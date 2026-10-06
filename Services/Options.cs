@@ -4,7 +4,7 @@ public sealed class ActiveDirectoryOptions
 {
     public string Domain { get; set; } = "automind.com.br";
     public string BaseDn { get; set; } = "DC=automind,DC=com,DC=br";
-    public string AdminGroup { get; set; } = "_informatica";
+    public string AdminGroup { get; set; } = "_treinamentos";
     public string AllowedMailSuffix { get; set; } = "@automind.com.br";
 }
 
