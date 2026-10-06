@@ -1,6 +1,6 @@
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
-    var isAdmin = User.IsInRole("Informatica");
+    var isAdmin = User.IsInRole("TreinamentosAdmin");
     var display = User.Identity?.Name ?? "Usuario";
     var initial = string.IsNullOrWhiteSpace(display) ? "A" : display[..1].ToUpperInvariant();
 }

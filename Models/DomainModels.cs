@@ -79,7 +79,7 @@ public sealed class AdUser
     public string Email { get; set; } = "";
     public string JobTitle { get; set; } = "";
     public string Department { get; set; } = "";
-    public bool IsInformatica { get; set; }
+    public bool IsAdministrator { get; set; }
 }
 
 public sealed class DirectoryExclusion

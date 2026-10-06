@@ -1,11 +1,14 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.8**
+Versao: **v0.0.9**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF, acompanhamento de pendencias no Active Directory e comunicacao via Teams.
 
-## Destaques da v0.0.8
+## Destaques acumulados da v0.0.9
 
+- administracao autorizada exclusivamente pelo grupo AD `_treinamentos`;
+- membership administrativa revalidada no AD a cada requisicao autenticada;
+- cookies antigos com role `Informatica` nao mantem acesso administrativo indevido;
 - a exclusao de contas deixa de ser por treinamento e passa a ser **permanente e global**;
 - nova pagina administrativa **Exclusoes**, acessivel pelo topo e pelo painel;
 - lista mostra nome, login, e-mail, tipo da conta, motivo, operador e data;
@@ -104,4 +107,11 @@ Comece por `docs/00-CHECKPOINT.md`.
 
 - PDF com resumo: `docs/20-PDF-RESUMO-V0.0.7.md`;
 - exclusoes permanentes: `docs/22-EXCLUSOES-PERMANENTES-V0.0.8.md`;
-- teste da versao: `docs/23-TESTE-V0.0.8.md`.
+- exclusoes v0.0.8: `docs/23-TESTE-V0.0.8.md`;
+- autorizacao administrativa v0.0.9: `docs/24-AUTORIZACAO-ADMIN-V0.0.9.md`;
+- teste v0.0.9: `docs/25-TESTE-V0.0.9.md`.
+
+
+## Autorizacao administrativa
+
+Administracao autorizada exclusivamente pelo grupo AD `_treinamentos`, com revalidacao de membership a cada requisicao autenticada.

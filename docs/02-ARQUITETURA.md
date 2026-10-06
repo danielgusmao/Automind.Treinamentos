@@ -1,4 +1,4 @@
-# Arquitetura - v0.0.5
+# Arquitetura - estado atual v0.0.9
 
 ```text
 Navegador
@@ -27,8 +27,8 @@ ASP.NET Core MVC / IIS
 
 - `AccountController`: login/logout AD.
 - `TrainingController`: area do colaborador, execucao, rota `/Training/Start/{id}` e aceite.
-- `AdminController`: funcoes restritas a `_informatica`, pendencias e Teams.
-- `AdAuthenticationService`: validacao de credenciais + dados do usuario.
+- `AdminController`: funcoes restritas ao grupo AD `_treinamentos` por meio da policy `TreinamentosAdmin`, pendencias e Teams.
+- `AdAuthenticationService`: validacao de credenciais + dados do usuario + revalidacao da membership administrativa no AD.
 - `AdDirectoryService`: usuarios habilitados com e-mail `@automind.com.br`.
 - `TrainingRepository`: acesso SQLite.
 - `TrainingSnapshotService`: snapshot + SHA-256 do treinamento.

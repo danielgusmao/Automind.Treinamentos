@@ -1,14 +1,24 @@
+# Atualizacao v0.0.9 - autorizacao administrativa
+
+- Grupo administrativo oficial: `_treinamentos`.
+- Role interna: `TreinamentosAdmin`.
+- Membership do AD e revalidada em cada requisicao autenticada; cookie antigo nao mantem privilegio indevido.
+- Falha de consulta ao AD nao concede administracao.
+- Proxima fase: definir e testar TLS/HTTPS interno sem expor o servidor 10.1.2.21 a Internet.
+
 # Contexto Atual - Automind.Treinamentos
 
 ## Versao
 
-`v0.0.8`
+`v0.0.9`
 
 ## Estado atual
 
-Aplicacao interna ASP.NET Core MVC com login AD, administracao autorizada pelo grupo `_informatica`, SQLite persistente, treinamentos, quiz, aceite, PDFs, comparacao AD, Teams e pipeline/Release automaticos pela branch `release`.
+Aplicacao interna ASP.NET Core MVC com login AD, administracao autorizada pelo grupo `_treinamentos` com revalidacao no AD a cada requisicao autenticada, SQLite persistente, treinamentos, quiz, aceite, PDFs, comparacao AD, Teams e pipeline/Release automaticos pela branch `release`.
 
-## v0.0.8 - principal mudanca
+## v0.0.9 - principal mudanca
+
+A autorizacao administrativa usa exclusivamente o grupo AD `_treinamentos`; cookies antigos nao preservam privilegio.
 
 A populacao de treinamento e formada por usuarios AD habilitados com e-mail `@automind.com.br`, menos a lista global `DirectoryExclusions`.
 

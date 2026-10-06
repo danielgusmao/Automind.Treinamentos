@@ -64,11 +64,11 @@ public sealed class AccountController : Controller
             new("job_title", adUser.JobTitle ?? ""),
             new("department", adUser.Department ?? "")
         };
-        if (adUser.IsInformatica) claims.Add(new Claim(ClaimTypes.Role, "Informatica"));
+        if (adUser.IsAdministrator) claims.Add(new Claim(ClaimTypes.Role, "TreinamentosAdmin"));
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-        await _audit.WriteAsync("login", "success", adUser.SamAccountName, new { adUser.DisplayName, adUser.Email, admin = adUser.IsInformatica });
+        await _audit.WriteAsync("login", "success", adUser.SamAccountName, new { adUser.DisplayName, adUser.Email, admin = adUser.IsAdministrator });
 
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             return LocalRedirect(model.ReturnUrl);

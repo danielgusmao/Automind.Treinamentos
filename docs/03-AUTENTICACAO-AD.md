@@ -1,34 +1,23 @@
-# Autenticação e Active Directory
+# Autenticacao e Active Directory
 
 ## Login
 
-O formulário recebe `usuário` e `senha` e valida diretamente contra `automind.com.br` usando `PrincipalContext.ValidateCredentials` com `ContextOptions.Negotiate`.
+O formulario recebe `usuario` e `senha` e valida diretamente contra `automind.com.br` usando `PrincipalContext.ValidateCredentials` com `ContextOptions.Negotiate`.
 
-Após sucesso, a aplicação cria cookie próprio contendo somente atributos não secretos:
+Apos sucesso, a aplicacao cria cookie proprio contendo somente atributos nao secretos: `sAMAccountName`, nome, e-mail, cargo, departamento e a role administrativa quando aplicavel. A senha nao e armazenada.
 
-- `sAMAccountName`;
-- nome de exibição;
-- e-mail;
-- cargo;
-- departamento;
-- role `Informatica` quando aplicável.
+## Administracao
 
-A senha não é armazenada.
+O grupo administrativo do projeto e `_treinamentos`. A role interna e `TreinamentosAdmin`.
 
-## Administração
+A partir da v0.0.9, a autorizacao nao depende apenas da role gravada no login: a cada requisicao autenticada o backend revalida no Active Directory a participacao atual do usuario no grupo configurado. Remocao ou inclusao no grupo passa a refletir na sessao sem aguardar as 8 horas do cookie.
 
-O usuário só recebe a role `Informatica` quando o AD confirma participação no grupo `_informatica`.
-
-Falha de resolução de grupo não concede acesso administrativo.
+Falha de resolucao/consulta do grupo nao concede acesso administrativo. Claims legadas `Informatica` nao autorizam mais a area administrativa.
 
 ## Pendentes
 
-Filtro LDAP planejado:
+Filtro LDAP: conta habilitada com `mail` terminando em `@automind.com.br`, menos a lista global permanente de exclusoes de contas que nao representam pessoas.
 
-- pessoa/user;
-- `mail=*@automind.com.br`;
-- conta não desabilitada.
+## Transporte
 
-## HTTP temporário
-
-Sem HTTPS, usuário e senha trafegam sem confidencialidade de transporte. A v0.0.2 deve ser usada apenas para teste interno controlado até o certificado estar disponível.
+O ambiente ainda esta em HTTP interno. HTTPS/TLS permanece pendente e deve ser tratado antes de ampliar o uso, pois usuario e senha de AD trafegam no formulario de login.

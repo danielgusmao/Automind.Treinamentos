@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Automind.Treinamentos.Controllers;
 
-[Authorize(Policy = "Informatica")]
+[Authorize(Policy = "TreinamentosAdmin")]
 public sealed class AdminController : Controller
 {
     private readonly TrainingRepository _repo;

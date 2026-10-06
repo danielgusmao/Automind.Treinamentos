@@ -14,7 +14,7 @@ Criar uma aplicação interna para disponibilizar treinamentos corporativos, val
 - registra aceite somente quando atinge a nota mínima;
 - consulta/baixa seu comprovante em PDF.
 
-### `_informatica`
+### Administrador (`_treinamentos`)
 
 Além das funções do colaborador:
 
@@ -30,12 +30,9 @@ Além das funções do colaborador:
 
 Usuários habilitados cujo atributo `mail` termina em `@automind.com.br`.
 
-## Fora do escopo da v0.0.3
+## Itens ainda pendentes / evolucoes futuras
 
 - assinatura digital ICP-Brasil;
-- workflow de aprovação de conteúdo;
+- workflow formal de aprovação de conteúdo;
 - editor rico/WYSIWYG;
-- envio automático de lembretes;
-- integração Teams/e-mail;
-- HTTPS (aguardando certificado);
-- publicação real no IIS do servidor 10.1.2.21.
+- HTTPS/TLS interno (fase seguinte).

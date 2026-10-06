@@ -1,3 +1,16 @@
+## 2026-10-06 - v0.0.9 correcao critica de autorizacao administrativa
+
+- Grupo administrativo oficial do Automind.Treinamentos: `_treinamentos`.
+- Corrigida a configuracao padrao que ainda apontava para `_informatica`.
+- A role interna passou de `Informatica` para `TreinamentosAdmin`; cookies antigos com a role legada nao concedem mais acesso.
+- Problema identificado: a role administrativa ficava gravada no cookie por ate 8 horas, portanto uma mudanca de grupo no AD/configuracao nao removia o acesso imediatamente.
+- A partir da v0.0.9, cada requisicao autenticada revalida no AD se o usuario pertence atualmente ao grupo `_treinamentos` (ou ao grupo configurado em `ActiveDirectory:AdminGroup`).
+- Usuario removido do grupo perde Administracao na requisicao seguinte sem precisar logout; usuario adicionado recebe a role na requisicao seguinte.
+- Em falha de consulta ao AD, o comportamento e fail-closed: nao concede privilegio administrativo.
+- Usuario fora do grupo continua podendo usar normalmente `Meus treinamentos`.
+- Documentos: `docs/24-AUTORIZACAO-ADMIN-V0.0.9.md` e `docs/25-TESTE-V0.0.9.md`.
+- HTTPS/TLS permanece como proxima fase; servidor `10.1.2.21` e interno e nao sera exposto a Internet.
+
 ## 2026-10-06 - v0.0.8 lista global permanente de exclusoes e versao corrigida
 
 - Exclusoes deixam de ser uma excecao por treinamento e passam a formar uma lista global permanente de contas que nao representam pessoas.

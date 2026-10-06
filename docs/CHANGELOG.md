@@ -1,3 +1,11 @@
+## v0.0.9 - 2026-10-06
+
+- Corrige autorizacao administrativa para usar o grupo AD `_treinamentos`.
+- Revalida membership administrativa a cada requisicao autenticada.
+- Remove privilegio administrativo imediatamente quando o usuario deixa o grupo.
+- Ignora/remove a role legada `Informatica` de cookies antigos.
+- Politica administrativa renomeada para `TreinamentosAdmin`.
+
 # Changelog
 
 ## v0.0.8 - 2026-10-06

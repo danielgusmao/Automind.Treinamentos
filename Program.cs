@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Automind.Treinamentos.Data;
 using Automind.Treinamentos.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -32,11 +33,48 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SecurePolicy = CookieSecurePolicy.None;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
+        options.Events.OnValidatePrincipal = context =>
+        {
+            var principal = context.Principal;
+            var identity = principal?.Identity as ClaimsIdentity;
+            var sam = principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (identity is null || string.IsNullOrWhiteSpace(sam))
+            {
+                context.RejectPrincipal();
+                return Task.CompletedTask;
+            }
+
+            var ad = context.HttpContext.RequestServices.GetRequiredService<AdAuthenticationService>();
+            var isAdminNow = ad.IsInAdminGroup(sam);
+            var hasAdminRole = principal!.IsInRole("TreinamentosAdmin");
+            var legacyClaims = identity.FindAll(ClaimTypes.Role)
+                .Where(c => string.Equals(c.Value, "Informatica", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            var changed = legacyClaims.Count > 0 || hasAdminRole != isAdminNow;
+            foreach (var claim in legacyClaims) identity.RemoveClaim(claim);
+
+            if (hasAdminRole && !isAdminNow)
+            {
+                foreach (var claim in identity.FindAll(ClaimTypes.Role)
+                    .Where(c => string.Equals(c.Value, "TreinamentosAdmin", StringComparison.OrdinalIgnoreCase))
+                    .ToList())
+                    identity.RemoveClaim(claim);
+            }
+            else if (!hasAdminRole && isAdminNow)
+            {
+                identity.AddClaim(new Claim(ClaimTypes.Role, "TreinamentosAdmin"));
+            }
+
+            if (changed) context.ShouldRenew = true;
+            return Task.CompletedTask;
+        };
     });
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("Informatica", policy => policy.RequireRole("Informatica"));
+    options.AddPolicy("TreinamentosAdmin", policy => policy.RequireRole("TreinamentosAdmin"));
 });
 
 builder.Services.AddSingleton<StorageService>();
