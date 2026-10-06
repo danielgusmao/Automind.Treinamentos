@@ -3,6 +3,7 @@ using Automind.Treinamentos.Models;
 using Automind.Treinamentos.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Automind.Treinamentos.Controllers;
 
@@ -15,8 +16,9 @@ public sealed class AdminController : Controller
     private readonly EvidenceService _evidence;
     private readonly AuditService _audit;
     private readonly TeamsWebhookService _teams;
+    private readonly PortalOptions _portal;
 
-    public AdminController(TrainingRepository repo, AdDirectoryService ad, TrainingSnapshotService snapshot, EvidenceService evidence, AuditService audit, TeamsWebhookService teams)
+    public AdminController(TrainingRepository repo, AdDirectoryService ad, TrainingSnapshotService snapshot, EvidenceService evidence, AuditService audit, TeamsWebhookService teams, IOptions<PortalOptions> portal)
     {
         _repo = repo;
         _ad = ad;
@@ -24,6 +26,7 @@ public sealed class AdminController : Controller
         _evidence = evidence;
         _audit = audit;
         _teams = teams;
+        _portal = portal.Value;
     }
 
     public async Task<IActionResult> Index()
@@ -222,8 +225,11 @@ public sealed class AdminController : Controller
         var completed = completions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var users = await _ad.GetEligibleUsersAsync();
         var usersBySam = users.ToDictionary(x => x.SamAccountName, StringComparer.OrdinalIgnoreCase);
-        var link = Url.Action("Take", "Training", new { id = training.Id }, Request.Scheme, Request.Host.Value)
-            ?? $"{Request.Scheme}://{Request.Host}/Training/Take/{training.Id}";
+        var baseUrl = (_portal.PublicBaseUrl ?? string.Empty).Trim().TrimEnd('/');
+        var link = string.IsNullOrWhiteSpace(baseUrl)
+            ? (Url.Action("Start", "Training", new { id = training.Id }, Request.Scheme, Request.Host.Value)
+                ?? $"{Request.Scheme}://{Request.Host}/Training/Start/{training.Id}")
+            : $"{baseUrl}/Training/Start/{training.Id}";
 
         var sent = 0;
         var failed = 0;

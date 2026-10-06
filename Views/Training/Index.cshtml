@@ -36,7 +36,7 @@
             </div>
             @if (item.Completion is null)
             {
-                <div class="training-card-actions"><a class="btn primary" asp-action="Take" asp-route-id="@item.Training.Id">Iniciar treinamento</a></div>
+                <div class="training-card-actions"><a class="btn primary" asp-action="Start" asp-route-id="@item.Training.Id">Iniciar treinamento</a></div>
             }
             else
             {

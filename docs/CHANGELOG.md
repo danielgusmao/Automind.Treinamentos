@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.0.5 - 2026-10-06
+
+- Estrutura de producao separada entre `Web` e dados persistentes.
+- `appsettings.Production.json` aponta para `C:\Automind.Treinamentos`.
+- `App_Data` mantido somente como fallback de desenvolvimento.
+- Teams alinhado ao padrao do CadColab com `IHttpClientFactory`, cliente `TeamsWebhook`, `{ recipient, text }` e `Automind__Teams__WebhookUrl`.
+- Mensagem de lembrete aprovada com primeiro nome, titulo, tempo e link clicavel.
+- Nova rota `/Training/Start/{id}` e botoes do portal usando `Start`.
+- `Portal:PublicBaseUrl=http://treinamentos.automind.com.br`.
+- Repositorio Azure DevOps e branch `release` documentados.
+- Script de preparo do servidor para migracao nao destrutiva, ACLs e copia segura da configuracao Teams.
+
 ## v0.0.4 - 2026-10-06
 
 - Edição de questões existentes.

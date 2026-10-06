@@ -37,6 +37,9 @@ public sealed class TrainingController : Controller
         return View(vm);
     }
 
+    [HttpGet("/Training/Start/{id:long}")]
+    public Task<IActionResult> Start(long id) => Take(id);
+
     [HttpGet]
     public async Task<IActionResult> Take(long id)
     {

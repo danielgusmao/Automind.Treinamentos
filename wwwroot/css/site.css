@@ -29,7 +29,7 @@ button,input,select,textarea{font:inherit}a{color:inherit}.app-container{width:m
 @media(max-width:980px){.topbar{grid-template-columns:190px 1fr auto}.brand img{width:178px}.main-nav{justify-content:flex-start}.dashboard-hero{grid-template-columns:1fr 190px}.hero-symbol img{width:150px}.login-shell{grid-template-columns:1fr}.login-visual{display:none}.login-panel{min-height:100vh}.login-mobile-logo{display:block}}
 @media(max-width:760px){.app-container{width:min(calc(100% - 26px),var(--container))}.topbar-shell{padding:8px 0}.topbar{grid-template-columns:1fr auto;gap:10px;padding:12px 14px}.brand img{width:170px}.main-nav{grid-column:1/-1;order:3;justify-content:flex-start;overflow:auto}.top-actions{justify-self:end}.user-chip{min-width:0}.user-chip>div,.version-chip{display:none}.page-main{padding:23px 0 40px}.page-heading,.page-head{align-items:flex-start;flex-direction:column}.dashboard-hero{grid-template-columns:1fr;padding:28px 24px;min-height:0}.hero-symbol{display:none}.dashboard-hero h1{font-size:2.5rem}.stats{grid-template-columns:1fr 1fr}.training-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.span2,.checkline{grid-column:span 1}.footer-inner{flex-direction:column;gap:5px}.login-panel{padding:28px 20px}}
 
-/* v0.0.4 - administracao, lembretes Teams e modelo de treinamento */
+/* v0.0.5 - estrutura persistente separada e Teams alinhado ao CadColab */
 .footer-version{color:#665d69;font-weight:800}
 .btn:disabled,.btn[disabled]{opacity:.48;cursor:not-allowed;transform:none!important;box-shadow:none!important}
 .alert.success{background:var(--success-soft);color:var(--success);border:1px solid #b6dfca}

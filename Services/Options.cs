@@ -18,3 +18,8 @@ public sealed class TeamsOptions
     public bool Enabled { get; set; } = true;
     public string WebhookUrl { get; set; } = "";
 }
+
+public sealed class PortalOptions
+{
+    public string PublicBaseUrl { get; set; } = "http://treinamentos.automind.com.br";
+}

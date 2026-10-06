@@ -2,58 +2,60 @@
 
 ## Versao
 
-`v0.0.4`
+`v0.0.5`
 
 ## Estado atual
 
-MVP local ASP.NET Core MVC com autenticacao AD, perfil administrativo `_informatica`, SQLite, treinamentos, quiz, aceite, evidencias PDF, comparacao de concluidos/pendentes no AD e identidade visual alinhada ao CadColab.
+Aplicacao interna ASP.NET Core MVC com autenticacao AD, administracao autorizada pelo grupo `_informatica`, SQLite, treinamentos, quiz, aceite, evidencias PDF, comparacao de concluidos/pendentes no AD, lembretes Teams e identidade visual alinhada ao CadColab.
 
-## Novidade principal v0.0.4
+## Novidade principal v0.0.5
 
-A administracao agora permite editar questoes e enviar lembretes Teams individuais ou em lote somente para colaboradores pendentes, incluindo o link direto do treinamento. O cadastro de novo treinamento passou a abrir com um modelo de conteudo e um exemplo de questao. A interface removeu a exibicao de `_informatica` e os avisos visuais de HTTP, mantendo a regra de autorizacao no backend.
+A estrutura de producao foi separada: `Web` contem somente a publicacao e os dados persistentes ficam em `Data`, `Treinamentos`, `Evidencias`, `Logs` e `Backup`, todos fora da pasta publicada. Em Production, a raiz e `C:\Automind.Treinamentos`; em desenvolvimento continua `App_Data`.
+
+O Teams agora replica explicitamente o padrao tecnico do CadColab: mesmo contrato `{ recipient, text }`, mesmo nome de configuracao externa `Automind__Teams__WebhookUrl` e mesmo tipo de Workflow. A URL real continua fora do repositorio. O link do treinamento foi padronizado para `/Training/Start/{id}` e o lembrete usa `http://treinamentos.automind.com.br` como base publica.
+
+## Estrutura de producao
+
+```text
+C:\Automind.Treinamentos\
+|-- Web\
+|-- Data\
+|-- Treinamentos\
+|-- Evidencias\Colaboradores\
+|-- Evidencias\Relatorios\
+|-- Logs\
+`-- Backup\
+```
 
 ## Recursos atuais
 
-- edicao de questoes existentes;
+- login AD sem persistencia de senha;
+- administracao por `_informatica`, sem exibir o nome do grupo na interface;
+- edicao de questoes;
+- criacao de treinamentos com modelo inicial;
 - selecao individual e `Marcar todos os pendentes`;
-- lembrete Teams individual/em lote com link direto;
-- webhook Teams externo ao Git (`Automind__Teams__WebhookUrl`);
-- modelo inicial para novo treinamento e exemplo de questao;
-- identidade visual do Cadastro de Colaboradores reutilizada;
-- logos, simbolo e wallpaper corporativos;
-- login AD;
-- navegacao e cards corporativos;
-- treinamento de SI integrado ao shell principal;
-- `EstimatedMinutes` por treinamento;
-- cronometro visual durante o treinamento;
-- tempo real calculado pelo servidor;
-- `StartedAtUtc` e `DurationSeconds` persistidos;
-- PDF individual institucional com logo, nota, tempos, protocolo e hash;
-- PDF consolidado em paisagem com duracao por colaborador;
-- migracao incremental do SQLite.
+- concluido sem checkbox e sem botao de lembrete;
+- Teams individual/em lote;
+- rota `/Training/Start/{id}`;
+- link publico configuravel por `Portal:PublicBaseUrl`;
+- cronometro e tempo real calculado pelo servidor;
+- evidencias PDF individuais;
+- PDF consolidado;
+- snapshot de treinamento e SHA-256;
+- auditoria JSONL.
 
-## Decisoes permanentes
+## Repositorios
 
-- servidor pretendido: `10.1.2.21`;
-- nenhuma alteracao no servidor sem aviso, backup e rollback;
-- HTTP apenas temporario enquanto nao houver certificado;
-- senha AD nunca e persistida;
-- `_informatica` e o grupo administrativo;
-- usuarios elegiveis: AD habilitado com `mail @automind.com.br`;
-- banco e a fonte oficial; PDFs sao evidencias derivadas;
-- pasta geral de treinamentos e pasta individual por colaborador;
-- treinamento deve permanecer dentro do layout geral do portal;
-- documentacao cumulativa com checkpoint atualizado em cada mudanca relevante.
-
-## Primeiro treinamento
-
-Seguranca da Informacao, versao `1.0.0`, nota minima 5/5 e tempo estimado de 8 minutos.
+- GitHub: `https://github.com/danielgusmao/Automind.Treinamentos.git`
+- Azure DevOps: `https://danielgusmao@dev.azure.com/danielgusmao/Automind.Treinamentos/_git/Automind.Treinamentos`
+- branch inicial: `release`
 
 ## Proxima acao
 
-1. Build da `v0.0.4` no Visual Studio.
-2. Validar edicao de questao e tela de pendencias.
-3. GitHub confirmado em `https://github.com/danielgusmao/Automind.Treinamentos.git`; publicar a branch `release` após build aprovado.
-4. Confirmar a URL específica do repositório Azure DevOps antes de configurar o remoto `azure`.
-5. Configurar o segredo Teams no ambiente do App Pool antes do primeiro envio real.
-6. Publicar no IIS somente apos o build e revisao das alteracoes.
+1. Extrair a v0.0.5 para `C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos`.
+2. Build Release.
+3. Inicializar Git na pasta correta e fazer push para `origin` e `azure` na branch `release`.
+4. Criar pipeline e Release.
+5. Antes da primeira publicacao v0.0.5 no servidor, executar o preparo/migracao controlado das pastas e copiar a configuracao Teams entre os App Pools.
+6. Publicar somente `Web`.
+7. Validar `docs/17-TESTE-V0.0.5.md`.

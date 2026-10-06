@@ -1,24 +1,15 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.Extensions.Options;
 
 namespace Automind.Treinamentos.Services;
 
-public sealed class TeamsWebhookService
+public sealed class TeamsWebhookService(
+    IHttpClientFactory httpClientFactory,
+    IConfiguration configuration,
+    ILogger<TeamsWebhookService> logger)
 {
-    private readonly HttpClient _http;
-    private readonly TeamsOptions _options;
-
-    public TeamsWebhookService(HttpClient http, IOptions<TeamsOptions> options)
-    {
-        _http = http;
-        _options = options.Value;
-    }
-
-    public bool IsConfigured =>
-        _options.Enabled &&
-        Uri.TryCreate(_options.WebhookUrl, UriKind.Absolute, out var uri) &&
-        uri.Scheme == Uri.UriSchemeHttps;
+    private string WebhookUrl => configuration["Automind:Teams:WebhookUrl"]?.Trim() ?? string.Empty;
+    public bool IsConfigured => configuration.GetValue("Automind:Teams:Enabled", true) && Uri.TryCreate(WebhookUrl, UriKind.Absolute, out _);
 
     public async Task<TeamsSendResult> SendTrainingReminderAsync(
         string recipient,
@@ -29,35 +20,47 @@ public sealed class TeamsWebhookService
         CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
-            return new TeamsSendResult(false, "Webhook do Teams nao configurado para este aplicativo.");
+            return new TeamsSendResult(false, "A integracao Teams esta desabilitada ou sem webhook configurado.");
 
         if (string.IsNullOrWhiteSpace(recipient))
             return new TeamsSendResult(false, "Destinatario sem e-mail/UPN.");
 
-        var safeName = WebUtility.HtmlEncode(displayName);
+        var firstName = string.IsNullOrWhiteSpace(displayName)
+            ? "colaborador"
+            : displayName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "colaborador";
+
+        var safeFirstName = WebUtility.HtmlEncode(firstName);
         var safeTitle = WebUtility.HtmlEncode(trainingTitle);
         var safeUrl = WebUtility.HtmlEncode(trainingUrl);
-        var text = $"Ola, {safeName}.<br><br>Voce ainda possui o treinamento <strong>{safeTitle}</strong> pendente.<br>Tempo estimado: {estimatedMinutes} minutos.<br><br>Acesse o treinamento pelo link:<br><a href=\"{safeUrl}\">{safeUrl}</a><br><br>Mensagem automatica do portal Automind.Treinamentos.";
+
+        var text =
+            $"Olá, {safeFirstName}. Você possui o treinamento <strong>{safeTitle}</strong> pendente.<br>" +
+            $"Tempo estimado: {estimatedMinutes} minutos.<br>" +
+            $"<strong>Acessar treinamento:</strong> <a href=\"{safeUrl}\">{safeUrl}</a>";
 
         try
         {
-            using var response = await _http.PostAsJsonAsync(
-                _options.WebhookUrl,
+            var client = httpClientFactory.CreateClient("TeamsWebhook");
+            using var response = await client.PostAsJsonAsync(
+                WebhookUrl,
                 new { recipient = recipient.Trim(), text },
                 cancellationToken);
 
+            var statusCode = (int)response.StatusCode;
             if (response.IsSuccessStatusCode)
                 return new TeamsSendResult(true, null);
 
-            var body = await response.Content.ReadAsStringAsync(cancellationToken);
-            var detail = string.IsNullOrWhiteSpace(body)
-                ? $"HTTP {(int)response.StatusCode}"
-                : $"HTTP {(int)response.StatusCode}: {body}";
-            return new TeamsSendResult(false, detail.Length > 700 ? detail[..700] : detail);
+            logger.LogWarning("Webhook Teams recusou lembrete de treinamento. HTTP {StatusCode}.", statusCode);
+            return new TeamsSendResult(false, $"O webhook Teams respondeu HTTP {statusCode}.");
         }
-        catch (Exception ex)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return new TeamsSendResult(false, ex.Message);
+            throw;
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning("Falha no envio Teams. Tipo: {ErrorType}; codigo: {Code}", exception.GetType().Name, exception.HResult);
+            return new TeamsSendResult(false, $"Falha tecnica no envio Teams ({exception.GetType().Name}).");
         }
     }
 }

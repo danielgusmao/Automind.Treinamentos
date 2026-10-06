@@ -8,6 +8,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.Configure<ActiveDirectoryOptions>(builder.Configuration.GetSection("ActiveDirectory"));
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection("Storage"));
 builder.Services.Configure<TeamsOptions>(builder.Configuration.GetSection("Automind:Teams"));
+builder.Services.Configure<PortalOptions>(builder.Configuration.GetSection("Portal"));
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -43,7 +44,8 @@ builder.Services.AddSingleton<TrainingDb>();
 builder.Services.AddSingleton<AuditService>();
 builder.Services.AddSingleton<SimplePdfService>();
 builder.Services.AddSingleton<TrainingSnapshotService>();
-builder.Services.AddHttpClient<TeamsWebhookService>(client => client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddHttpClient("TeamsWebhook", client => client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddSingleton<TeamsWebhookService>();
 builder.Services.AddScoped<TrainingRepository>();
 builder.Services.AddScoped<AdAuthenticationService>();
 builder.Services.AddScoped<AdDirectoryService>();

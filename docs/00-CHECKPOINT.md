@@ -1,3 +1,46 @@
+## 2026-10-06 - v0.0.5 estrutura persistente separada e reuso do Teams CadColab
+
+### Decisoes aprovadas
+
+- Separar aplicacao publicada de dados persistentes no servidor.
+- Estrutura final: `Web`, `Data`, `Treinamentos`, `Evidencias`, `Logs`, `Backup` diretamente sob `C:\Automind.Treinamentos`.
+- `Evidencias` permanece dividida em `Colaboradores` e `Relatorios`.
+- `Web` passa a ser descartavel/substituivel por pipeline/release; dados persistentes nunca devem ser limpos pelo deploy.
+- Production usa `C:\Automind.Treinamentos` como `Storage:RootPath`; desenvolvimento continua usando `App_Data`.
+- A migracao inicial deve COPIAR o estado atual de `Web\App_Data` para as pastas novas e manter o antigo `App_Data` temporariamente para rollback.
+- App Pool `Automind.Treinamentos` precisa de Modify somente nas pastas persistentes, nao em toda a pasta `Web`.
+
+### Teams
+
+- O ultimo CadColab fornecido foi usado como referencia tecnica.
+- Mesmo contrato HTTP: POST JSON `{ recipient, text }`.
+- Mesmo segredo externo: `Automind__Teams__WebhookUrl`.
+- Mesmo `HttpClient` nomeado `TeamsWebhook` com timeout de 15 segundos.
+- O segredo nao entra em Git, appsettings, docs, SQLite ou auditoria.
+- O preparo do servidor deve copiar o valor da variavel do App Pool `CadastroColaboradores` para `Automind.Treinamentos` sem imprimir o valor.
+- Mensagem aprovada: primeiro nome + treinamento pendente + tempo estimado + link direto.
+- Base publica: `http://treinamentos.automind.com.br`.
+- Rota de acesso padrao: `/Training/Start/{id}`.
+- O primeiro treinamento gera `http://treinamentos.automind.com.br/Training/Start/1`.
+
+### Git / Azure
+
+- GitHub: `https://github.com/danielgusmao/Automind.Treinamentos.git`.
+- Azure DevOps: `https://danielgusmao@dev.azure.com/danielgusmao/Automind.Treinamentos/_git/Automind.Treinamentos`.
+- Branch inicial: `release`.
+- Pasta local correta: `C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos`.
+- Nao executar comandos deste projeto dentro de `Automind.CadastroColaboradores`.
+
+### Documentos novos
+
+- `docs/14-ESTRUTURA-PASTAS-V0.0.5.md`.
+- `docs/15-TEAMS-CADCOLAB-V0.0.5.md`.
+- `docs/16-GIT-AZURE-RELEASE-V0.0.5.md`.
+- `docs/17-TESTE-V0.0.5.md`.
+- `deploy/Prepare-Server-v0.0.5.ps1`.
+
+---
+
 ## 2026-10-06 - v0.0.4 administração de questões, lembretes Teams e modelo de treinamento
 
 ### Alterações solicitadas e incorporadas

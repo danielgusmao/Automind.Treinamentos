@@ -2,49 +2,62 @@
 
 Branch inicial aprovada para `Automind.Treinamentos`: `release`.
 
-## GitHub
+## Pasta local correta
 
-Repositorio informado:
+```text
+C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos
+```
+
+Nao executar estes comandos dentro de `Automind.CadastroColaboradores`.
+
+## GitHub
 
 ```text
 https://github.com/danielgusmao/Automind.Treinamentos.git
 ```
 
-Na raiz local do projeto, depois do build aprovado:
-
-```powershell
-git init
-git remote remove origin 2>$null
-git remote add origin https://github.com/danielgusmao/Automind.Treinamentos.git
-git switch -C release
-git add .
-git commit -m "feat: edicao de questoes e lembretes Teams v0.0.4"
-git push -u origin release
-```
-
-Se o repositorio local ja tiver historico e a branch `release` existir, preferir:
-
-```powershell
-git switch release
-git add .
-git commit -m "feat: edicao de questoes e lembretes Teams v0.0.4"
-git push origin release
-```
-
 ## Azure DevOps
 
-O remoto deve se chamar `azure`. Antes do primeiro push, confirmar o endereco exato do repositorio Azure DevOps; ele ainda nao foi informado para `Automind.Treinamentos`. Nao reutilizar URL de outro projeto.
+```text
+https://danielgusmao@dev.azure.com/danielgusmao/Automind.Treinamentos/_git/Automind.Treinamentos
+```
 
-Depois que o remoto `azure` estiver configurado:
+Remotos padrao:
+
+- `origin` = GitHub;
+- `azure` = Azure DevOps.
+
+## Primeiro commit do repositorio
 
 ```powershell
+Set-Location "C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos"
+git init
+git remote add origin https://github.com/danielgusmao/Automind.Treinamentos.git
+git remote add azure https://danielgusmao@dev.azure.com/danielgusmao/Automind.Treinamentos/_git/Automind.Treinamentos
+git add .
+git commit -m "feat: estrutura persistente e Teams v0.0.5"
+git branch -M release
+git push -u origin release
 git push -u azure release
 ```
 
-Validacao dos remotes:
+## Atualizacoes seguintes
 
 ```powershell
+Set-Location "C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos"
+git switch release
+git add .
+git commit -m "descricao da alteracao"
+git push origin release
+git push azure release
+```
+
+## Validacao
+
+```powershell
+git status
+git branch --show-current
 git remote -v
 ```
 
-Nao colocar `Automind__Teams__WebhookUrl` no repositorio.
+Nunca versionar `Automind__Teams__WebhookUrl`.

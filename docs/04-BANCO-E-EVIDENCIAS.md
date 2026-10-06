@@ -1,43 +1,60 @@
-# Banco e Evidências
+# Banco e Evidencias
 
 ## Banco
 
 SQLite: `Automind.Treinamentos.db`.
 
+Em producao:
+
+```text
+C:\Automind.Treinamentos\Data\Automind.Treinamentos.db
+```
+
+Arquivos `-wal` e `-shm` permanecem na mesma pasta.
+
 ### Trainings
 
-Mantém código, slug, título, descrição, versão, conteúdo, nota mínima, publicação, obrigatoriedade e layout.
+Mantem codigo, slug, titulo, descricao, versao, conteudo, nota minima, publicacao, obrigatoriedade, layout e tempo estimado.
 
 ### TrainingQuestions
 
-Mantém posição, pergunta, alternativas e índice da resposta correta.
+Mantem posicao, pergunta, alternativas e indice da resposta correta.
 
 ### TrainingCompletions
 
-Mantém:
-
-- treinamento;
-- usuário AD;
-- dados de identificação;
-- nota;
-- data/hora UTC;
-- protocolo;
-- hash do treinamento;
-- caminho do PDF;
-- hash do PDF.
+Mantem treinamento, usuario AD, dados de identificacao, nota, inicio, conclusao, duracao, protocolo, hash do treinamento, caminho do PDF e hash do PDF.
 
 ## Snapshot de treinamento
 
-A publicação cria `manifest.json` e `SHA256.txt`.
+A publicacao cria, em producao:
+
+```text
+C:\Automind.Treinamentos\Treinamentos\<slug>\<versao>\manifest.json
+C:\Automind.Treinamentos\Treinamentos\<slug>\<versao>\SHA256.txt
+```
 
 ## PDF individual
 
-Gerado automaticamente na conclusão e gravado na pasta individual do colaborador.
+Gerado automaticamente na conclusao em:
+
+```text
+C:\Automind.Treinamentos\Evidencias\Colaboradores\<Nome - samAccountName>\
+```
 
 ## PDF consolidado
 
-Gerado sob demanda pelo painel administrativo em `Evidencias\Relatorios`.
+Gerado sob demanda em:
+
+```text
+C:\Automind.Treinamentos\Evidencias\Relatorios\
+```
+
+## Auditoria
+
+```text
+C:\Automind.Treinamentos\Logs\Audit.jsonl
+```
 
 ## Imutabilidade operacional
 
-Na v0.0.2, uma conclusão existente não é sobrescrita pelo colaborador. Mudanças futuras de conteúdo devem preferir nova versão do treinamento, preservando evidências históricas.
+Uma conclusao existente nao e sobrescrita pelo colaborador. Alteracoes de conteudo devem preferir uma nova versao do treinamento para preservar evidencias historicas.
