@@ -20,8 +20,8 @@
     <section class="training-hero">
         <div class="training-hero-copy">
             <span class="training-eyebrow">Segurança da Informação &middot; LGPD</span>
-            <h1>Treinamento de Conscientizacao em Segurança da Informação</h1>
-            <p>Leia os módulos, responda ao quiz e registre o seu aceite. O resultado e o tempo realizado serão vinculados à sua evidência.</p>
+            <h1>@Model.Training.Title</h1>
+            <p>@Model.Training.Description</p>
             <div class="training-hero-meta">
                 <span class="training-pill">Tempo estimado <strong>~ @Model.Training.EstimatedMinutes min</strong></span>
                 <span class="training-pill">Quiz <strong>@Model.Questions.Count questões</strong></span>
@@ -80,7 +80,7 @@
                 <div>
                     <span class="training-section-eyebrow">Verificação</span>
                     <h2>Quiz de fixação</h2>
-                    <p>Marque a alternativa correta. E preciso acertar as 5 questões para liberar o Termo de Ciencia.</p>
+                    <p>Marque a alternativa correta. E preciso atingir @Model.Training.PassingScore de @Model.Questions.Count questoes para liberar o Termo de Ciencia.</p>
                 </div>
                 <span class="training-validation-badge">VALIDACAO LOCAL + SERVIDOR</span>
             </div>

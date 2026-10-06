@@ -18,7 +18,7 @@ public sealed class TrainingRepository
     {
         using var c = _db.OpenConnection();
         using var cmd = c.CreateCommand();
-        cmd.CommandText = "SELECT * FROM Trainings WHERE IsPublished=1 ORDER BY Title;";
+        cmd.CommandText = "SELECT * FROM Trainings WHERE IsPublished=1 AND IsArchived=0 ORDER BY Title;";
         using var r = await cmd.ExecuteReaderAsync();
         var list = new List<Training>();
         while (await r.ReadAsync()) list.Add(MapTraining(r));
@@ -80,6 +80,17 @@ public sealed class TrainingRepository
         return await r.ReadAsync() ? MapCompletion(r) : null;
     }
 
+    public async Task<TrainingCompletion?> GetCompletionByIdAsync(long id, string sam)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT * FROM TrainingCompletions WHERE Id=$id AND lower(SamAccountName)=lower($sam) LIMIT 1;";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$sam", sam);
+        using var r = await cmd.ExecuteReaderAsync();
+        return await r.ReadAsync() ? MapCompletion(r) : null;
+    }
+
     public async Task<List<TrainingCompletion>> GetCompletionsAsync(long trainingId)
     {
         using var c = _db.OpenConnection();
@@ -90,6 +101,116 @@ public sealed class TrainingRepository
         var list = new List<TrainingCompletion>();
         while (await r.ReadAsync()) list.Add(MapCompletion(r));
         return list;
+    }
+
+    public async Task<int> GetCompletionCountAsync(long trainingId)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM TrainingCompletions WHERE TrainingId=$trainingId;";
+        cmd.Parameters.AddWithValue("$trainingId", trainingId);
+        return Convert.ToInt32(await cmd.ExecuteScalarAsync());
+    }
+
+    public async Task<bool> TrainingVersionExistsAsync(string code, string version, long? ignoreId = null)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = ignoreId.HasValue
+            ? "SELECT 1 FROM Trainings WHERE lower(Code)=lower($code) AND lower(Version)=lower($version) AND Id<>$id LIMIT 1;"
+            : "SELECT 1 FROM Trainings WHERE lower(Code)=lower($code) AND lower(Version)=lower($version) LIMIT 1;";
+        cmd.Parameters.AddWithValue("$code", (code ?? string.Empty).Trim());
+        cmd.Parameters.AddWithValue("$version", (version ?? string.Empty).Trim());
+        if (ignoreId.HasValue) cmd.Parameters.AddWithValue("$id", ignoreId.Value);
+        return await cmd.ExecuteScalarAsync() is not null;
+    }
+
+    public async Task UpdateTrainingAsync(AdminTrainingEditViewModel m)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+UPDATE Trainings
+SET Title=$title,
+    Description=$description,
+    SummaryText=$summary,
+    Version=$version,
+    ContentText=$content,
+    PassingScore=$passing,
+    EstimatedMinutes=$estimated,
+    RequiredForAll=$required
+WHERE Id=$id AND IsArchived=0;";
+        cmd.Parameters.AddWithValue("$title", m.Title.Trim());
+        cmd.Parameters.AddWithValue("$description", m.Description?.Trim() ?? "");
+        cmd.Parameters.AddWithValue("$summary", m.SummaryText?.Trim() ?? "");
+        cmd.Parameters.AddWithValue("$version", m.Version.Trim());
+        cmd.Parameters.AddWithValue("$content", m.ContentText?.Trim() ?? "");
+        cmd.Parameters.AddWithValue("$passing", m.PassingScore);
+        cmd.Parameters.AddWithValue("$estimated", m.EstimatedMinutes);
+        cmd.Parameters.AddWithValue("$required", m.RequiredForAll ? 1 : 0);
+        cmd.Parameters.AddWithValue("$id", m.Id);
+        var changed = await cmd.ExecuteNonQueryAsync();
+        if (changed == 0) throw new InvalidOperationException("Treinamento nao encontrado ou versao historica imutavel.");
+    }
+
+    public async Task<long> CreateTrainingRevisionAsync(Training source, AdminTrainingEditViewModel m, string actor)
+    {
+        if (string.Equals(source.Version, m.Version?.Trim(), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Informe uma nova versao para preservar as evidencias existentes.");
+
+        if (await TrainingVersionExistsAsync(source.Code, m.Version))
+            throw new InvalidOperationException($"A versao {m.Version} ja existe para o codigo {source.Code}.");
+
+        var familySlug = string.IsNullOrWhiteSpace(source.FamilySlug) ? source.Slug : source.FamilySlug;
+        var versionSlug = new string((m.Version ?? string.Empty).Trim().ToLowerInvariant()
+            .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')
+            .ToArray()).Trim('-');
+        if (string.IsNullOrWhiteSpace(versionSlug)) throw new InvalidOperationException("Versao invalida.");
+        var technicalSlug = $"{familySlug}-v{versionSlug}";
+
+        using var c = _db.OpenConnection();
+        using var tx = c.BeginTransaction();
+        long newId;
+        using (var insert = c.CreateCommand())
+        {
+            insert.Transaction = tx;
+            insert.CommandText = @"
+INSERT INTO Trainings(Code, Slug, FamilySlug, Title, Description, SummaryText, Version, ContentText, PassingScore, EstimatedMinutes, IsPublished, IsArchived, RequiredForAll, LayoutKey, CreatedAtUtc, CreatedBy)
+VALUES($code,$slug,$familySlug,$title,$description,$summary,$version,$content,$passing,$estimated,0,0,$required,$layout,$created,$actor);
+SELECT last_insert_rowid();";
+            insert.Parameters.AddWithValue("$code", source.Code.Trim());
+            insert.Parameters.AddWithValue("$slug", technicalSlug);
+            insert.Parameters.AddWithValue("$familySlug", familySlug.Trim().ToLowerInvariant());
+            insert.Parameters.AddWithValue("$title", m.Title.Trim());
+            insert.Parameters.AddWithValue("$description", m.Description?.Trim() ?? "");
+            insert.Parameters.AddWithValue("$summary", m.SummaryText?.Trim() ?? "");
+            insert.Parameters.AddWithValue("$version", m.Version.Trim());
+            insert.Parameters.AddWithValue("$content", m.ContentText?.Trim() ?? "");
+            insert.Parameters.AddWithValue("$passing", m.PassingScore);
+            insert.Parameters.AddWithValue("$estimated", m.EstimatedMinutes);
+            insert.Parameters.AddWithValue("$required", m.RequiredForAll ? 1 : 0);
+            insert.Parameters.AddWithValue("$layout", source.LayoutKey);
+            insert.Parameters.AddWithValue("$created", DateTime.UtcNow.ToString("O"));
+            insert.Parameters.AddWithValue("$actor", actor);
+            newId = Convert.ToInt64(await insert.ExecuteScalarAsync());
+        }
+
+        using (var copyQuestions = c.CreateCommand())
+        {
+            copyQuestions.Transaction = tx;
+            copyQuestions.CommandText = @"
+INSERT INTO TrainingQuestions(TrainingId, Position, Text, OptionsJson, CorrectIndex)
+SELECT $newId, Position, Text, OptionsJson, CorrectIndex
+FROM TrainingQuestions
+WHERE TrainingId=$sourceId
+ORDER BY Position, Id;";
+            copyQuestions.Parameters.AddWithValue("$newId", newId);
+            copyQuestions.Parameters.AddWithValue("$sourceId", source.Id);
+            await copyQuestions.ExecuteNonQueryAsync();
+        }
+
+        tx.Commit();
+        return newId;
     }
 
     public async Task<List<TrainingExclusion>> GetExclusionsAsync(long trainingId)
@@ -243,8 +364,8 @@ WHERE lower(SamAccountName)=lower($sam) AND IsActive=1;";
         using var c = _db.OpenConnection();
         using var cmd = c.CreateCommand();
         cmd.CommandText = @"
-INSERT INTO Trainings(Code, Slug, Title, Description, SummaryText, Version, ContentText, PassingScore, EstimatedMinutes, IsPublished, RequiredForAll, LayoutKey, CreatedAtUtc, CreatedBy)
-VALUES($code,$slug,$title,$description,$summary,$version,$content,$passing,$estimated,0,$required,'generic',$created,$actor);
+INSERT INTO Trainings(Code, Slug, FamilySlug, Title, Description, SummaryText, Version, ContentText, PassingScore, EstimatedMinutes, IsPublished, IsArchived, RequiredForAll, LayoutKey, CreatedAtUtc, CreatedBy)
+VALUES($code,$slug,$slug,$title,$description,$summary,$version,$content,$passing,$estimated,0,0,$required,'generic',$created,$actor);
 SELECT last_insert_rowid();";
         cmd.Parameters.AddWithValue("$code", m.Code.Trim());
         cmd.Parameters.AddWithValue("$slug", m.Slug.Trim().ToLowerInvariant());
@@ -339,11 +460,47 @@ VALUES($trainingId,$position,$text,$options,$correct);";
     public async Task SetPublishedAsync(long trainingId, bool published)
     {
         using var c = _db.OpenConnection();
-        using var cmd = c.CreateCommand();
-        cmd.CommandText = "UPDATE Trainings SET IsPublished=$p WHERE Id=$id;";
-        cmd.Parameters.AddWithValue("$p", published ? 1 : 0);
-        cmd.Parameters.AddWithValue("$id", trainingId);
-        await cmd.ExecuteNonQueryAsync();
+        using var tx = c.BeginTransaction();
+
+        string? code = null;
+        bool archived = false;
+        using (var lookup = c.CreateCommand())
+        {
+            lookup.Transaction = tx;
+            lookup.CommandText = "SELECT Code, IsArchived FROM Trainings WHERE Id=$id LIMIT 1;";
+            lookup.Parameters.AddWithValue("$id", trainingId);
+            using var r = await lookup.ExecuteReaderAsync();
+            if (!await r.ReadAsync()) throw new InvalidOperationException("Treinamento nao encontrado.");
+            code = r.GetString(0);
+            archived = r.GetInt32(1) == 1;
+        }
+
+        if (published && archived)
+            throw new InvalidOperationException("Uma versao historica nao pode ser publicada novamente. Crie uma nova revisao.");
+
+        if (published)
+        {
+            using var archivePrevious = c.CreateCommand();
+            archivePrevious.Transaction = tx;
+            archivePrevious.CommandText = @"
+UPDATE Trainings
+SET IsPublished=0, IsArchived=1
+WHERE Id<>$id AND lower(Code)=lower($code) AND IsPublished=1;";
+            archivePrevious.Parameters.AddWithValue("$id", trainingId);
+            archivePrevious.Parameters.AddWithValue("$code", code);
+            await archivePrevious.ExecuteNonQueryAsync();
+        }
+
+        using (var cmd = c.CreateCommand())
+        {
+            cmd.Transaction = tx;
+            cmd.CommandText = "UPDATE Trainings SET IsPublished=$p, IsArchived=CASE WHEN $p=1 THEN 0 ELSE IsArchived END WHERE Id=$id;";
+            cmd.Parameters.AddWithValue("$p", published ? 1 : 0);
+            cmd.Parameters.AddWithValue("$id", trainingId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        tx.Commit();
     }
 
     public async Task InsertCompletionAsync(TrainingCompletion x)
@@ -403,6 +560,7 @@ VALUES($trainingId,$sam,$display,$email,$title,$department,$score,$total,$starte
         Id = r.GetInt64(r.GetOrdinal("Id")),
         Code = r.GetString(r.GetOrdinal("Code")),
         Slug = r.GetString(r.GetOrdinal("Slug")),
+        FamilySlug = r.GetString(r.GetOrdinal("FamilySlug")),
         Title = r.GetString(r.GetOrdinal("Title")),
         Description = r.GetString(r.GetOrdinal("Description")),
         SummaryText = r.GetString(r.GetOrdinal("SummaryText")),
@@ -411,6 +569,7 @@ VALUES($trainingId,$sam,$display,$email,$title,$department,$score,$total,$starte
         PassingScore = r.GetInt32(r.GetOrdinal("PassingScore")),
         EstimatedMinutes = r.GetInt32(r.GetOrdinal("EstimatedMinutes")),
         IsPublished = r.GetInt32(r.GetOrdinal("IsPublished")) == 1,
+        IsArchived = r.GetInt32(r.GetOrdinal("IsArchived")) == 1,
         RequiredForAll = r.GetInt32(r.GetOrdinal("RequiredForAll")) == 1,
         LayoutKey = r.GetString(r.GetOrdinal("LayoutKey")),
         CreatedAtUtc = DateTime.Parse(r.GetString(r.GetOrdinal("CreatedAtUtc")), null, System.Globalization.DateTimeStyles.RoundtripKind),

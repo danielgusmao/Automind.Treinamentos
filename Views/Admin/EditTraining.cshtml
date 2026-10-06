@@ -1,0 +1,79 @@
+@model AdminTrainingEditViewModel
+@{ ViewData["Title"] = "Editar treinamento"; }
+<div class="page-head">
+    <div>
+        <span class="eyebrow">ADMINISTRACAO</span>
+        <h1>Editar treinamento</h1>
+        <p>@Model.Code · versao atual @Model.CurrentVersion</p>
+    </div>
+    <a class="btn secondary" asp-action="Trainings">Voltar ao catalogo</a>
+</div>
+
+@if (Model.HasCompletions || Model.IsArchived)
+{
+    <div class="alert warning">
+        <strong>Versao protegida por evidencias.</strong>
+        Existem @Model.CompletionCount conclusao(oes) vinculada(s) a versao @Model.CurrentVersion.
+        Ao salvar, a versao atual nao sera alterada: o sistema criara uma <strong>nova versao em rascunho</strong> e copiara todas as questoes.
+    </div>
+}
+else
+{
+    <div class="alert success">
+        Esta versao ainda nao possui evidencias. As alteracoes podem ser salvas diretamente nela.
+    </div>
+}
+
+@if (Model.LayoutKey == "security-awareness-v1")
+{
+    <div class="alert warning">
+        Este treinamento usa o layout visual dedicado de Seguranca da Informacao. Titulo, descricao, resumo do PDF, versao, tempo e nota podem ser alterados aqui. Os modulos visuais permanecem controlados pelo layout dedicado.
+    </div>
+}
+
+<form asp-action="EditTraining" method="post" class="card form-grid">
+    @Html.AntiForgeryToken()
+    <input asp-for="Id" type="hidden" />
+    <input asp-for="CurrentVersion" type="hidden" />
+    <input asp-for="LayoutKey" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="alert error span2"></div>
+
+    <label>Codigo
+        <input asp-for="Code" readonly />
+        <span class="form-help">Identificador permanente da familia do treinamento.</span>
+    </label>
+    <label>Slug
+        <input asp-for="Slug" readonly />
+        <span class="form-help">Identificador tecnico. Nao e alterado depois da criacao.</span>
+    </label>
+
+    <label class="span2">Titulo<input asp-for="Title" /></label>
+    <label class="span2">Descricao<textarea asp-for="Description" rows="2"></textarea></label>
+    <label class="span2">Resumo para o PDF<textarea asp-for="SummaryText" rows="4"></textarea><span class="form-help">Resumo que aparece na segunda pagina da evidencia PDF.</span></label>
+
+    <label>Versao
+        <input asp-for="Version" />
+        @if (Model.HasCompletions || Model.IsArchived)
+        {
+            <span class="form-help">Obrigatoriamente diferente de @Model.CurrentVersion. Sugestao preenchida automaticamente.</span>
+        }
+    </label>
+    <label>Tempo estimado (minutos)<input asp-for="EstimatedMinutes" type="number" min="1" max="480" /></label>
+    <label>Nota minima<input asp-for="PassingScore" type="number" min="1" /></label>
+
+    @if (Model.LayoutKey != "security-awareness-v1")
+    {
+        <label class="span2">Conteudo<textarea asp-for="ContentText" rows="22"></textarea></label>
+    }
+    else
+    {
+        <input asp-for="ContentText" type="hidden" />
+    }
+
+    <label class="checkline"><input asp-for="RequiredForAll" /> Obrigatorio para todos os usuarios elegiveis do AD</label>
+
+    <div class="span2 form-actions">
+        <button class="btn primary" type="submit">@(Model.HasCompletions || Model.IsArchived ? "Criar nova versao" : "Salvar alteracoes")</button>
+        <a class="btn secondary" asp-action="Questions" asp-route-id="@Model.Id">Questoes</a>
+    </div>
+</form>

@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS Trainings (
     Id INTEGER PRIMARY KEY AUTOINCREMENT,
     Code TEXT NOT NULL,
     Slug TEXT NOT NULL UNIQUE,
+    FamilySlug TEXT NOT NULL DEFAULT '',
     Title TEXT NOT NULL,
     Description TEXT NOT NULL DEFAULT '',
     SummaryText TEXT NOT NULL DEFAULT '',
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS Trainings (
     PassingScore INTEGER NOT NULL,
     EstimatedMinutes INTEGER NOT NULL DEFAULT 8,
     IsPublished INTEGER NOT NULL DEFAULT 0,
+    IsArchived INTEGER NOT NULL DEFAULT 0,
     RequiredForAll INTEGER NOT NULL DEFAULT 1,
     LayoutKey TEXT NOT NULL DEFAULT 'generic',
     CreatedAtUtc TEXT NOT NULL,
@@ -104,9 +106,19 @@ CREATE INDEX IF NOT EXISTS IX_DirectoryExclusions_Email ON DirectoryExclusions(E
         }
 
         await EnsureColumnAsync(connection, "Trainings", "EstimatedMinutes", "INTEGER NOT NULL DEFAULT 8");
+        await EnsureColumnAsync(connection, "Trainings", "FamilySlug", "TEXT NOT NULL DEFAULT ''");
+        await EnsureColumnAsync(connection, "Trainings", "IsArchived", "INTEGER NOT NULL DEFAULT 0");
         await EnsureColumnAsync(connection, "Trainings", "SummaryText", "TEXT NOT NULL DEFAULT ''");
         await EnsureColumnAsync(connection, "TrainingCompletions", "StartedAtUtc", "TEXT NOT NULL DEFAULT ''");
         await EnsureColumnAsync(connection, "TrainingCompletions", "DurationSeconds", "INTEGER NOT NULL DEFAULT 0");
+
+        // v0.0.11: FamilySlug identifica a familia logica do treinamento entre revisoes.
+        // Slug continua unico e tecnico para manter compatibilidade com o banco existente.
+        using (var familySlug = connection.CreateCommand())
+        {
+            familySlug.CommandText = "UPDATE Trainings SET FamilySlug=Slug WHERE trim(coalesce(FamilySlug,''))='';";
+            await familySlug.ExecuteNonQueryAsync();
+        }
 
         // v0.0.8: converte as exclusoes antigas por treinamento em uma lista permanente
         // aplicavel a todos os treinamentos. A tabela legada e preservada apenas para historico/rollback.
@@ -150,11 +162,11 @@ WHERE Id=$id;";
             {
                 using var insert = connection.CreateCommand();
                 insert.CommandText = @"
-INSERT INTO Trainings(Code, Slug, Title, Description, SummaryText, Version, ContentText, PassingScore, EstimatedMinutes, IsPublished, RequiredForAll, LayoutKey, CreatedAtUtc, CreatedBy)
-VALUES('SI-001', 'seguranca-da-informacao', 'Treinamento de Conscientização em Segurança da Informação',
+INSERT INTO Trainings(Code, Slug, FamilySlug, Title, Description, SummaryText, Version, ContentText, PassingScore, EstimatedMinutes, IsPublished, IsArchived, RequiredForAll, LayoutKey, CreatedAtUtc, CreatedBy)
+VALUES('SI-001', 'seguranca-da-informacao', 'seguranca-da-informacao', 'Treinamento de Conscientização em Segurança da Informação',
 'Leia os módulos, responda ao quiz e registre o seu aceite. Tempo estimado: 8 minutos.',
 'Treinamento de conscientizacao sobre protecao de credenciais, prevencao a phishing e engenharia social, tratamento adequado de dados pessoais conforme a LGPD e resposta a incidentes de seguranca. Reforca o uso de senhas fortes e unicas, MFA, a verificacao de mensagens e links suspeitos, o sigilo das informacoes e o reporte imediato de incidentes pelo TOPDESK.',
-'1.0.0', '', 5, 8, 1, 1, 'security-awareness-v1', $created, 'system');
+'1.0.0', '', 5, 8, 1, 0, 1, 'security-awareness-v1', $created, 'system');
 SELECT last_insert_rowid();";
                 insert.Parameters.AddWithValue("$created", DateTime.UtcNow.ToString("O"));
                 trainingId = Convert.ToInt64(await insert.ExecuteScalarAsync());

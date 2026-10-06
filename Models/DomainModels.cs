@@ -5,6 +5,7 @@ public sealed class Training
     public long Id { get; set; }
     public string Code { get; set; } = "";
     public string Slug { get; set; } = "";
+    public string FamilySlug { get; set; } = "";
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
     public string SummaryText { get; set; } = "";
@@ -13,6 +14,7 @@ public sealed class Training
     public int PassingScore { get; set; }
     public int EstimatedMinutes { get; set; } = 8;
     public bool IsPublished { get; set; }
+    public bool IsArchived { get; set; }
     public bool RequiredForAll { get; set; }
     public string LayoutKey { get; set; } = "generic";
     public DateTime CreatedAtUtc { get; set; }

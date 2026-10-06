@@ -1,6 +1,6 @@
 # Automind.Treinamentos - documentacao completa do projeto
 
-Estado consolidado em 06/10/2026 - versao v0.0.10.
+Estado consolidado em 06/10/2026 - atualizado ate a versao v0.0.11.
 
 ## 1. Objetivo
 
@@ -117,11 +117,11 @@ Categorias previstas incluem e-mail geral/caixa compartilhada, conta de servico,
 
 ## 8. Treinamentos
 
-Administradores podem criar treinamento, definir codigo, slug, titulo, descricao, versao, tempo estimado, nota minima, conteudo e resumo para PDF.
+Administradores podem criar e editar treinamentos, definindo titulo, descricao, versao, tempo estimado, nota minima, conteudo e resumo para PDF. `Code` e `Slug` sao identificadores tecnicos definidos na criacao e permanecem estaveis.
 
-Questoes podem ser criadas, editadas e excluidas.
+Questoes podem ser criadas, editadas e excluidas enquanto a versao nao possui evidencias.
 
-Quando um treinamento publicado e alterado, o snapshot versionado e regravado.
+A partir da v0.0.11 uma versao que ja possui conclusoes e imutavel. Qualquer alteracao cria uma nova revisao em rascunho e copia as questoes, preservando integralmente conclusoes, PDFs, hashes e snapshot da versao anterior. Quando a nova revisao e publicada, a versao publicada anterior do mesmo codigo passa a historica.
 
 Primeiro treinamento: `Treinamento de Conscientizacao em Seguranca da Informacao`, codigo `SI-001`, versao `1.0.0`, estimativa de 8 minutos e nota minima 5/5.
 

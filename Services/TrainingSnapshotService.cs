@@ -17,13 +17,14 @@ public sealed class TrainingSnapshotService
     public async Task<string> WriteSnapshotAsync(Training training, IReadOnlyCollection<TrainingQuestion> questions)
     {
         _storage.EnsureDirectories();
-        var dir = Path.Combine(_storage.TrainingsPath, StorageService.SafeSegment(training.Slug), StorageService.SafeSegment(training.Version));
+        var dir = Path.Combine(_storage.TrainingsPath, StorageService.SafeSegment(string.IsNullOrWhiteSpace(training.FamilySlug) ? training.Slug : training.FamilySlug), StorageService.SafeSegment(training.Version));
         Directory.CreateDirectory(dir);
         var manifestPath = Path.Combine(dir, "manifest.json");
         var payload = new
         {
             training.Code,
             training.Slug,
+            training.FamilySlug,
             training.Title,
             training.Description,
             training.Version,
@@ -43,7 +44,7 @@ public sealed class TrainingSnapshotService
 
     public async Task<string> GetOrCreateSnapshotHashAsync(Training training, IReadOnlyCollection<TrainingQuestion> questions)
     {
-        var dir = Path.Combine(_storage.TrainingsPath, StorageService.SafeSegment(training.Slug), StorageService.SafeSegment(training.Version));
+        var dir = Path.Combine(_storage.TrainingsPath, StorageService.SafeSegment(string.IsNullOrWhiteSpace(training.FamilySlug) ? training.Slug : training.FamilySlug), StorageService.SafeSegment(training.Version));
         var manifestPath = Path.Combine(dir, "manifest.json");
         if (!File.Exists(manifestPath)) return await WriteSnapshotAsync(training, questions);
         return Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(manifestPath)));

@@ -76,12 +76,134 @@ public sealed class AdminController : Controller
     }
 
     [HttpGet]
+    public async Task<IActionResult> EditTraining(long id)
+    {
+        var training = await _repo.GetTrainingAsync(id);
+        if (training is null) return NotFound();
+
+        var completionCount = await _repo.GetCompletionCountAsync(id);
+        var hasCompletions = completionCount > 0;
+        return View(new AdminTrainingEditViewModel
+        {
+            Id = training.Id,
+            Code = training.Code,
+            Slug = training.Slug,
+            Title = training.Title,
+            Description = training.Description,
+            SummaryText = training.SummaryText,
+            Version = hasCompletions ? SuggestNextVersion(training.Version) : training.Version,
+            CurrentVersion = training.Version,
+            ContentText = training.ContentText,
+            PassingScore = training.PassingScore,
+            EstimatedMinutes = training.EstimatedMinutes,
+            RequiredForAll = training.RequiredForAll,
+            HasCompletions = hasCompletions,
+            CompletionCount = completionCount,
+            IsPublished = training.IsPublished,
+            IsArchived = training.IsArchived,
+            LayoutKey = training.LayoutKey
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditTraining(AdminTrainingEditViewModel model)
+    {
+        var training = await _repo.GetTrainingAsync(model.Id);
+        if (training is null) return NotFound();
+
+        var completionCount = await _repo.GetCompletionCountAsync(training.Id);
+        model.Code = training.Code;
+        model.Slug = training.Slug;
+        model.CurrentVersion = training.Version;
+        model.HasCompletions = completionCount > 0;
+        model.CompletionCount = completionCount;
+        model.IsPublished = training.IsPublished;
+        model.IsArchived = training.IsArchived;
+        model.LayoutKey = training.LayoutKey;
+
+        if (training.LayoutKey == "security-awareness-v1")
+            model.ContentText = training.ContentText;
+
+        if (!ModelState.IsValid) return View(model);
+
+        try
+        {
+            if (completionCount > 0 || training.IsArchived)
+            {
+                if (string.Equals(training.Version, model.Version?.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    ModelState.AddModelError(nameof(model.Version), "Este treinamento ja possui evidencias. Informe uma nova versao.");
+                    return View(model);
+                }
+
+                var newId = await _repo.CreateTrainingRevisionAsync(training, model, Sam());
+                await _audit.WriteAsync("training-revision-create", "success", Sam(), new
+                {
+                    sourceTrainingId = training.Id,
+                    newTrainingId = newId,
+                    training.Code,
+                    fromVersion = training.Version,
+                    toVersion = model.Version,
+                    completionCount
+                });
+                TempData["Message"] = $"Nova versao {model.Version} criada como rascunho. As {completionCount} conclusao(oes) da versao {training.Version} foram preservadas.";
+                return RedirectToAction(nameof(Questions), new { id = newId });
+            }
+
+            if (await _repo.TrainingVersionExistsAsync(training.Code, model.Version, training.Id))
+            {
+                ModelState.AddModelError(nameof(model.Version), $"A versao {model.Version} ja existe para o codigo {training.Code}.");
+                return View(model);
+            }
+
+            if (training.IsPublished)
+            {
+                var questionCount = (await _repo.GetQuestionsAsync(training.Id)).Count;
+                if (questionCount == 0)
+                {
+                    ModelState.AddModelError("", "Um treinamento publicado precisa ter pelo menos uma questao.");
+                    return View(model);
+                }
+                if (model.PassingScore > questionCount)
+                {
+                    ModelState.AddModelError(nameof(model.PassingScore), "A nota minima nao pode ser maior que a quantidade de questoes.");
+                    return View(model);
+                }
+            }
+
+            await _repo.UpdateTrainingAsync(model);
+            var updated = await _repo.GetTrainingAsync(training.Id);
+            if (updated?.IsPublished == true)
+                await _snapshot.WriteSnapshotAsync(updated, await _repo.GetQuestionsAsync(updated.Id));
+
+            await _audit.WriteAsync("training-edit", "success", Sam(), new
+            {
+                training.Id,
+                training.Code,
+                oldVersion = training.Version,
+                newVersion = model.Version,
+                model.Title
+            });
+            TempData["TrainingMessage"] = "Treinamento atualizado com sucesso.";
+            return RedirectToAction(nameof(Trainings));
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("", "Nao foi possivel salvar o treinamento. " + ex.Message);
+            return View(model);
+        }
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Questions(long id)
     {
         var training = await _repo.GetTrainingAsync(id);
         if (training is null) return NotFound();
         ViewBag.Training = training;
         ViewBag.Questions = await _repo.GetQuestionsAsync(id);
+        ViewBag.CompletionCount = await _repo.GetCompletionCountAsync(id);
+        ViewBag.QuestionsLocked = training.IsArchived || (int)ViewBag.CompletionCount > 0;
         return View(new AdminQuestionCreateViewModel { TrainingId = id });
     }
 
@@ -89,12 +211,22 @@ public sealed class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddQuestion(AdminQuestionCreateViewModel model)
     {
+        var trainingForWrite = await _repo.GetTrainingAsync(model.TrainingId);
+        if (trainingForWrite is null) return NotFound();
+        if (trainingForWrite.IsArchived || await _repo.GetCompletionCountAsync(model.TrainingId) > 0)
+        {
+            TempData["Message"] = "Esta versao possui evidencias e e imutavel. Use Editar treinamento para criar uma nova versao antes de alterar as questoes.";
+            return RedirectToAction(nameof(Questions), new { id = model.TrainingId });
+        }
+
         if (!ModelState.IsValid)
         {
             var training = await _repo.GetTrainingAsync(model.TrainingId);
             if (training is null) return NotFound();
             ViewBag.Training = training;
             ViewBag.Questions = await _repo.GetQuestionsAsync(model.TrainingId);
+            ViewBag.CompletionCount = 0;
+            ViewBag.QuestionsLocked = false;
             return View("Questions", model);
         }
         await _repo.AddQuestionAsync(model);
@@ -111,6 +243,11 @@ public sealed class AdminController : Controller
         var training = await _repo.GetTrainingAsync(trainingId);
         var question = await _repo.GetQuestionAsync(trainingId, questionId);
         if (training is null || question is null) return NotFound();
+        if (training.IsArchived || await _repo.GetCompletionCountAsync(trainingId) > 0)
+        {
+            TempData["Message"] = "Esta versao possui evidencias e e imutavel. Crie uma nova versao para alterar as questoes.";
+            return RedirectToAction(nameof(Questions), new { id = trainingId });
+        }
         ViewBag.Training = training;
         return View(new AdminQuestionEditViewModel
         {
@@ -131,6 +268,11 @@ public sealed class AdminController : Controller
     {
         var training = await _repo.GetTrainingAsync(model.TrainingId);
         if (training is null) return NotFound();
+        if (training.IsArchived || await _repo.GetCompletionCountAsync(model.TrainingId) > 0)
+        {
+            TempData["Message"] = "Esta versao possui evidencias e e imutavel. Crie uma nova versao para alterar as questoes.";
+            return RedirectToAction(nameof(Questions), new { id = model.TrainingId });
+        }
         if (!ModelState.IsValid)
         {
             ViewBag.Training = training;
@@ -149,6 +291,13 @@ public sealed class AdminController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteQuestion(long trainingId, long questionId)
     {
+        var training = await _repo.GetTrainingAsync(trainingId);
+        if (training is null) return NotFound();
+        if (training.IsArchived || await _repo.GetCompletionCountAsync(trainingId) > 0)
+        {
+            TempData["Message"] = "Esta versao possui evidencias e e imutavel. Crie uma nova versao para alterar as questoes.";
+            return RedirectToAction(nameof(Questions), new { id = trainingId });
+        }
         await _repo.DeleteQuestionAsync(trainingId, questionId);
         var updatedTraining = await _repo.GetTrainingAsync(trainingId);
         if (updatedTraining?.IsPublished == true)
@@ -163,6 +312,11 @@ public sealed class AdminController : Controller
     {
         var training = await _repo.GetTrainingAsync(id);
         if (training is null) return NotFound();
+        if (publish && training.IsArchived)
+        {
+            TempData["TrainingMessage"] = "Versoes historicas nao podem ser republicadas. Crie uma nova versao.";
+            return RedirectToAction(nameof(Trainings));
+        }
         var questions = await _repo.GetQuestionsAsync(id);
         if (publish)
         {
@@ -189,6 +343,11 @@ public sealed class AdminController : Controller
     {
         var training = await _repo.GetTrainingAsync(id);
         if (training is null) return NotFound();
+        if (training.IsArchived)
+        {
+            TempData["TrainingMessage"] = "Esta e uma versao historica. Consulte Concluidos para as evidencias preservadas.";
+            return RedirectToAction(nameof(Trainings));
+        }
         ViewBag.Training = training;
         ViewBag.TeamsConfigured = _teams.IsConfigured;
 
@@ -331,6 +490,11 @@ public sealed class AdminController : Controller
     {
         var training = await _repo.GetTrainingAsync(trainingId);
         if (training is null) return NotFound();
+        if (training.IsArchived || !training.IsPublished)
+        {
+            TempData["TeamsError"] = "Lembretes so podem ser enviados para a versao atualmente publicada.";
+            return RedirectToAction(nameof(Trainings));
+        }
 
         var selected = (selectedSams ?? new List<string>())
             .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -424,6 +588,14 @@ public sealed class AdminController : Controller
             "Outro" => value,
             _ => "E-mail geral / Caixa compartilhada"
         };
+    }
+
+    private static string SuggestNextVersion(string? current)
+    {
+        var parts = (current ?? string.Empty).Trim().Split('.');
+        if (parts.Length == 3 && int.TryParse(parts[0], out var major) && int.TryParse(parts[1], out var minor) && int.TryParse(parts[2], out var patch))
+            return $"{major}.{minor}.{patch + 1}";
+        return string.IsNullOrWhiteSpace(current) ? "1.0.0" : current + ".1";
     }
 
     private string Sam() => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";

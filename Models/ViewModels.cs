@@ -83,6 +83,30 @@ Reforce em poucas linhas os comportamentos que o colaborador deve levar para o t
     public bool RequiredForAll { get; set; } = true;
 }
 
+
+public sealed class AdminTrainingEditViewModel
+{
+    public long Id { get; set; }
+    [Required] public string Code { get; set; } = "";
+    [Required] public string Slug { get; set; } = "";
+    [Required] public string Title { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string SummaryText { get; set; } = "";
+    [Required] public string Version { get; set; } = "1.0.0";
+    public string ContentText { get; set; } = "";
+    [Range(1, 100)] public int PassingScore { get; set; } = 1;
+    [Range(1, 480)] public int EstimatedMinutes { get; set; } = 10;
+    public bool RequiredForAll { get; set; } = true;
+
+    // Somente exibicao/controle de fluxo. O servidor recalcula estes valores no POST.
+    public bool HasCompletions { get; set; }
+    public int CompletionCount { get; set; }
+    public bool IsPublished { get; set; }
+    public bool IsArchived { get; set; }
+    public string LayoutKey { get; set; } = "generic";
+    public string CurrentVersion { get; set; } = "";
+}
+
 public sealed class AdminQuestionCreateViewModel
 {
     public long TrainingId { get; set; }

@@ -1,3 +1,12 @@
+## v0.0.11 - 2026-10-06
+
+- Edicao de treinamento pelo catalogo.
+- Protecao de versoes que ja possuem evidencias.
+- Criacao automatica de nova revisao em rascunho com copia de questoes.
+- Bloqueio de edicao de questoes de versoes com conclusoes.
+- Estados de versao `Publicado`, `Rascunho` e `Historico`.
+- Migracao aditiva com `FamilySlug` e `IsArchived`.
+
 ## v0.0.10 - 2026-10-06
 
 - Remove qualquer role administrativa persistida em cookie/sessao.

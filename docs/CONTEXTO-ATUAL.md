@@ -1,4 +1,11 @@
-# Atualizacao v0.0.10 - autorizacao administrativa em tempo real
+
+## Edicao de treinamentos - v0.0.11
+
+O catalogo administrativo possui `Editar`. Versoes sem conclusoes podem ser alteradas diretamente. Quando ja existem evidencias, a versao fica imutavel e o salvamento cria uma nova versao em rascunho com copia das questoes. A versao publicada anterior torna-se historica quando a nova revisao e publicada.
+
+A reorganizacao da pasta `Evidencias` por treinamento/versao continua pendente e deve ser feita somente depois da validacao desta versao.
+
+# Atualizacao v0.0.11 - autorizacao administrativa em tempo real
 
 - Grupo administrativo oficial: `_treinamentos`.
 - A v0.0.9 ainda dependia de `GetAuthorizationGroups()` e nao refletiu de forma confiavel uma inclusao feita durante a sessao.

@@ -160,15 +160,10 @@ public sealed class TrainingController : Controller
     [HttpGet]
     public async Task<IActionResult> Completed(long id)
     {
-        var trainings = await _repo.GetPublishedTrainingsAsync();
-        TrainingCompletion? completion = null;
-        Training? training = null;
-        foreach (var t in trainings)
-        {
-            var c = await _repo.GetCompletionAsync(t.Id, Sam());
-            if (c?.Id == id) { completion = c; training = t; break; }
-        }
-        if (completion is null || training is null) return NotFound();
+        var completion = await _repo.GetCompletionByIdAsync(id, Sam());
+        if (completion is null) return NotFound();
+        var training = await _repo.GetTrainingAsync(completion.TrainingId);
+        if (training is null) return NotFound();
         ViewBag.Training = training;
         return View(completion);
     }

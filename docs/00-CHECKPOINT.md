@@ -1,3 +1,18 @@
+## 2026-10-06 - v0.0.11 edicao e versionamento seguro de treinamentos
+
+- Adicionada acao `Editar` no catalogo administrativo.
+- `Code` e `Slug` passam a ser tratados como identificadores tecnicos imutaveis depois da criacao.
+- Treinamento sem conclusoes pode ser editado diretamente.
+- Treinamento com conclusoes/evidencias nao e alterado retroativamente: salvar cria nova versao em rascunho e copia as questoes.
+- Nova versao sugerida automaticamente incrementa o patch quando o formato atual e `X.Y.Z`.
+- Questoes de versao com conclusoes ficam somente leitura no frontend e sao bloqueadas tambem no backend.
+- Adicionados `Trainings.FamilySlug` e `Trainings.IsArchived` por migracao automatica, sem apagar dados existentes.
+- Ao publicar nova versao do mesmo codigo, a versao publicada anterior vira `Historico`; historicos nao recebem Pendentes/Teams nem podem ser republicados diretamente.
+- `TrainingController.Completed` passou a localizar a conclusao diretamente por ID + usuario, mantendo acesso a evidencia mesmo quando a versao do treinamento se torna historica.
+- O layout dedicado `security-awareness-v1` agora usa titulo e descricao vindos do banco, mas os modulos visuais continuam controlados pelo template; por isso o conteudo livre nao e oferecido para edicao nesse layout.
+- A reorganizacao de `Evidencias` por treinamento/versao foi deliberadamente adiada para depois da validacao desta edicao.
+- Documentos: `docs/29-EDICAO-E-VERSIONAMENTO-TREINAMENTOS-V0.0.11.md` e `docs/30-TESTE-V0.0.11.md`.
+
 ## 2026-10-06 - v0.0.10 autorizacao administrativa LDAP direta
 
 - Evidencia real: v0.0.9 estava publicada e exibia `Colaborador`; Daniel Gusmao foi novamente incluido em `_treinamentos` no AD, mas a area administrativa nao apareceu na requisicao seguinte.
