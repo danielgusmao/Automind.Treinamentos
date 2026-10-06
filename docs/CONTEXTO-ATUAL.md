@@ -1,8 +1,13 @@
 # CONTEXTO ATUAL - Automind.Treinamentos
 
-Versao de aplicacao preparada: **v0.0.12**.
+Versao de aplicacao preparada: **v0.0.13**.
 
 Mudanca mais recente: correcao do fluxo administrativo de Publicar/Despublicar para sempre fornecer feedback e bloquear publicacao sem questoes ou com nota minima invalida.
+
+
+## Publicacao - v0.0.13
+
+A publicacao e despublicacao usam endpoints separados. O frontend nao envia mais um booleano `publish` para um endpoint de toggle. Ao publicar com sucesso, o sistema gera `Treinamentos/<slug-ou-familySlug>/<versao>/manifest.json` e `SHA256.txt` antes de marcar a versao como publicada.
 
 
 ## Edicao de treinamentos - v0.0.11

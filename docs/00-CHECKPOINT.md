@@ -1,5 +1,17 @@
 # CHECKPOINT - Automind.Treinamentos
 
+## 2026-10-06 - v0.0.13 - Publicacao explicita sem toggle booleano
+
+- Falha observada em producao na v0.0.12: clicar em `Publicar` no SI-002 executava o caminho de despublicacao e exibia `despublicado com sucesso`.
+- Confirmado no codigo que o catalogo usava um unico endpoint `TogglePublish(id, bool publish)` e dependia do bind de um campo booleano oculto.
+- Removido o toggle booleano da interface e do controller para eliminar ambiguidade de binding.
+- Criados endpoints POST separados: `PublishTraining(long id)` e `UnpublishTraining(long id)`.
+- O botao `Publicar` agora chama somente `PublishTraining`; o botao `Despublicar` chama somente `UnpublishTraining`.
+- Ao publicar, o snapshot e gravado antes da alteracao de estado em `C:\Automind.Treinamentos\Treinamentos\<familySlug-ou-slug>\<versao>`.
+- Publicacao valida questoes e nota minima; falha de snapshot/banco e mostrada ao administrador.
+- Nenhum botao de exclusao de treinamento foi criado; exclusao de treinamento de teste continua sendo procedimento manual e controlado.
+- A reorganizacao de `Evidencias` por treinamento/versao continua pendente ate a publicacao ser validada.
+
 ## 2026-10-06 - v0.0.12 - Correcao do fluxo Publicar/Despublicar
 
 - Corrigido o fluxo do botao **Publicar** no catalogo administrativo.

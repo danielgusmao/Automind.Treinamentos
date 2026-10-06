@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.0.13 - 2026-10-06
+- Corrigido bug em que `Publicar` podia chegar ao backend como `publish=false` e executar despublicacao.
+- Removido `TogglePublish(long id, bool publish)`.
+- Criados POSTs separados `PublishTraining` e `UnpublishTraining`.
+- Snapshot continua sendo criado antes de marcar a versao como publicada.
+- Nenhuma exclusao de treinamento foi adicionada na UI.
+
 ## v0.0.12 - 2026-10-06
 - Corrigido fluxo de Publicar/Despublicar com feedback de validacao e erro.
 - Antiforgery token explicito no formulario de publicacao.

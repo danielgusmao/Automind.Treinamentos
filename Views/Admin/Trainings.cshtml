@@ -15,7 +15,8 @@
             <a asp-action="Questions" asp-route-id="@t.Id">Questoes</a>
             <a asp-action="Completions" asp-route-id="@t.Id">Concluidos</a>
             @if(!t.IsArchived){<a asp-action="Pending" asp-route-id="@t.Id">Pendentes</a>}
-            @if(!t.IsArchived){<form asp-controller="Admin" asp-action="TogglePublish" method="post" class="inline">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@t.Id"/><input type="hidden" name="publish" value="@(!t.IsPublished)"/><button class="link-button" type="submit">@(t.IsPublished?"Despublicar":"Publicar")</button></form>}
+            @if(!t.IsArchived && t.IsPublished){<form asp-controller="Admin" asp-action="UnpublishTraining" method="post" class="inline"><input type="hidden" name="id" value="@t.Id"/><button class="link-button" type="submit">Despublicar</button></form>}
+            @if(!t.IsArchived && !t.IsPublished){<form asp-controller="Admin" asp-action="PublishTraining" method="post" class="inline"><input type="hidden" name="id" value="@t.Id"/><button class="link-button" type="submit">Publicar</button></form>}
         </div></td>
     </tr>
 }

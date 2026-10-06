@@ -308,48 +308,81 @@ public sealed class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> TogglePublish(long id, bool publish)
+    public async Task<IActionResult> PublishTraining(long id)
     {
         var training = await _repo.GetTrainingAsync(id);
         if (training is null) return NotFound();
 
-        if (publish && training.IsArchived)
+        if (training.IsArchived)
         {
             TempData["TrainingError"] = "Versoes historicas nao podem ser republicadas. Crie uma nova versao.";
             return RedirectToAction(nameof(Trainings));
         }
 
-        var questions = await _repo.GetQuestionsAsync(id);
-        if (publish)
+        if (training.IsPublished)
         {
-            if (questions.Count == 0)
-            {
-                TempData["Message"] = "Para publicar este treinamento, adicione pelo menos uma questao.";
-                return RedirectToAction(nameof(Questions), new { id });
-            }
+            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versao {training.Version} ja esta publicado.";
+            return RedirectToAction(nameof(Trainings));
+        }
 
-            if (training.PassingScore > questions.Count)
-            {
-                TempData["Message"] = $"A nota minima ({training.PassingScore}) e maior que a quantidade de questoes ({questions.Count}). Ajuste o treinamento antes de publicar.";
-                return RedirectToAction(nameof(Questions), new { id });
-            }
+        var questions = await _repo.GetQuestionsAsync(id);
+        if (questions.Count == 0)
+        {
+            TempData["Message"] = "Para publicar este treinamento, adicione pelo menos uma questao.";
+            return RedirectToAction(nameof(Questions), new { id });
+        }
+
+        if (training.PassingScore > questions.Count)
+        {
+            TempData["Message"] = $"A nota minima ({training.PassingScore}) e maior que a quantidade de questoes ({questions.Count}). Ajuste o treinamento antes de publicar.";
+            return RedirectToAction(nameof(Questions), new { id });
         }
 
         try
         {
-            if (publish)
-                await _snapshot.WriteSnapshotAsync(training, questions);
-
-            await _repo.SetPublishedAsync(id, publish);
-            await _audit.WriteAsync("training-publish", "success", Sam(), new { id, publish });
-            TempData["TrainingMessage"] = publish
-                ? $"Treinamento {training.Code} - versao {training.Version} publicado com sucesso."
-                : $"Treinamento {training.Code} - versao {training.Version} despublicado com sucesso.";
+            await _snapshot.WriteSnapshotAsync(training, questions);
+            await _repo.SetPublishedAsync(id, true);
+            await _audit.WriteAsync("training-publish", "success", Sam(), new { id, publish = true });
+            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versao {training.Version} publicado com sucesso.";
         }
         catch (Exception ex)
         {
-            await _audit.WriteAsync("training-publish", "error", Sam(), new { id, publish, error = ex.Message });
-            TempData["TrainingError"] = "Nao foi possivel alterar a publicacao do treinamento: " + ex.Message;
+            await _audit.WriteAsync("training-publish", "error", Sam(), new { id, publish = true, error = ex.Message });
+            TempData["TrainingError"] = "Nao foi possivel publicar o treinamento: " + ex.Message;
+        }
+
+        return RedirectToAction(nameof(Trainings));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UnpublishTraining(long id)
+    {
+        var training = await _repo.GetTrainingAsync(id);
+        if (training is null) return NotFound();
+
+        if (training.IsArchived)
+        {
+            TempData["TrainingError"] = "Versoes historicas nao podem ser alteradas.";
+            return RedirectToAction(nameof(Trainings));
+        }
+
+        if (!training.IsPublished)
+        {
+            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versao {training.Version} ja esta despublicado.";
+            return RedirectToAction(nameof(Trainings));
+        }
+
+        try
+        {
+            await _repo.SetPublishedAsync(id, false);
+            await _audit.WriteAsync("training-unpublish", "success", Sam(), new { id, publish = false });
+            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versao {training.Version} despublicado com sucesso.";
+        }
+        catch (Exception ex)
+        {
+            await _audit.WriteAsync("training-unpublish", "error", Sam(), new { id, publish = false, error = ex.Message });
+            TempData["TrainingError"] = "Nao foi possivel despublicar o treinamento: " + ex.Message;
         }
 
         return RedirectToAction(nameof(Trainings));

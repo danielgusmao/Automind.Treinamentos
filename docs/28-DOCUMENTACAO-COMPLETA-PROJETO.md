@@ -1,6 +1,6 @@
 # Automind.Treinamentos - documentacao completa do projeto
 
-Estado consolidado em 06/10/2026 - atualizado ate a versao v0.0.11.
+Estado consolidado em 06/10/2026 - atualizado ate a versao v0.0.13.
 
 ## 1. Objetivo
 
@@ -243,3 +243,11 @@ Toda alteracao relevante deve:
 2. Se houver atraso por replicacao entre DCs, identificar o DC operacional e configurar `ActiveDirectory__AuthorizationServer` sem alterar codigo.
 3. Retomar estudo de HTTPS/TLS interno e executar apenas testes de conectividade/PKI antes de instalar win-acme ou outro agente.
 4. Continuar populando a lista permanente de contas que nao representam pessoas.
+
+## 14. Publicacao administrativa
+
+A partir da v0.0.13, publicacao e despublicacao usam endpoints separados: `PublishTraining` e `UnpublishTraining`. Nao existe mais toggle booleano no formulario.
+
+Ao publicar, o sistema valida questoes e nota minima, grava o snapshot em `C:\Automind.Treinamentos\Treinamentos\<slug-ou-familySlug>\<versao>` e somente depois marca a versao como publicada. Se o snapshot falhar, a publicacao nao e concluida.
+
+A exclusao de treinamento de teste continua sendo uma operacao manual e nao existe botao de exclusao no portal.
