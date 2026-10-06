@@ -5,6 +5,7 @@
     var pending = Model.Count - done;
     var totalMinutes = Model.Where(x => x.Completion is null).Sum(x => x.Training.EstimatedMinutes);
 }
+@if(TempData["TrainingMessage"] is string trainingMessage){<div class="alert info">@trainingMessage</div>}
 <section class="dashboard-hero">
     <div class="dashboard-hero-copy">
         <span class="eyebrow eyebrow-light">PORTAL DE CAPACITACAO</span>

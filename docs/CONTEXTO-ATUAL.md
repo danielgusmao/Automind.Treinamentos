@@ -2,17 +2,17 @@
 
 ## Versao
 
-`v0.0.5`
+`v0.0.6`
 
 ## Estado atual
 
 Aplicacao interna ASP.NET Core MVC com autenticacao AD, administracao autorizada pelo grupo `_informatica`, SQLite, treinamentos, quiz, aceite, evidencias PDF, comparacao de concluidos/pendentes no AD, lembretes Teams e identidade visual alinhada ao CadColab.
 
-## Novidade principal v0.0.5
+## Novidade principal v0.0.6
 
-A estrutura de producao foi separada: `Web` contem somente a publicacao e os dados persistentes ficam em `Data`, `Treinamentos`, `Evidencias`, `Logs` e `Backup`, todos fora da pasta publicada. Em Production, a raiz e `C:\Automind.Treinamentos`; em desenvolvimento continua `App_Data`.
+Administradores podem excluir colaboradores pendentes da obrigacao de um treinamento sem alterar o objeto no Active Directory. A exclusao exige motivo, registra operador e data, remove o colaborador dos contadores de elegiveis/pendentes/adesao e impede lembretes Teams e acesso ao treinamento enquanto a excecao estiver ativa. A tela administrativa mantem uma lista separada de excluidos com opcao de reinclusao.
 
-O Teams agora replica explicitamente o padrao tecnico do CadColab: mesmo contrato `{ recipient, text }`, mesmo nome de configuracao externa `Automind__Teams__WebhookUrl` e mesmo tipo de Workflow. A URL real continua fora do repositorio. O link do treinamento foi padronizado para `/Training/Start/{id}` e o lembrete usa `http://treinamentos.automind.com.br` como base publica.
+A estrutura de producao permanece separada: `Web` contem somente a publicacao e os dados persistentes ficam em `Data`, `Treinamentos`, `Evidencias`, `Logs` e `Backup`, todos fora da pasta publicada. O Teams continua usando o mesmo Workflow do CadColab e a configuracao externa `Automind__Teams__WebhookUrl`.
 
 ## Estrutura de producao
 
@@ -36,6 +36,8 @@ C:\Automind.Treinamentos\
 - selecao individual e `Marcar todos os pendentes`;
 - concluido sem checkbox e sem botao de lembrete;
 - Teams individual/em lote;
+- exclusao por treinamento com motivo e reinclusao;
+- excluidos nao contam como elegiveis/pendentes e nao recebem Teams;
 - rota `/Training/Start/{id}`;
 - link publico configuravel por `Portal:PublicBaseUrl`;
 - cronometro e tempo real calculado pelo servidor;
@@ -52,10 +54,10 @@ C:\Automind.Treinamentos\
 
 ## Proxima acao
 
-1. Extrair a v0.0.5 para `C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos`.
+1. Extrair a v0.0.6 para `C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos`.
 2. Build Release.
 3. Inicializar Git na pasta correta e fazer push para `origin` e `azure` na branch `release`.
 4. Criar pipeline e Release.
-5. Antes da primeira publicacao v0.0.5 no servidor, executar o preparo/migracao controlado das pastas e copiar a configuracao Teams entre os App Pools.
+5. Antes da primeira publicacao v0.0.6 no servidor, executar o preparo/migracao controlado das pastas e copiar a configuracao Teams entre os App Pools.
 6. Publicar somente `Web`.
-7. Validar `docs/17-TESTE-V0.0.5.md`.
+7. Validar `docs/19-TESTE-V0.0.6.md`.

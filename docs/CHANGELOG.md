@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.6 - 2026-10-06
+
+- Inclusao de exclusoes administrativas por treinamento.
+- Motivo obrigatorio, auditoria e reinclusao.
+- Excluidos deixam de compor elegiveis, pendentes, adesao e lembretes Teams.
+- Bloqueio server-side de acesso ao treinamento excluido.
+- Nova tabela SQLite `TrainingExclusions`.
+
+
 ## v0.0.5 - 2026-10-06
 
 - Estrutura de producao separada entre `Web` e dados persistentes.

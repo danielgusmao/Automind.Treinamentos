@@ -59,6 +59,18 @@ public sealed class TrainingCompletion
     }
 }
 
+
+public sealed class TrainingExclusion
+{
+    public long TrainingId { get; set; }
+    public string SamAccountName { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Reason { get; set; } = "";
+    public DateTime ExcludedAtUtc { get; set; }
+    public string ExcludedBy { get; set; } = "";
+}
+
 public sealed class AdUser
 {
     public string SamAccountName { get; set; } = "";

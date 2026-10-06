@@ -72,6 +72,18 @@ CREATE TABLE IF NOT EXISTS TrainingCompletions (
 );
 CREATE INDEX IF NOT EXISTS IX_TrainingCompletions_Training ON TrainingCompletions(TrainingId);
 CREATE INDEX IF NOT EXISTS IX_TrainingCompletions_Sam ON TrainingCompletions(SamAccountName);
+CREATE TABLE IF NOT EXISTS TrainingExclusions (
+    TrainingId INTEGER NOT NULL,
+    SamAccountName TEXT NOT NULL,
+    DisplayName TEXT NOT NULL DEFAULT '',
+    Email TEXT NOT NULL DEFAULT '',
+    Reason TEXT NOT NULL,
+    ExcludedAtUtc TEXT NOT NULL,
+    ExcludedBy TEXT NOT NULL,
+    PRIMARY KEY (TrainingId, SamAccountName),
+    FOREIGN KEY (TrainingId) REFERENCES Trainings(Id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS IX_TrainingExclusions_Training ON TrainingExclusions(TrainingId);
 ";
             await command.ExecuteNonQueryAsync();
         }

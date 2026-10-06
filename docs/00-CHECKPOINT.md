@@ -1,3 +1,14 @@
+## 2026-10-06 - v0.0.6 exclusao administrativa de colaboradores
+
+- Adicionado `Excluir` apenas para colaboradores pendentes na tela de elegiveis.
+- Exclusao exige motivo e vale somente para o treinamento selecionado.
+- Excluidos saem dos contadores de elegiveis/pendentes/adesao, nao podem receber Teams e nao veem o treinamento em `Meus treinamentos`.
+- Administracao mostra secao de excluidos com motivo, operador, data e acao `Reincluir`.
+- Nao existe exclusao ou modificacao de usuario no Active Directory.
+- Nova tabela `TrainingExclusions`; migracao automatica e sem perda do banco existente.
+- Documento: `docs/18-EXCLUSOES-COLABORADORES-V0.0.6.md`.
+- Teste: `docs/19-TESTE-V0.0.6.md`.
+
 ## 2026-10-06 - v0.0.5 estrutura persistente separada e reuso do Teams CadColab
 
 ### Decisoes aprovadas

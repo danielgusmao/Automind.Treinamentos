@@ -28,6 +28,7 @@ public sealed class TrainingController : Controller
         var vm = new List<TrainingListItemViewModel>();
         foreach (var t in trainings)
         {
+            if (await _repo.IsExcludedAsync(t.Id, sam)) continue;
             vm.Add(new TrainingListItemViewModel
             {
                 Training = t,
@@ -45,6 +46,11 @@ public sealed class TrainingController : Controller
     {
         var training = await _repo.GetTrainingAsync(id);
         if (training is null || !training.IsPublished) return NotFound();
+        if (await _repo.IsExcludedAsync(id, Sam()))
+        {
+            TempData["TrainingMessage"] = "Este treinamento nao esta atribuido ao seu usuario.";
+            return RedirectToAction(nameof(Index));
+        }
         var questions = await _repo.GetQuestionsAsync(id);
         var completion = await _repo.GetCompletionAsync(id, Sam());
         if (completion is not null) return RedirectToAction(nameof(Completed), new { id = completion.Id });
@@ -59,6 +65,11 @@ public sealed class TrainingController : Controller
     {
         var training = await _repo.GetTrainingAsync(model.TrainingId);
         if (training is null || !training.IsPublished) return NotFound();
+        if (await _repo.IsExcludedAsync(training.Id, Sam()))
+        {
+            TempData["TrainingMessage"] = "Este treinamento nao esta atribuido ao seu usuario.";
+            return RedirectToAction(nameof(Index));
+        }
         var questions = await _repo.GetQuestionsAsync(training.Id);
         var existing = await _repo.GetCompletionAsync(training.Id, Sam());
         if (existing is not null) return RedirectToAction(nameof(Completed), new { id = existing.Id });

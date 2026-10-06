@@ -183,16 +183,69 @@ public sealed class AdminController : Controller
         ViewBag.TeamsConfigured = _teams.IsConfigured;
         var completions = await _repo.GetCompletionsAsync(id);
         var completed = completions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var exclusions = await _repo.GetExclusionsAsync(id);
+        var excluded = exclusions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        ViewBag.Exclusions = exclusions;
+        ViewBag.ExcludedCount = exclusions.Count;
         try
         {
             var users = await _ad.GetEligibleUsersAsync();
-            return View(users.Select(u => new PendingUserViewModel { User = u, Completed = completed.Contains(u.SamAccountName) }).ToList());
+            var eligible = users.Where(u => !excluded.Contains(u.SamAccountName)).ToList();
+            return View(eligible.Select(u => new PendingUserViewModel { User = u, Completed = completed.Contains(u.SamAccountName) }).ToList());
         }
         catch (Exception ex)
         {
             ViewBag.AdError = ex.Message;
             return View(new List<PendingUserViewModel>());
         }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExcludeUser(long trainingId, string sam, string reason)
+    {
+        var training = await _repo.GetTrainingAsync(trainingId);
+        if (training is null) return NotFound();
+        sam = (sam ?? string.Empty).Trim();
+        reason = (reason ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(sam) || string.IsNullOrWhiteSpace(reason))
+        {
+            TempData["ExclusionError"] = "Informe o colaborador e o motivo da exclusao.";
+            return RedirectToAction(nameof(Pending), new { id = trainingId });
+        }
+        if (reason.Length > 300) reason = reason[..300];
+        if (await _repo.GetCompletionAsync(trainingId, sam) is not null)
+        {
+            TempData["ExclusionError"] = "Nao e permitido excluir um colaborador que ja concluiu este treinamento.";
+            return RedirectToAction(nameof(Pending), new { id = trainingId });
+        }
+
+        var users = await _ad.GetEligibleUsersAsync();
+        var user = users.FirstOrDefault(x => string.Equals(x.SamAccountName, sam, StringComparison.OrdinalIgnoreCase));
+        if (user is null)
+        {
+            TempData["ExclusionError"] = "Colaborador nao localizado entre os usuarios elegiveis do Active Directory.";
+            return RedirectToAction(nameof(Pending), new { id = trainingId });
+        }
+
+        await _repo.UpsertExclusionAsync(trainingId, user, reason, Sam());
+        await _audit.WriteAsync("training-user-exclude", "success", Sam(), new { trainingId, sam = user.SamAccountName, user.DisplayName, reason });
+        TempData["ExclusionResult"] = $"{user.DisplayName} foi excluido das obrigacoes deste treinamento.";
+        return RedirectToAction(nameof(Pending), new { id = trainingId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReincludeUser(long trainingId, string sam)
+    {
+        var training = await _repo.GetTrainingAsync(trainingId);
+        if (training is null) return NotFound();
+        sam = (sam ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(sam)) return RedirectToAction(nameof(Pending), new { id = trainingId });
+        await _repo.RemoveExclusionAsync(trainingId, sam);
+        await _audit.WriteAsync("training-user-reinclude", "success", Sam(), new { trainingId, sam });
+        TempData["ExclusionResult"] = $"{sam} voltou a ser elegivel para este treinamento.";
+        return RedirectToAction(nameof(Pending), new { id = trainingId });
     }
 
     [HttpPost]
@@ -223,6 +276,8 @@ public sealed class AdminController : Controller
 
         var completions = await _repo.GetCompletionsAsync(trainingId);
         var completed = completions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var exclusions = await _repo.GetExclusionsAsync(trainingId);
+        var excluded = exclusions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var users = await _ad.GetEligibleUsersAsync();
         var usersBySam = users.ToDictionary(x => x.SamAccountName, StringComparer.OrdinalIgnoreCase);
         var baseUrl = (_portal.PublicBaseUrl ?? string.Empty).Trim().TrimEnd('/');
@@ -235,7 +290,7 @@ public sealed class AdminController : Controller
         var failed = 0;
         foreach (var sam in selected)
         {
-            if (completed.Contains(sam)) continue;
+            if (completed.Contains(sam) || excluded.Contains(sam)) continue;
             if (!usersBySam.TryGetValue(sam, out var user) || string.IsNullOrWhiteSpace(user.Email))
             {
                 failed++;

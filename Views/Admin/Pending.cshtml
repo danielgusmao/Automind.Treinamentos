@@ -4,17 +4,21 @@
     ViewData["Title"]="Pendentes";
     var pending=Model.Count(x=>!x.Completed);
     var completed=Model.Count-pending;
+    var exclusions = ViewBag.Exclusions as List<TrainingExclusion> ?? new List<TrainingExclusion>();
+    var excludedCount = exclusions.Count;
     var teamsConfigured = ViewBag.TeamsConfigured is bool value && value;
 }
 <div class="page-head"><div><span class="eyebrow">ACTIVE DIRECTORY</span><h1>Pendências do treinamento</h1><p>@training.Title</p></div><a class="btn secondary" asp-action="Index">Voltar</a></div>
-<div class="stats"><div class="stat"><strong>@Model.Count</strong><span>Elegíveis</span></div><div class="stat"><strong>@completed</strong><span>Concluídos</span></div><div class="stat"><strong>@pending</strong><span>Pendentes</span></div><div class="stat"><strong>@(Model.Count == 0 ? 0 : Math.Round((double)completed / Model.Count * 100, 1))%</strong><span>Adesão</span></div></div>
+<div class="stats stats-five"><div class="stat"><strong>@Model.Count</strong><span>Elegíveis</span></div><div class="stat"><strong>@completed</strong><span>Concluídos</span></div><div class="stat"><strong>@pending</strong><span>Pendentes</span></div><div class="stat"><strong>@excludedCount</strong><span>Excluídos</span></div><div class="stat"><strong>@(Model.Count == 0 ? 0 : Math.Round((double)completed / Model.Count * 100, 1))%</strong><span>Adesão</span></div></div>
 @if(ViewBag.AdError is not null){<div class="alert error">Falha ao consultar o AD: @ViewBag.AdError</div>}
 @if(TempData["TeamsResult"] is string result){<div class="alert success">@result</div>}
 @if(TempData["TeamsError"] is string teamsError){<div class="alert error">@teamsError</div>}
+@if(TempData["ExclusionResult"] is string exclusionResult){<div class="alert success">@exclusionResult</div>}
+@if(TempData["ExclusionError"] is string exclusionError){<div class="alert error">@exclusionError</div>}
 @if(!teamsConfigured){<div class="alert info"><strong>Teams:</strong> os controles já estão disponíveis, mas o webhook precisa ser configurado no ambiente do App Pool para habilitar os envios.</div>}
 <div class="card">
     <div class="pending-toolbar">
-        <div><span class="eyebrow">LEMBRETES</span><h2>Colaboradores elegíveis</h2><p class="muted">Selecione somente os pendentes e envie um lembrete pelo Teams com o link direto deste treinamento.</p></div>
+        <div><span class="eyebrow">LEMBRETES</span><h2>Colaboradores elegíveis</h2><p class="muted">A lista vem do Active Directory. Colaboradores excluídos deixam de contar como elegíveis e pendentes para este treinamento.</p></div>
         <div class="pending-toolbar-actions">
             <button class="btn secondary" type="button" id="toggleAllPending" disabled="@(pending==0)">Marcar todos os pendentes</button>
             <form id="batchReminderForm" asp-action="SendTeamsReminders" method="post">
@@ -30,23 +34,89 @@
             <td class="select-col">@if(!x.Completed){<input class="pending-check" type="checkbox" name="selectedSams" value="@x.User.SamAccountName" form="batchReminderForm" aria-label="Selecionar @x.User.DisplayName" />}</td>
             <td><span class="status @(x.Completed?"done":"pending")">@(x.Completed?"Concluído":"Pendente")</span></td>
             <td><strong>@x.User.DisplayName</strong></td><td>@x.User.SamAccountName</td><td>@x.User.Email</td><td>@x.User.JobTitle</td><td>@x.User.Department</td>
-            <td>@if(!x.Completed){<form asp-action="SendTeamsReminders" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="selectedSams" value="@x.User.SamAccountName"/><button class="btn secondary btn-small" type="submit" disabled="@(!teamsConfigured)">Enviar Teams</button></form>}else{<span class="muted">Concluído</span>}</td>
+            <td>
+                @if(!x.Completed){
+                    <div class="row-actions">
+                        <form asp-action="SendTeamsReminders" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="selectedSams" value="@x.User.SamAccountName"/><button class="btn secondary btn-small" type="submit" disabled="@(!teamsConfigured)">Enviar Teams</button></form>
+                        <button class="btn danger btn-small exclude-user-btn" type="button" data-sam="@x.User.SamAccountName" data-name="@x.User.DisplayName">Excluir</button>
+                    </div>
+                }else{<span class="muted">Concluído</span>}
+            </td>
         </tr>
     }
     </tbody></table></div>
 </div>
+
+@if(exclusions.Count > 0)
+{
+<div class="card excluded-card">
+    <div class="pending-toolbar">
+        <div><span class="eyebrow">EXCEÇÕES</span><h2>Excluídos deste treinamento</h2><p class="muted">A exclusão vale somente para este treinamento. Ela não altera nem exclui o usuário do Active Directory.</p></div>
+    </div>
+    <div class="admin-table-shell"><table><thead><tr><th>Nome</th><th>Login</th><th>E-mail</th><th>Motivo</th><th>Excluído por</th><th>Data</th><th>Ação</th></tr></thead><tbody>
+    @foreach(var x in exclusions.OrderBy(x=>x.DisplayName))
+    {
+        <tr>
+            <td><strong>@(string.IsNullOrWhiteSpace(x.DisplayName)?x.SamAccountName:x.DisplayName)</strong></td>
+            <td>@x.SamAccountName</td>
+            <td>@x.Email</td>
+            <td>@x.Reason</td>
+            <td>@x.ExcludedBy</td>
+            <td>@x.ExcludedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+            <td><form asp-action="ReincludeUser" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="sam" value="@x.SamAccountName"/><button class="btn secondary btn-small" type="submit">Reincluir</button></form></td>
+        </tr>
+    }
+    </tbody></table></div>
+</div>
+}
+
+<div class="modal-backdrop" id="excludeModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="excludeTitle">
+        <div class="modal-head"><div><span class="eyebrow">EXCEÇÃO</span><h2 id="excludeTitle">Excluir deste treinamento</h2></div><button type="button" class="modal-close" id="closeExcludeModal" aria-label="Fechar">×</button></div>
+        <p class="muted">O colaborador deixará de contar como elegível e pendente apenas neste treinamento. Nenhuma alteração será feita no Active Directory.</p>
+        <form asp-action="ExcludeUser" method="post" class="form-stack">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="trainingId" value="@training.Id"/>
+            <input type="hidden" name="sam" id="excludeSam"/>
+            <div class="exclusion-person" id="excludePerson"></div>
+            <label for="excludeReason">Motivo da exclusão</label>
+            <input id="excludeReason" name="reason" maxlength="300" required placeholder="Ex.: afastamento, terceiro, conta de serviço, não se aplica..."/>
+            <div class="modal-actions"><button class="btn secondary" type="button" id="cancelExcludeModal">Cancelar</button><button class="btn danger" type="submit">Confirmar exclusão</button></div>
+        </form>
+    </div>
+</div>
+
 @section Scripts{
 <script>
 (() => {
     const button = document.getElementById('toggleAllPending');
-    if (!button) return;
-    button.addEventListener('click', () => {
-        const boxes = [...document.querySelectorAll('.pending-check')];
-        if (!boxes.length) return;
-        const mark = boxes.some(x => !x.checked);
-        boxes.forEach(x => x.checked = mark);
-        button.textContent = mark ? 'Desmarcar todos' : 'Marcar todos os pendentes';
-    });
+    if (button) {
+        button.addEventListener('click', () => {
+            const boxes = [...document.querySelectorAll('.pending-check')];
+            if (!boxes.length) return;
+            const mark = boxes.some(x => !x.checked);
+            boxes.forEach(x => x.checked = mark);
+            button.textContent = mark ? 'Desmarcar todos' : 'Marcar todos os pendentes';
+        });
+    }
+
+    const modal = document.getElementById('excludeModal');
+    const sam = document.getElementById('excludeSam');
+    const person = document.getElementById('excludePerson');
+    const reason = document.getElementById('excludeReason');
+    const close = () => { if (modal) modal.hidden = true; };
+    document.querySelectorAll('.exclude-user-btn').forEach(btn => btn.addEventListener('click', () => {
+        if (!modal || !sam || !person || !reason) return;
+        sam.value = btn.dataset.sam || '';
+        person.textContent = `${btn.dataset.name || ''} · ${btn.dataset.sam || ''}`;
+        reason.value = '';
+        modal.hidden = false;
+        setTimeout(() => reason.focus(), 0);
+    }));
+    document.getElementById('closeExcludeModal')?.addEventListener('click', close);
+    document.getElementById('cancelExcludeModal')?.addEventListener('click', close);
+    modal?.addEventListener('click', e => { if (e.target === modal) close(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 })();
 </script>
 }
