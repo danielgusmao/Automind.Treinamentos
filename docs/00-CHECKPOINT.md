@@ -1,3 +1,18 @@
+## 2026-10-06 - v0.0.10 autorizacao administrativa LDAP direta
+
+- Evidencia real: v0.0.9 estava publicada e exibia `Colaborador`; Daniel Gusmao foi novamente incluido em `_treinamentos` no AD, mas a area administrativa nao apareceu na requisicao seguinte.
+- Revisados todos os pontos de autorizacao do projeto: login/cookie (`AccountController`), autenticacao e ordem de middlewares (`Program.cs`), consulta AD (`AdAuthenticationService`), policy do backend (`AdminController`) e exibicao do menu (`_Layout.cshtml`).
+- Causa arquitetural corrigida: `GetAuthorizationGroups()` deixou de ser a fonte de membership administrativa dinamica.
+- Nova fonte: consulta LDAP direta ao grupo configurado, usando matching rule in chain para membership direta e aninhada.
+- Nenhuma role administrativa e persistida no cookie ou sessao. O cookie guarda apenas identidade basica do colaborador.
+- Em cada requisicao, roles antigas `TreinamentosAdmin`/`Informatica` sao removidas do principal em memoria; a role `TreinamentosAdmin` e recriada somente se o LDAP confirmar membership atual.
+- Middleware de consulta roda depois de `UseAuthentication` e antes de `UseAuthorization`, garantindo que menu e `[Authorize(Policy = "TreinamentosAdmin")]` usem a mesma decisao.
+- Falha de consulta continua fail-closed.
+- Criado `ActiveDirectory:AuthorizationServer` opcional. Vazio = dominio escolhe o DC; pode ser definido via `ActiveDirectory__AuthorizationServer` no App Pool se for necessario fixar um DC por causa de replicacao.
+- Documentos: `docs/26-AUTORIZACAO-ADMIN-TEMPO-REAL-V0.0.10.md` e `docs/27-TESTE-V0.0.10.md`.
+- Gerada consolidacao completa: `docs/28-DOCUMENTACAO-COMPLETA-PROJETO.md`, cobrindo ambiente, AD, autorizacao, exclusoes, PDFs, Teams, pipeline, seguranca, TLS pendente e proximos passos.
+- Proxima fase apos validar esta versao: HTTPS/TLS interno.
+
 ## 2026-10-06 - v0.0.9 correcao critica de autorizacao administrativa
 
 - Grupo administrativo oficial do Automind.Treinamentos: `_treinamentos`.

@@ -1,3 +1,12 @@
+## v0.0.10 - 2026-10-06
+
+- Remove qualquer role administrativa persistida em cookie/sessao.
+- Substitui `GetAuthorizationGroups()` por consulta LDAP direta do grupo `_treinamentos` em cada requisicao autenticada.
+- Membership direta e aninhada suportadas pelo matching rule in chain.
+- Menu administrativo e policy backend passam a usar a mesma decisao atual do AD no request.
+- Adiciona `ActiveDirectory:AuthorizationServer` opcional para fixar um DC sem alterar codigo.
+- Mantem comportamento fail-closed em erro de AD.
+
 ## v0.0.9 - 2026-10-06
 
 - Corrige autorizacao administrativa para usar o grupo AD `_treinamentos`.

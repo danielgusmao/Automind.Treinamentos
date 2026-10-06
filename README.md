@@ -1,14 +1,16 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.9**
+Versao: **v0.0.10**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF, acompanhamento de pendencias no Active Directory e comunicacao via Teams.
 
-## Destaques acumulados da v0.0.9
+## Destaques acumulados da v0.0.10
 
 - administracao autorizada exclusivamente pelo grupo AD `_treinamentos`;
-- membership administrativa revalidada no AD a cada requisicao autenticada;
-- cookies antigos com role `Informatica` nao mantem acesso administrativo indevido;
+- role administrativa nao e persistida em cookie nem em sessao;
+- membership administrativa e consultada diretamente no LDAP a cada requisicao autenticada;
+- consulta usa o grupo real no AD e suporta membership direta/aninhada;
+- cookies antigos com `TreinamentosAdmin` ou `Informatica` nao mantem acesso administrativo indevido;
 - a exclusao de contas deixa de ser por treinamento e passa a ser **permanente e global**;
 - nova pagina administrativa **Exclusoes**, acessivel pelo topo e pelo painel;
 - lista mostra nome, login, e-mail, tipo da conta, motivo, operador e data;
@@ -108,10 +110,12 @@ Comece por `docs/00-CHECKPOINT.md`.
 - PDF com resumo: `docs/20-PDF-RESUMO-V0.0.7.md`;
 - exclusoes permanentes: `docs/22-EXCLUSOES-PERMANENTES-V0.0.8.md`;
 - exclusoes v0.0.8: `docs/23-TESTE-V0.0.8.md`;
-- autorizacao administrativa v0.0.9: `docs/24-AUTORIZACAO-ADMIN-V0.0.9.md`;
-- teste v0.0.9: `docs/25-TESTE-V0.0.9.md`.
+- historico da tentativa v0.0.9: `docs/24-AUTORIZACAO-ADMIN-V0.0.9.md`;
+- autorizacao administrativa atual: `docs/26-AUTORIZACAO-ADMIN-TEMPO-REAL-V0.0.10.md`;
+- teste v0.0.10: `docs/27-TESTE-V0.0.10.md`.
+- consolidacao completa do projeto: `docs/28-DOCUMENTACAO-COMPLETA-PROJETO.md`.
 
 
 ## Autorizacao administrativa
 
-Administracao autorizada exclusivamente pelo grupo AD `_treinamentos`, com revalidacao de membership a cada requisicao autenticada.
+Administracao autorizada exclusivamente pelo grupo AD `_treinamentos`, com consulta LDAP direta a cada requisicao autenticada e sem persistencia de role administrativa no cookie.

@@ -1,4 +1,4 @@
-# Arquitetura - estado atual v0.0.9
+# Arquitetura - estado atual v0.0.10
 
 ```text
 Navegador
@@ -57,3 +57,8 @@ O banco e a fonte oficial de conclusao. Os PDFs sao evidencias derivadas e possu
 ## Layout de treinamentos
 
 As views de treinamento usam o `_Layout.cshtml` compartilhado. Conteudos especializados podem carregar CSS proprio pela secao `Styles`, mas nao devem criar outro `<html>/<body>` ou remover a navegacao global.
+
+
+## Autorizacao administrativa v0.0.10
+
+`UseAuthentication` restaura apenas a identidade do cookie. Em seguida, middleware proprio remove qualquer role administrativa persistida/legada, consulta `AdAdminAuthorizationService` no LDAP e acrescenta `TreinamentosAdmin` somente ao principal em memoria da requisicao. `UseAuthorization` roda depois dessa etapa. Portanto menu Razor e `[Authorize(Policy = "TreinamentosAdmin")]` usam a mesma decisao atual.

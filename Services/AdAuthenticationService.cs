@@ -45,47 +45,9 @@ public sealed class AdAuthenticationService
         }
         catch { }
 
-        adUser.IsAdministrator = IsInAdminGroup(user);
+        // A autorizacao administrativa nao e calculada nem persistida no login.
+        // Ela e consultada diretamente no AD em cada requisicao autenticada.
         return adUser;
-    }
-
-    // Revalida a autorizacao sem precisar da senha. Usado tambem durante a validacao do cookie.
-    public bool IsInAdminGroup(string samAccountName)
-    {
-        if (string.IsNullOrWhiteSpace(samAccountName)) return false;
-
-        try
-        {
-            using var context = new PrincipalContext(ContextType.Domain, _options.Domain);
-            using var user = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, NormalizeSam(samAccountName));
-            return user is not null && user.Enabled == true && IsInAdminGroup(user);
-        }
-        catch
-        {
-            // Falha de AD nunca eleva privilegio.
-            return false;
-        }
-    }
-
-    private bool IsInAdminGroup(UserPrincipal user)
-    {
-        try
-        {
-            foreach (var group in user.GetAuthorizationGroups())
-            {
-                using (group)
-                {
-                    if (string.Equals(group.SamAccountName, _options.AdminGroup, StringComparison.OrdinalIgnoreCase))
-                        return true;
-                }
-            }
-        }
-        catch
-        {
-            // Algumas florestas possuem SIDs/grupos que nao resolvem. Nao elevar privilegio em caso de erro.
-        }
-
-        return false;
     }
 
     private static string NormalizeSam(string value)

@@ -12,11 +12,13 @@ public sealed class AccountController : Controller
 {
     private readonly AdAuthenticationService _ad;
     private readonly AuditService _audit;
+    private readonly AdAdminAuthorizationService _adminAuthorization;
 
-    public AccountController(AdAuthenticationService ad, AuditService audit)
+    public AccountController(AdAuthenticationService ad, AuditService audit, AdAdminAuthorizationService adminAuthorization)
     {
         _ad = ad;
         _audit = audit;
+        _adminAuthorization = adminAuthorization;
     }
 
     [AllowAnonymous]
@@ -64,11 +66,12 @@ public sealed class AccountController : Controller
             new("job_title", adUser.JobTitle ?? ""),
             new("department", adUser.Department ?? "")
         };
-        if (adUser.IsAdministrator) claims.Add(new Claim(ClaimTypes.Role, "TreinamentosAdmin"));
-
+        // Nenhuma role administrativa e persistida no cookie.
+        // A autorizacao e reconsultada diretamente no AD em cada requisicao.
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-        await _audit.WriteAsync("login", "success", adUser.SamAccountName, new { adUser.DisplayName, adUser.Email, admin = adUser.IsAdministrator });
+        var isAdminNow = _adminAuthorization.IsInAdminGroup(adUser.SamAccountName);
+        await _audit.WriteAsync("login", "success", adUser.SamAccountName, new { adUser.DisplayName, adUser.Email, admin = isAdminNow });
 
         if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             return LocalRedirect(model.ReturnUrl);

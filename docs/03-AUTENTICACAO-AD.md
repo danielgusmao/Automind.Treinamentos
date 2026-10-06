@@ -21,3 +21,8 @@ Filtro LDAP: conta habilitada com `mail` terminando em `@automind.com.br`, menos
 ## Transporte
 
 O ambiente ainda esta em HTTP interno. HTTPS/TLS permanece pendente e deve ser tratado antes de ampliar o uso, pois usuario e senha de AD trafegam no formulario de login.
+
+
+## Atualizacao v0.0.10 - autorizacao administrativa
+
+A role administrativa nao e mais gravada no cookie. Cada requisicao autenticada consulta diretamente o LDAP para verificar membership atual no grupo `_treinamentos`, usando `memberOf:1.2.840.113556.1.4.1941` e fail-closed em erro. A v0.0.9, baseada em `GetAuthorizationGroups()`, foi substituida por esta abordagem.

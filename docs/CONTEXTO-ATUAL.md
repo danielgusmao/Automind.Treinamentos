@@ -1,20 +1,24 @@
-# Atualizacao v0.0.9 - autorizacao administrativa
+# Atualizacao v0.0.10 - autorizacao administrativa em tempo real
 
 - Grupo administrativo oficial: `_treinamentos`.
-- Role interna: `TreinamentosAdmin`.
-- Membership do AD e revalidada em cada requisicao autenticada; cookie antigo nao mantem privilegio indevido.
-- Falha de consulta ao AD nao concede administracao.
-- Proxima fase: definir e testar TLS/HTTPS interno sem expor o servidor 10.1.2.21 a Internet.
+- A v0.0.9 ainda dependia de `GetAuthorizationGroups()` e nao refletiu de forma confiavel uma inclusao feita durante a sessao.
+- A v0.0.10 remove a role administrativa persistida do cookie e da sessao.
+- Cada requisicao consulta diretamente o LDAP e cria `TreinamentosAdmin` apenas em memoria para aquele request.
+- Menu e policy `/Admin` usam exatamente a mesma decisao.
+- Membership direta e aninhada sao suportadas.
+- Falha LDAP permanece fail-closed.
+- `ActiveDirectory__AuthorizationServer` pode fixar um DC por configuracao de ambiente caso a replicacao entre DCs gere atraso operacional.
+- HTTPS/TLS interno continua pendente para a proxima fase.
 
 # Contexto Atual - Automind.Treinamentos
 
 ## Versao
 
-`v0.0.9`
+`v0.0.10`
 
 ## Estado atual
 
-Aplicacao interna ASP.NET Core MVC com login AD, administracao autorizada pelo grupo `_treinamentos` com revalidacao no AD a cada requisicao autenticada, SQLite persistente, treinamentos, quiz, aceite, PDFs, comparacao AD, Teams e pipeline/Release automaticos pela branch `release`.
+Aplicacao interna ASP.NET Core MVC com login AD, administracao dinamica pelo grupo `_treinamentos`, SQLite persistente, treinamentos, quiz, aceite, PDFs, comparacao AD, Teams e pipeline/Release automaticos pela branch `release`.
 
 ## v0.0.9 - principal mudanca
 

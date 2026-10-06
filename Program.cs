@@ -33,43 +33,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SecurePolicy = CookieSecurePolicy.None;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
-        options.Events.OnValidatePrincipal = context =>
-        {
-            var principal = context.Principal;
-            var identity = principal?.Identity as ClaimsIdentity;
-            var sam = principal?.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (identity is null || string.IsNullOrWhiteSpace(sam))
-            {
-                context.RejectPrincipal();
-                return Task.CompletedTask;
-            }
-
-            var ad = context.HttpContext.RequestServices.GetRequiredService<AdAuthenticationService>();
-            var isAdminNow = ad.IsInAdminGroup(sam);
-            var hasAdminRole = principal!.IsInRole("TreinamentosAdmin");
-            var legacyClaims = identity.FindAll(ClaimTypes.Role)
-                .Where(c => string.Equals(c.Value, "Informatica", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            var changed = legacyClaims.Count > 0 || hasAdminRole != isAdminNow;
-            foreach (var claim in legacyClaims) identity.RemoveClaim(claim);
-
-            if (hasAdminRole && !isAdminNow)
-            {
-                foreach (var claim in identity.FindAll(ClaimTypes.Role)
-                    .Where(c => string.Equals(c.Value, "TreinamentosAdmin", StringComparison.OrdinalIgnoreCase))
-                    .ToList())
-                    identity.RemoveClaim(claim);
-            }
-            else if (!hasAdminRole && isAdminNow)
-            {
-                identity.AddClaim(new Claim(ClaimTypes.Role, "TreinamentosAdmin"));
-            }
-
-            if (changed) context.ShouldRenew = true;
-            return Task.CompletedTask;
-        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -86,6 +49,7 @@ builder.Services.AddHttpClient("TeamsWebhook", client => client.Timeout = TimeSp
 builder.Services.AddSingleton<TeamsWebhookService>();
 builder.Services.AddScoped<TrainingRepository>();
 builder.Services.AddScoped<AdAuthenticationService>();
+builder.Services.AddScoped<AdAdminAuthorizationService>();
 builder.Services.AddScoped<AdDirectoryService>();
 builder.Services.AddScoped<EvidenceService>();
 builder.Services.AddScoped<DatabaseInitializer>();
@@ -102,6 +66,38 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 app.UseAuthentication();
+
+// A role administrativa e transitoria e existe somente na requisicao atual.
+// Roles gravadas em cookies antigos sao removidas antes da consulta LDAP.
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true)
+    {
+        var identity = context.User.Identities.FirstOrDefault(x => x.IsAuthenticated);
+        if (identity is not null)
+        {
+            foreach (var claim in identity.FindAll(ClaimTypes.Role)
+                .Where(c =>
+                    string.Equals(c.Value, "TreinamentosAdmin", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Value, "Informatica", StringComparison.OrdinalIgnoreCase))
+                .ToList())
+            {
+                identity.RemoveClaim(claim);
+            }
+
+            var sam = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!string.IsNullOrWhiteSpace(sam))
+            {
+                var adminAuthorization = context.RequestServices.GetRequiredService<AdAdminAuthorizationService>();
+                if (adminAuthorization.IsInAdminGroup(sam))
+                    identity.AddClaim(new Claim(ClaimTypes.Role, "TreinamentosAdmin"));
+            }
+        }
+    }
+
+    await next();
+});
+
 app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
