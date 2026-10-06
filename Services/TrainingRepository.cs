@@ -164,13 +164,14 @@ ON CONFLICT(TrainingId,SamAccountName) DO UPDATE SET
         using var c = _db.OpenConnection();
         using var cmd = c.CreateCommand();
         cmd.CommandText = @"
-INSERT INTO Trainings(Code, Slug, Title, Description, Version, ContentText, PassingScore, EstimatedMinutes, IsPublished, RequiredForAll, LayoutKey, CreatedAtUtc, CreatedBy)
-VALUES($code,$slug,$title,$description,$version,$content,$passing,$estimated,0,$required,'generic',$created,$actor);
+INSERT INTO Trainings(Code, Slug, Title, Description, SummaryText, Version, ContentText, PassingScore, EstimatedMinutes, IsPublished, RequiredForAll, LayoutKey, CreatedAtUtc, CreatedBy)
+VALUES($code,$slug,$title,$description,$summary,$version,$content,$passing,$estimated,0,$required,'generic',$created,$actor);
 SELECT last_insert_rowid();";
         cmd.Parameters.AddWithValue("$code", m.Code.Trim());
         cmd.Parameters.AddWithValue("$slug", m.Slug.Trim().ToLowerInvariant());
         cmd.Parameters.AddWithValue("$title", m.Title.Trim());
         cmd.Parameters.AddWithValue("$description", m.Description?.Trim() ?? "");
+        cmd.Parameters.AddWithValue("$summary", m.SummaryText?.Trim() ?? "");
         cmd.Parameters.AddWithValue("$version", m.Version.Trim());
         cmd.Parameters.AddWithValue("$content", m.ContentText?.Trim() ?? "");
         cmd.Parameters.AddWithValue("$passing", m.PassingScore);
@@ -299,6 +300,7 @@ VALUES($trainingId,$sam,$display,$email,$title,$department,$score,$total,$starte
         Slug = r.GetString(r.GetOrdinal("Slug")),
         Title = r.GetString(r.GetOrdinal("Title")),
         Description = r.GetString(r.GetOrdinal("Description")),
+        SummaryText = r.GetString(r.GetOrdinal("SummaryText")),
         Version = r.GetString(r.GetOrdinal("Version")),
         ContentText = r.GetString(r.GetOrdinal("ContentText")),
         PassingScore = r.GetInt32(r.GetOrdinal("PassingScore")),

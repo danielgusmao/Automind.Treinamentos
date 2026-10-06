@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS Trainings (
     Slug TEXT NOT NULL UNIQUE,
     Title TEXT NOT NULL,
     Description TEXT NOT NULL DEFAULT '',
+    SummaryText TEXT NOT NULL DEFAULT '',
     Version TEXT NOT NULL,
     ContentText TEXT NOT NULL DEFAULT '',
     PassingScore INTEGER NOT NULL,
@@ -89,6 +90,7 @@ CREATE INDEX IF NOT EXISTS IX_TrainingExclusions_Training ON TrainingExclusions(
         }
 
         await EnsureColumnAsync(connection, "Trainings", "EstimatedMinutes", "INTEGER NOT NULL DEFAULT 8");
+        await EnsureColumnAsync(connection, "Trainings", "SummaryText", "TEXT NOT NULL DEFAULT ''");
         await EnsureColumnAsync(connection, "TrainingCompletions", "StartedAtUtc", "TEXT NOT NULL DEFAULT ''");
         await EnsureColumnAsync(connection, "TrainingCompletions", "DurationSeconds", "INTEGER NOT NULL DEFAULT 0");
 
@@ -101,7 +103,10 @@ CREATE INDEX IF NOT EXISTS IX_TrainingExclusions_Training ON TrainingExclusions(
             {
                 trainingId = Convert.ToInt64(existing);
                 using var update = connection.CreateCommand();
-                update.CommandText = "UPDATE Trainings SET EstimatedMinutes=8 WHERE Id=$id AND EstimatedMinutes<=0;";
+                update.CommandText = @"UPDATE Trainings
+SET EstimatedMinutes = CASE WHEN EstimatedMinutes<=0 THEN 8 ELSE EstimatedMinutes END,
+    SummaryText = CASE WHEN trim(coalesce(SummaryText,''))='' THEN 'Treinamento de conscientizacao sobre protecao de credenciais, prevencao a phishing e engenharia social, tratamento adequado de dados pessoais conforme a LGPD e resposta a incidentes de seguranca. Reforca o uso de senhas fortes e unicas, MFA, a verificacao de mensagens e links suspeitos, o sigilo das informacoes e o reporte imediato de incidentes pelo TOPDESK.' ELSE SummaryText END
+WHERE Id=$id;";
                 update.Parameters.AddWithValue("$id", trainingId);
                 await update.ExecuteNonQueryAsync();
             }
@@ -109,9 +114,10 @@ CREATE INDEX IF NOT EXISTS IX_TrainingExclusions_Training ON TrainingExclusions(
             {
                 using var insert = connection.CreateCommand();
                 insert.CommandText = @"
-INSERT INTO Trainings(Code, Slug, Title, Description, Version, ContentText, PassingScore, EstimatedMinutes, IsPublished, RequiredForAll, LayoutKey, CreatedAtUtc, CreatedBy)
+INSERT INTO Trainings(Code, Slug, Title, Description, SummaryText, Version, ContentText, PassingScore, EstimatedMinutes, IsPublished, RequiredForAll, LayoutKey, CreatedAtUtc, CreatedBy)
 VALUES('SI-001', 'seguranca-da-informacao', 'Treinamento de Conscientização em Segurança da Informação',
 'Leia os módulos, responda ao quiz e registre o seu aceite. Tempo estimado: 8 minutos.',
+'Treinamento de conscientizacao sobre protecao de credenciais, prevencao a phishing e engenharia social, tratamento adequado de dados pessoais conforme a LGPD e resposta a incidentes de seguranca. Reforca o uso de senhas fortes e unicas, MFA, a verificacao de mensagens e links suspeitos, o sigilo das informacoes e o reporte imediato de incidentes pelo TOPDESK.',
 '1.0.0', '', 5, 8, 1, 1, 'security-awareness-v1', $created, 'system');
 SELECT last_insert_rowid();";
                 insert.Parameters.AddWithValue("$created", DateTime.UtcNow.ToString("O"));

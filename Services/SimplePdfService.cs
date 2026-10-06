@@ -15,58 +15,113 @@ public sealed class SimplePdfService
 
     public byte[] CreateEvidencePdf(Training training, TrainingCompletion completion, string trainingHash)
     {
-        var c = new StringBuilder();
-        PageBackground(c, 595, 842);
-        DrawLogo(c, 44, 756, 214, 59);
-        Text(c, "EVIDENCIA CORPORATIVA", 12, 516, 790, Font.Bold, Color.Magenta, Align.Right);
-        Text(c, completion.Protocol, 9, 516, 773, Font.Regular, Color.Muted, Align.Right);
+        var summary = BuildTrainingSummary(training);
+        var keyTopics = BuildKeyTopics(training);
 
-        Rect(c, 0, 654, 595, 78, Color.Dark);
-        Text(c, "TREINAMENTO CONCLUIDO", 9, 44, 705, Font.Bold, Color.PinkLight);
-        var titleLines = Wrap(training.Title, 48).Take(2).ToArray();
+        var page1 = new StringBuilder();
+        PageBackground(page1, 595, 842);
+        DrawLogo(page1, 44, 756, 214, 59);
+        Text(page1, "EVIDENCIA CORPORATIVA", 12, 516, 790, Font.Bold, Color.Magenta, Align.Right);
+        Text(page1, completion.Protocol, 9, 516, 773, Font.Regular, Color.Muted, Align.Right);
+        Text(page1, "Pagina 1 de 2", 7.5, 516, 757, Font.Regular, Color.Muted, Align.Right);
+
+        Rect(page1, 0, 654, 595, 78, Color.Dark);
+        Text(page1, "TREINAMENTO CONCLUIDO", 9, 44, 705, Font.Bold, Color.PinkLight);
+        var titleLines = Wrap(training.Title, 38).Take(2).ToArray();
         var titleY = 683d;
         foreach (var line in titleLines)
         {
-            Text(c, line, 19, 44, titleY, Font.Bold, Color.White);
+            Text(page1, line, 17, 44, titleY, Font.Bold, Color.White);
             titleY -= 21;
         }
 
-        Pill(c, 390, 681, 72, 23, "APROVADO", Color.Green, Color.GreenSoft, 8.5);
-        Pill(c, 469, 681, 82, 23, $"NOTA {completion.Score}/{completion.Total}", Color.White, Color.Magenta, 8.5);
+        Pill(page1, 390, 681, 72, 23, "APROVADO", Color.Green, Color.GreenSoft, 8.5);
+        Pill(page1, 469, 681, 82, 23, $"NOTA {completion.Score}/{completion.Total}", Color.White, Color.Magenta, 8.5);
 
-        Text(c, "RESUMO", 9, 44, 625, Font.Bold, Color.Magenta);
-        Card(c, 44, 548, 507, 62, Color.Soft);
-        Metric(c, "VERSAO", training.Version, 60, 571);
-        Metric(c, "TEMPO ESTIMADO", $"{training.EstimatedMinutes} min", 207, 571);
-        Metric(c, "TEMPO REALIZADO", FormatDuration(completion.DurationSeconds), 385, 571);
+        Text(page1, "RESUMO", 9, 44, 625, Font.Bold, Color.Magenta);
+        Card(page1, 44, 548, 507, 62, Color.Soft);
+        Metric(page1, "VERSAO", training.Version, 60, 571);
+        Metric(page1, "TEMPO ESTIMADO", $"{training.EstimatedMinutes} min", 207, 571);
+        Metric(page1, "TEMPO REALIZADO", FormatDuration(completion.DurationSeconds), 385, 571);
 
-        Text(c, "COLABORADOR", 9, 44, 520, Font.Bold, Color.Magenta);
-        Card(c, 44, 375, 507, 130, Color.White, Color.Line);
-        LabelValue(c, "NOME", completion.DisplayName, 60, 472, 218);
-        LabelValue(c, "LOGIN AD", completion.SamAccountName, 310, 472, 220);
-        LabelValue(c, "E-MAIL", completion.Email, 60, 427, 218);
-        LabelValue(c, "CARGO", completion.JobTitle, 310, 427, 220);
-        LabelValue(c, "DEPARTAMENTO", completion.Department, 60, 389, 218);
+        Text(page1, "COLABORADOR", 9, 44, 520, Font.Bold, Color.Magenta);
+        Card(page1, 44, 375, 507, 130, Color.White, Color.Line);
+        LabelValue(page1, "NOME", completion.DisplayName, 60, 472, 218);
+        LabelValue(page1, "LOGIN AD", completion.SamAccountName, 310, 472, 220);
+        LabelValue(page1, "E-MAIL", completion.Email, 60, 427, 218);
+        LabelValue(page1, "CARGO", completion.JobTitle, 310, 427, 220);
+        LabelValue(page1, "DEPARTAMENTO", completion.Department, 60, 389, 218);
 
-        Text(c, "REGISTRO DE ACEITE", 9, 44, 346, Font.Bold, Color.Magenta);
-        Card(c, 44, 252, 507, 79, Color.Soft);
-        LabelValue(c, "INICIO", completion.StartedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss"), 60, 304, 218);
-        LabelValue(c, "CONCLUSAO", completion.AcceptedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss"), 310, 304, 220);
-        LabelValue(c, "TERMO DE CIENCIA", "ACEITO", 60, 266, 218, Color.Green);
-        LabelValue(c, "DURACAO REGISTRADA", FormatDuration(completion.DurationSeconds), 310, 266, 220);
+        Text(page1, "REGISTRO DE ACEITE", 9, 44, 346, Font.Bold, Color.Magenta);
+        Card(page1, 44, 252, 507, 79, Color.Soft);
+        LabelValue(page1, "INICIO", completion.StartedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss"), 60, 304, 218);
+        LabelValue(page1, "CONCLUSAO", completion.AcceptedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss"), 310, 304, 220);
+        LabelValue(page1, "TERMO DE CIENCIA", "ACEITO", 60, 266, 218, Color.Green);
+        LabelValue(page1, "DURACAO REGISTRADA", FormatDuration(completion.DurationSeconds), 310, 266, 220);
 
-        Text(c, "DECLARACAO", 9, 44, 224, Font.Bold, Color.Magenta);
-        Card(c, 44, 139, 507, 70, Color.White, Color.Line);
-        var declaration = "Declaro que participei do treinamento, li e compreendi o seu conteudo e me comprometo a observar a Politica de Seguranca da Informacao e as normas internas de protecao de dados da AutoMind.";
-        TextBlock(c, declaration, 9.2, 60, 187, 82, 14, Color.Ink);
+        Text(page1, "DECLARACAO", 9, 44, 224, Font.Bold, Color.Magenta);
+        Card(page1, 44, 139, 507, 70, Color.White, Color.Line);
+        var declaration = "Declaro que participei do treinamento, li e compreendi o seu conteudo e me comprometo a observar as orientacoes apresentadas e as normas internas aplicaveis da Automind.";
+        TextBlock(page1, declaration, 9.2, 60, 187, 82, 14, Color.Ink);
 
-        Text(c, "INTEGRIDADE", 8, 44, 111, Font.Bold, Color.Muted);
-        Text(c, "SHA-256 do treinamento:", 7.5, 44, 96, Font.Bold, Color.Muted);
-        Text(c, trainingHash, 7.1, 44, 83, Font.Regular, Color.Muted);
-        Text(c, "Documento interno - Automind.Treinamentos v0.0.3", 7.5, 44, 51, Font.Regular, Color.Muted);
-        Text(c, "Gerado automaticamente a partir do registro oficial no banco de dados.", 7.5, 551, 51, Font.Regular, Color.Muted, Align.Right);
+        Text(page1, "INTEGRIDADE", 8, 44, 111, Font.Bold, Color.Muted);
+        Text(page1, "SHA-256 do treinamento:", 7.5, 44, 96, Font.Bold, Color.Muted);
+        Text(page1, trainingHash, 7.1, 44, 83, Font.Regular, Color.Muted);
+        Text(page1, "Documento interno - Automind.Treinamentos v0.0.7", 7.5, 44, 51, Font.Regular, Color.Muted);
+        Text(page1, "Gerado automaticamente a partir do registro oficial no banco de dados.", 7.5, 551, 51, Font.Regular, Color.Muted, Align.Right);
 
-        return BuildPdf(new List<string> { c.ToString() }, 595, 842, LoadLogoJpeg());
+        var page2 = new StringBuilder();
+        PageBackground(page2, 595, 842);
+        DrawLogo(page2, 44, 756, 214, 59);
+        Text(page2, "RESUMO DO TREINAMENTO", 12, 516, 790, Font.Bold, Color.Magenta, Align.Right);
+        Text(page2, completion.Protocol, 9, 516, 773, Font.Regular, Color.Muted, Align.Right);
+        Text(page2, "Pagina 2 de 2", 7.5, 516, 757, Font.Regular, Color.Muted, Align.Right);
+
+        Rect(page2, 0, 654, 595, 78, Color.Dark);
+        Text(page2, training.Code, 9, 44, 705, Font.Bold, Color.PinkLight);
+        var summaryTitleLines = Wrap(training.Title, 48).Take(2).ToArray();
+        var summaryTitleY = 683d;
+        foreach (var line in summaryTitleLines)
+        {
+            Text(page2, line, 19, 44, summaryTitleY, Font.Bold, Color.White);
+            summaryTitleY -= 21;
+        }
+
+        Text(page2, "SOBRE ESTE TREINAMENTO", 9, 44, 625, Font.Bold, Color.Magenta);
+        Card(page2, 44, 455, 507, 150, Color.Soft);
+        TextBlock(page2, summary, 10, 60, 578, 86, 15, Color.Ink);
+
+        Text(page2, "PRINCIPAIS TEMAS ABORDADOS", 9, 44, 426, Font.Bold, Color.Magenta);
+        Card(page2, 44, 210, 507, 198, Color.White, Color.Line);
+        var topicY = 374d;
+        if (keyTopics.Count == 0)
+        {
+            TextBlock(page2, "O conteudo completo do treinamento foi apresentado ao colaborador antes do quiz e do registro de aceite.", 9.5, 60, topicY, 84, 15, Color.Ink);
+        }
+        else
+        {
+            foreach (var topic in keyTopics.Take(6))
+            {
+                Text(page2, "-", 11, 61, topicY, Font.Bold, Color.Magenta);
+                var lines = Wrap(topic, 78).Take(3).ToArray();
+                var lineY = topicY;
+                foreach (var line in lines)
+                {
+                    Text(page2, line, 9.2, 76, lineY, Font.Regular, Color.Ink);
+                    lineY -= 13;
+                }
+                topicY = lineY - 10;
+                if (topicY < 230) break;
+            }
+        }
+
+        Text(page2, "REFERENCIA", 8, 44, 180, Font.Bold, Color.Muted);
+        Text(page2, $"Versao {training.Version} | Tempo estimado {training.EstimatedMinutes} min | Resultado {completion.Score}/{completion.Total}", 8.2, 44, 164, Font.Regular, Color.Muted);
+        Text(page2, "Este resumo integra a evidencia de conclusao e descreve os principais assuntos apresentados no treinamento.", 8.2, 44, 149, Font.Regular, Color.Muted);
+        Text(page2, "Documento interno - Automind.Treinamentos v0.0.7", 7.5, 44, 51, Font.Regular, Color.Muted);
+        Text(page2, "Resumo associado ao registro oficial de conclusao.", 7.5, 551, 51, Font.Regular, Color.Muted, Align.Right);
+
+        return BuildPdf(new List<string> { page1.ToString(), page2.ToString() }, 595, 842, LoadLogoJpeg());
     }
 
     public byte[] CreateConsolidatedPdf(Training training, IReadOnlyCollection<TrainingCompletion> completions)
@@ -120,7 +175,7 @@ public sealed class SimplePdfService
             }
 
             Text(c, $"Gerado em {DateTime.Now:dd/MM/yyyy HH:mm:ss}", 7.5, 38, 35, Font.Regular, Color.Muted);
-            Text(c, "Automind.Treinamentos v0.0.3 - Documento interno", 7.5, 804, 35, Font.Regular, Color.Muted, Align.Right);
+            Text(c, "Automind.Treinamentos v0.0.7 - Documento interno", 7.5, 804, 35, Font.Regular, Color.Muted, Align.Right);
             pages.Add(c.ToString());
         }
 
@@ -248,6 +303,91 @@ public sealed class SimplePdfService
         value ??= "";
         if (value.Length <= max) return value;
         return value[..Math.Max(1, max - 3)] + "...";
+    }
+
+    private static string BuildTrainingSummary(Training training)
+    {
+        if (!string.IsNullOrWhiteSpace(training.SummaryText))
+            return LimitSummary(NormalizeSummaryText(training.SummaryText));
+
+        if (string.Equals(training.LayoutKey, "security-awareness-v1", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Treinamento de conscientizacao sobre protecao de credenciais, prevencao a phishing e engenharia social, tratamento adequado de dados pessoais conforme a LGPD e resposta a incidentes de seguranca. Reforca o uso de senhas fortes e unicas, MFA, a verificacao de mensagens e links suspeitos, o sigilo das informacoes e o reporte imediato de incidentes pelo TOPDESK.";
+        }
+
+        var finalSummary = ExtractFinalSummary(training.ContentText);
+        if (!string.IsNullOrWhiteSpace(finalSummary))
+            return LimitSummary(finalSummary);
+
+        if (!string.IsNullOrWhiteSpace(training.Description))
+            return LimitSummary(NormalizeSummaryText(training.Description));
+
+        var content = NormalizeSummaryText(training.ContentText);
+        return !string.IsNullOrWhiteSpace(content)
+            ? LimitSummary(content)
+            : "Treinamento corporativo concluido conforme o conteudo publicado e validado pela Automind.";
+    }
+
+    private static List<string> BuildKeyTopics(Training training)
+    {
+        if (string.Equals(training.LayoutKey, "security-awareness-v1", StringComparison.OrdinalIgnoreCase))
+        {
+            return new List<string>
+            {
+                "Senhas fortes e unicas, nao compartilhamento de credenciais e uso de autenticacao multifator (MFA).",
+                "Reconhecimento de phishing e engenharia social, com atencao a urgencia, remetentes, links, anexos e pedidos de senha.",
+                "Tratamento de dados pessoais com sigilo e uso adequado das informacoes conforme os principios apresentados de LGPD.",
+                "Resposta a incidentes: interromper a acao de risco, confirmar por canais confiaveis e abrir chamado no TOPDESK imediatamente."
+            };
+        }
+
+        var content = (training.ContentText ?? string.Empty).Replace("\r", string.Empty);
+        var bullets = content.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim())
+            .Where(x => x.StartsWith("- ", StringComparison.Ordinal))
+            .Select(x => NormalizeSummaryText(x[2..]))
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(6)
+            .ToList();
+
+        if (bullets.Count > 0) return bullets;
+
+        return content.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim())
+            .Where(x => x.StartsWith("MODULO ", StringComparison.OrdinalIgnoreCase))
+            .Select(NormalizeSummaryText)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Take(6)
+            .ToList();
+    }
+
+    private static string ExtractFinalSummary(string? contentText)
+    {
+        if (string.IsNullOrWhiteSpace(contentText)) return string.Empty;
+        var lines = contentText.Replace("\r", string.Empty).Split('\n');
+        var index = Array.FindIndex(lines, x => x.Trim().Equals("RESUMO FINAL", StringComparison.OrdinalIgnoreCase));
+        if (index < 0) return string.Empty;
+        var summaryLines = lines.Skip(index + 1)
+            .Select(x => x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Take(8);
+        return NormalizeSummaryText(string.Join(" ", summaryLines));
+    }
+
+    private static string NormalizeSummaryText(string? value)
+    {
+        return string.Join(" ", (value ?? string.Empty)
+            .Replace("\r", " ")
+            .Replace("\n", " ")
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private static string LimitSummary(string value)
+    {
+        const int max = 900;
+        if (value.Length <= max) return value;
+        return value[..(max - 3)].TrimEnd() + "...";
     }
 
     private static string FormatDuration(int seconds)

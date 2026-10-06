@@ -432,3 +432,14 @@ Ao aparecer qualquer erro no primeiro build, corrigir antes de avançar para IIS
 7. Testar depois com um membro de `_informatica`.
 8. Validar criação local de `App_Data\Data`, `Treinamentos`, `Evidencias`, `Logs` e `Backup`.
 9. Só depois discutir a publicação no servidor 10.1.2.21.
+
+## 2026-10-06 - v0.0.7 - resumo do treinamento no PDF
+- Requisito: toda evidencia individual em PDF deve explicar, de forma resumida, o que foi abordado no treinamento concluido.
+- Decisao: o comprovante individual passa a ter duas paginas para nao comprimir os dados de auditoria da primeira pagina.
+- Pagina 1: resultado, dados AD, datas, duracao, aceite, protocolo e integridade.
+- Pagina 2: resumo do treinamento e principais temas abordados.
+- `Trainings.SummaryText` foi adicionado com migracao automatica e sem apagar o banco existente.
+- Novo treinamento possui campo administrativo `Resumo para o PDF`.
+- Fallback: `SummaryText` -> bloco `RESUMO FINAL` do `ContentText` -> `Description` -> trecho do conteudo.
+- Para `security-awareness-v1`, o resumo registra: senhas/MFA, phishing e engenharia social, dados pessoais/LGPD e reporte de incidentes via TOPDESK.
+- Esta alteracao nao modifica a regra de conclusao, quiz, elegibilidade, Teams ou exclusoes por treinamento.

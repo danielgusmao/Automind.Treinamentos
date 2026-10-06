@@ -7,6 +7,7 @@ public sealed class Training
     public string Slug { get; set; } = "";
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
+    public string SummaryText { get; set; } = "";
     public string Version { get; set; } = "1.0.0";
     public string ContentText { get; set; } = "";
     public int PassingScore { get; set; }

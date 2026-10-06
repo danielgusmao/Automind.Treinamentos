@@ -50,6 +50,7 @@ public sealed class AdminTrainingCreateViewModel
     [Required] public string Slug { get; set; } = "";
     [Required] public string Title { get; set; } = "";
     public string Description { get; set; } = "";
+    public string SummaryText { get; set; } = "";
     [Required] public string Version { get; set; } = "1.0.0";
     public string ContentText { get; set; } = """
 MODULO 1 - TITULO DO MODULO

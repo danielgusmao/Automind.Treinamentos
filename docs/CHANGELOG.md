@@ -75,3 +75,12 @@
 - Auditoria JSONL.
 - Cadastro básico de novos treinamentos e questões.
 - Perfil HTTP para desenvolvimento, sem HTTPS por enquanto.
+
+## v0.0.7 - 2026-10-06
+- PDF individual de evidencia passa a ter 2 paginas.
+- Nova pagina "Resumo do treinamento" com descricao objetiva do conteudo realizado.
+- Primeiro treinamento documenta senhas/MFA, phishing/engenharia social, dados pessoais/LGPD e resposta a incidentes/TOPDESK.
+- Novo campo `SummaryText` em `Trainings`, com migracao automatica de banco existente.
+- Cadastro de novo treinamento ganhou o campo "Resumo para o PDF".
+- Para treinamentos genericos sem resumo preenchido, o sistema tenta usar `RESUMO FINAL`, depois `Description` e por fim o proprio conteudo.
+- Rodape do PDF atualizado para v0.0.7.

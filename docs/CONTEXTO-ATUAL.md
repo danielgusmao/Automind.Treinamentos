@@ -61,3 +61,10 @@ C:\Automind.Treinamentos\
 5. Antes da primeira publicacao v0.0.6 no servidor, executar o preparo/migracao controlado das pastas e copiar a configuracao Teams entre os App Pools.
 6. Publicar somente `Web`.
 7. Validar `docs/19-TESTE-V0.0.6.md`.
+
+## Atualizacao v0.0.7 - PDF com resumo
+- Evidencia individual agora possui segunda pagina com resumo e temas do treinamento.
+- Campo persistente `Trainings.SummaryText` adicionado com migracao automatica.
+- Cadastro administrativo de treinamento possui `Resumo para o PDF`.
+- Primeiro treinamento resume senhas/MFA, phishing/engenharia social, dados pessoais/LGPD e incidentes/TOPDESK.
+- PDFs antigos nao sao regenerados automaticamente; novos aceites usam o formato v0.0.7.

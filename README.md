@@ -1,10 +1,10 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.6**
+Versao: **v0.0.7**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF e acompanhamento de pendencias de colaboradores do Active Directory.
 
-## Destaques da v0.0.6
+## Destaques da v0.0.7
 
 - Exclusao administrativa de colaboradores por treinamento, com motivo obrigatorio e reinclusao.
 - Excluidos deixam de contar como elegiveis/pendentes e nao recebem lembretes Teams daquele treinamento.
@@ -89,5 +89,8 @@ Branch inicial: `release`.
 
 Comece por `docs/00-CHECKPOINT.md`.
 
-Mudanca v0.0.6: `docs/18-EXCLUSOES-COLABORADORES-V0.0.6.md`.
+Mudanca v0.0.7: `docs/18-EXCLUSOES-COLABORADORES-V0.0.6.md`.
 Teste: `docs/19-TESTE-V0.0.6.md`.
+
+## v0.0.7 - evidencia com resumo
+O PDF individual de conclusao possui uma segunda pagina com o resumo do treinamento e os principais assuntos abordados. Novos treinamentos podem definir esse texto no campo administrativo `Resumo para o PDF`.
