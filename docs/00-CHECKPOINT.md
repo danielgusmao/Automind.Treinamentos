@@ -1,3 +1,18 @@
+## 2026-10-06 - v0.0.8 lista global permanente de exclusoes e versao corrigida
+
+- Exclusoes deixam de ser uma excecao por treinamento e passam a formar uma lista global permanente de contas que nao representam pessoas.
+- Nova pagina `Administracao > Exclusoes` mostra nome, login, e-mail, tipo, motivo, operador e data.
+- Toda exclusao pode ser revertida por `Reincluir`; o historico de reinclusao e preservado.
+- Exclusoes globais nao entram em elegiveis, pendentes, adesao, Teams nem em `Meus treinamentos`, e o backend bloqueia link direto.
+- Registros existentes de `TrainingExclusions` sao migrados automaticamente para `DirectoryExclusions`, preservando a tabela anterior para historico/rollback.
+- `produtos / produtos@automind.com.br` foi adicionado como conta geral inicial conhecida.
+- A lista fica no SQLite persistente em `C:\Automind.Treinamentos\Data`, portanto permanece entre deploys.
+- Corrigido o versionamento: a v0.0.7 tinha `VERSION.txt=v0.0.7`, mas o `.csproj` ainda compilava o assembly como `0.0.6`; por isso a UI continuou exibindo a versao anterior.
+- Na v0.0.8, `Automind.Treinamentos.csproj` usa `0.0.8` para assembly/file/informational version e o build/publish gera `VERSION.txt` a partir da mesma propriedade.
+- A UI continua lendo a versao do assembly, evitando depender de arquivo antigo no servidor.
+- Pipeline/Release automaticos na branch `release`: apos push bem-sucedido, nao orientar deploy manual.
+- Documentos: `docs/22-EXCLUSOES-PERMANENTES-V0.0.8.md` e `docs/23-TESTE-V0.0.8.md`.
+
 ## 2026-10-06 - v0.0.6 exclusao administrativa de colaboradores
 
 - Adicionado `Excluir` apenas para colaboradores pendentes na tela de elegiveis.

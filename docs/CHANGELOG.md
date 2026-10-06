@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.0.8 - 2026-10-06
+
+- Nova lista global e permanente de contas excluidas da populacao de treinamentos.
+- Tela administrativa `Exclusoes` com nome, login, e-mail, categoria, motivo, operador, data, pesquisa e reinclusao.
+- Historico de reinclusoes preservado.
+- Exclusoes globais aplicadas a todos os treinamentos, indicadores, Teams e acesso direto.
+- Migracao automatica dos registros anteriores de `TrainingExclusions` para `DirectoryExclusions`.
+- Inclusao inicial de `produtos@automind.com.br` como e-mail geral que nao representa pessoa.
+- Correcao do versionamento do assembly: `0.0.8` passa a ser a fonte oficial da UI.
+- `VERSION.txt` do artifact passa a ser gerado pelo build/publish a partir da mesma versao do projeto.
+- PDF com resumo da v0.0.7 mantido.
+
 ## v0.0.6 - 2026-10-06
 
 - Inclusao de exclusoes administrativas por treinamento.

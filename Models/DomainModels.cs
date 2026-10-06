@@ -81,3 +81,17 @@ public sealed class AdUser
     public string Department { get; set; } = "";
     public bool IsInformatica { get; set; }
 }
+
+public sealed class DirectoryExclusion
+{
+    public string SamAccountName { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Category { get; set; } = "E-mail geral / Caixa compartilhada";
+    public string Reason { get; set; } = "";
+    public DateTime ExcludedAtUtc { get; set; }
+    public string ExcludedBy { get; set; } = "";
+    public bool IsActive { get; set; } = true;
+    public DateTime? ReincludedAtUtc { get; set; }
+    public string ReincludedBy { get; set; } = "";
+}

@@ -24,11 +24,17 @@ public sealed class TrainingController : Controller
     public async Task<IActionResult> Index()
     {
         var sam = Sam();
-        var trainings = await _repo.GetPublishedTrainingsAsync();
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? "";
         var vm = new List<TrainingListItemViewModel>();
+        if (await _repo.IsDirectoryExcludedAsync(sam, email))
+        {
+            TempData["TrainingMessage"] = "Seu usuario esta fora da base de colaboradores elegiveis para treinamentos.";
+            return View(vm);
+        }
+
+        var trainings = await _repo.GetPublishedTrainingsAsync();
         foreach (var t in trainings)
         {
-            if (await _repo.IsExcludedAsync(t.Id, sam)) continue;
             vm.Add(new TrainingListItemViewModel
             {
                 Training = t,
@@ -46,9 +52,9 @@ public sealed class TrainingController : Controller
     {
         var training = await _repo.GetTrainingAsync(id);
         if (training is null || !training.IsPublished) return NotFound();
-        if (await _repo.IsExcludedAsync(id, Sam()))
+        if (await _repo.IsDirectoryExcludedAsync(Sam(), User.FindFirstValue(ClaimTypes.Email)))
         {
-            TempData["TrainingMessage"] = "Este treinamento nao esta atribuido ao seu usuario.";
+            TempData["TrainingMessage"] = "Seu usuario esta fora da base de colaboradores elegiveis para treinamentos.";
             return RedirectToAction(nameof(Index));
         }
         var questions = await _repo.GetQuestionsAsync(id);
@@ -65,9 +71,9 @@ public sealed class TrainingController : Controller
     {
         var training = await _repo.GetTrainingAsync(model.TrainingId);
         if (training is null || !training.IsPublished) return NotFound();
-        if (await _repo.IsExcludedAsync(training.Id, Sam()))
+        if (await _repo.IsDirectoryExcludedAsync(Sam(), User.FindFirstValue(ClaimTypes.Email)))
         {
-            TempData["TrainingMessage"] = "Este treinamento nao esta atribuido ao seu usuario.";
+            TempData["TrainingMessage"] = "Seu usuario esta fora da base de colaboradores elegiveis para treinamentos.";
             return RedirectToAction(nameof(Index));
         }
         var questions = await _repo.GetQuestionsAsync(training.Id);

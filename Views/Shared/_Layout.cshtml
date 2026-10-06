@@ -26,6 +26,7 @@
             @if (isAdmin)
             {
                 <a class="@(controller == "Admin" ? "active" : "")" asp-controller="Admin" asp-action="Index">Administracao</a>
+                <a asp-controller="Admin" asp-action="DirectoryExclusions">Exclusoes</a>
             }
         </nav>
         <div class="top-actions">

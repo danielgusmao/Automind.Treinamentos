@@ -67,7 +67,7 @@ public sealed class SimplePdfService
         Text(page1, "INTEGRIDADE", 8, 44, 111, Font.Bold, Color.Muted);
         Text(page1, "SHA-256 do treinamento:", 7.5, 44, 96, Font.Bold, Color.Muted);
         Text(page1, trainingHash, 7.1, 44, 83, Font.Regular, Color.Muted);
-        Text(page1, "Documento interno - Automind.Treinamentos v0.0.7", 7.5, 44, 51, Font.Regular, Color.Muted);
+        Text(page1, "Documento interno - Automind.Treinamentos v0.0.8", 7.5, 44, 51, Font.Regular, Color.Muted);
         Text(page1, "Gerado automaticamente a partir do registro oficial no banco de dados.", 7.5, 551, 51, Font.Regular, Color.Muted, Align.Right);
 
         var page2 = new StringBuilder();
@@ -118,7 +118,7 @@ public sealed class SimplePdfService
         Text(page2, "REFERENCIA", 8, 44, 180, Font.Bold, Color.Muted);
         Text(page2, $"Versao {training.Version} | Tempo estimado {training.EstimatedMinutes} min | Resultado {completion.Score}/{completion.Total}", 8.2, 44, 164, Font.Regular, Color.Muted);
         Text(page2, "Este resumo integra a evidencia de conclusao e descreve os principais assuntos apresentados no treinamento.", 8.2, 44, 149, Font.Regular, Color.Muted);
-        Text(page2, "Documento interno - Automind.Treinamentos v0.0.7", 7.5, 44, 51, Font.Regular, Color.Muted);
+        Text(page2, "Documento interno - Automind.Treinamentos v0.0.8", 7.5, 44, 51, Font.Regular, Color.Muted);
         Text(page2, "Resumo associado ao registro oficial de conclusao.", 7.5, 551, 51, Font.Regular, Color.Muted, Align.Right);
 
         return BuildPdf(new List<string> { page1.ToString(), page2.ToString() }, 595, 842, LoadLogoJpeg());
@@ -175,7 +175,7 @@ public sealed class SimplePdfService
             }
 
             Text(c, $"Gerado em {DateTime.Now:dd/MM/yyyy HH:mm:ss}", 7.5, 38, 35, Font.Regular, Color.Muted);
-            Text(c, "Automind.Treinamentos v0.0.7 - Documento interno", 7.5, 804, 35, Font.Regular, Color.Muted, Align.Right);
+            Text(c, "Automind.Treinamentos v0.0.8 - Documento interno", 7.5, 804, 35, Font.Regular, Color.Muted, Align.Right);
             pages.Add(c.ToString());
         }
 

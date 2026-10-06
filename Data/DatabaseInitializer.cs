@@ -85,6 +85,20 @@ CREATE TABLE IF NOT EXISTS TrainingExclusions (
     FOREIGN KEY (TrainingId) REFERENCES Trainings(Id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS IX_TrainingExclusions_Training ON TrainingExclusions(TrainingId);
+CREATE TABLE IF NOT EXISTS DirectoryExclusions (
+    SamAccountName TEXT PRIMARY KEY COLLATE NOCASE,
+    DisplayName TEXT NOT NULL DEFAULT '',
+    Email TEXT NOT NULL DEFAULT '',
+    Category TEXT NOT NULL DEFAULT 'E-mail geral / Caixa compartilhada',
+    Reason TEXT NOT NULL,
+    ExcludedAtUtc TEXT NOT NULL,
+    ExcludedBy TEXT NOT NULL,
+    IsActive INTEGER NOT NULL DEFAULT 1,
+    ReincludedAtUtc TEXT NULL,
+    ReincludedBy TEXT NULL
+);
+CREATE INDEX IF NOT EXISTS IX_DirectoryExclusions_Active ON DirectoryExclusions(IsActive);
+CREATE INDEX IF NOT EXISTS IX_DirectoryExclusions_Email ON DirectoryExclusions(Email);
 ";
             await command.ExecuteNonQueryAsync();
         }
@@ -93,6 +107,28 @@ CREATE INDEX IF NOT EXISTS IX_TrainingExclusions_Training ON TrainingExclusions(
         await EnsureColumnAsync(connection, "Trainings", "SummaryText", "TEXT NOT NULL DEFAULT ''");
         await EnsureColumnAsync(connection, "TrainingCompletions", "StartedAtUtc", "TEXT NOT NULL DEFAULT ''");
         await EnsureColumnAsync(connection, "TrainingCompletions", "DurationSeconds", "INTEGER NOT NULL DEFAULT 0");
+
+        // v0.0.8: converte as exclusoes antigas por treinamento em uma lista permanente
+        // aplicavel a todos os treinamentos. A tabela legada e preservada apenas para historico/rollback.
+        using (var migrateExclusions = connection.CreateCommand())
+        {
+            migrateExclusions.CommandText = @"
+INSERT OR IGNORE INTO DirectoryExclusions(
+    SamAccountName, DisplayName, Email, Category, Reason, ExcludedAtUtc, ExcludedBy, IsActive, ReincludedAtUtc, ReincludedBy)
+SELECT
+    lower(SamAccountName), DisplayName, Email, 'Migrado da lista anterior', Reason, ExcludedAtUtc, ExcludedBy, 1, NULL, NULL
+FROM TrainingExclusions
+ORDER BY ExcludedAtUtc DESC;
+
+INSERT OR IGNORE INTO DirectoryExclusions(
+    SamAccountName, DisplayName, Email, Category, Reason, ExcludedAtUtc, ExcludedBy, IsActive, ReincludedAtUtc, ReincludedBy)
+VALUES(
+    'produtos', 'Produtos', 'produtos@automind.com.br', 'E-mail geral / Caixa compartilhada',
+    'E-mail de uso geral da empresa; nao representa uma pessoa e nao deve receber treinamentos.',
+    $now, 'system-seed', 1, NULL, NULL);";
+            migrateExclusions.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
+            await migrateExclusions.ExecuteNonQueryAsync();
+        }
 
         long trainingId;
         using (var check = connection.CreateCommand())

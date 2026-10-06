@@ -1,0 +1,106 @@
+@{
+    ViewData["Title"] = "Exclusões permanentes";
+    var active = ViewBag.Active as List<DirectoryExclusion> ?? new List<DirectoryExclusion>();
+    var history = ViewBag.History as List<DirectoryExclusion> ?? new List<DirectoryExclusion>();
+}
+<div class="page-head">
+    <div>
+        <span class="eyebrow">BASE DE COLABORADORES</span>
+        <h1>Exclusões permanentes</h1>
+        <p>Contas que existem no Active Directory, mas não representam pessoas e por isso não devem entrar nos indicadores nem receber treinamentos.</p>
+    </div>
+    <a class="btn secondary" asp-action="Index">Voltar</a>
+</div>
+
+<div class="stats stats-five">
+    <div class="stat"><strong>@active.Count</strong><span>Exclusões ativas</span><small>Ignoradas em todos os treinamentos</small></div>
+    <div class="stat"><strong>@history.Count</strong><span>Reincluídas</span><small>Histórico preservado</small></div>
+    <div class="stat"><strong>Todos</strong><span>Treinamentos</span><small>Regra global</small></div>
+    <div class="stat"><strong>AD</strong><span>Origem</span><small>Nenhuma conta é apagada</small></div>
+    <div class="stat"><strong>Auditável</strong><span>Histórico</span><small>Operador e data registrados</small></div>
+</div>
+
+@if(TempData["DirectoryExclusionResult"] is string ok){<div class="alert success">@ok</div>}
+@if(TempData["DirectoryExclusionError"] is string error){<div class="alert error">@error</div>}
+
+<div class="card exclusion-add-card">
+    <div class="section-title-row">
+        <div><span class="eyebrow">ADICIONAR</span><h2>Excluir uma conta da base de treinamentos</h2><p class="muted">Informe exatamente o login ou o e-mail corporativo. O sistema confirma a conta no Active Directory antes de salvar.</p></div>
+    </div>
+    <form asp-action="AddDirectoryExclusion" method="post" class="form-grid">
+        @Html.AntiForgeryToken()
+        <div class="field">
+            <label for="lookup">Login ou e-mail</label>
+            <input id="lookup" name="lookup" required placeholder="Ex.: produtos ou produtos@automind.com.br" />
+        </div>
+        <div class="field">
+            <label for="category">Tipo de conta</label>
+            <select id="category" name="category" required>
+                <option>E-mail geral / Caixa compartilhada</option>
+                <option>Conta de servico</option>
+                <option>Terceiro / Nao colaborador</option>
+                <option>Outro</option>
+            </select>
+        </div>
+        <div class="field span2">
+            <label for="reason">Motivo</label>
+            <input id="reason" name="reason" maxlength="300" required placeholder="Ex.: endereço geral do setor Produtos; não representa um colaborador." />
+        </div>
+        <div class="form-actions span2"><button class="btn danger" type="submit">Adicionar à lista permanente</button></div>
+    </form>
+</div>
+
+<div class="card excluded-card">
+    <div class="pending-toolbar">
+        <div><span class="eyebrow">LISTA ATIVA</span><h2>Contas ignoradas em todos os treinamentos</h2><p class="muted">Essas contas não aparecem como elegíveis, pendentes ou destinatários de lembretes do Teams.</p></div>
+        <div class="exclusion-search"><label for="exclusionSearch">Pesquisar</label><input id="exclusionSearch" placeholder="Nome, login, e-mail ou motivo" /></div>
+    </div>
+    @if(active.Count == 0)
+    {
+        <div class="empty-state-inline">Nenhuma exclusão permanente ativa.</div>
+    }
+    else
+    {
+        <div class="admin-table-shell"><table id="activeExclusionsTable"><thead><tr><th>Nome</th><th>Login</th><th>E-mail</th><th>Tipo</th><th>Motivo</th><th>Excluído por</th><th>Data</th><th>Ação</th></tr></thead><tbody>
+        @foreach(var x in active.OrderBy(x=>x.DisplayName))
+        {
+            <tr data-search="@($"{x.DisplayName} {x.SamAccountName} {x.Email} {x.Category} {x.Reason}".ToLowerInvariant())">
+                <td><strong>@(string.IsNullOrWhiteSpace(x.DisplayName)?x.SamAccountName:x.DisplayName)</strong></td>
+                <td>@x.SamAccountName</td>
+                <td>@x.Email</td>
+                <td><span class="status excluded">@x.Category</span></td>
+                <td>@x.Reason</td>
+                <td>@x.ExcludedBy</td>
+                <td>@x.ExcludedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                <td><form asp-action="ReincludeDirectoryUser" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="sam" value="@x.SamAccountName"/><button class="btn secondary btn-small" type="submit">Reincluir</button></form></td>
+            </tr>
+        }
+        </tbody></table></div>
+    }
+</div>
+
+@if(history.Count > 0)
+{
+<div class="card excluded-card">
+    <div class="section-title-row"><div><span class="eyebrow">HISTÓRICO</span><h2>Contas reincluídas</h2><p class="muted">O registro é preservado para auditoria. Uma conta reincluída volta a participar de todos os treinamentos aplicáveis.</p></div></div>
+    <div class="admin-table-shell"><table><thead><tr><th>Nome</th><th>Login</th><th>E-mail</th><th>Motivo original</th><th>Reincluído por</th><th>Data</th></tr></thead><tbody>
+    @foreach(var x in history.OrderByDescending(x=>x.ReincludedAtUtc))
+    {
+        <tr><td><strong>@(string.IsNullOrWhiteSpace(x.DisplayName)?x.SamAccountName:x.DisplayName)</strong></td><td>@x.SamAccountName</td><td>@x.Email</td><td>@x.Reason</td><td>@x.ReincludedBy</td><td>@(x.ReincludedAtUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "-")</td></tr>
+    }
+    </tbody></table></div>
+</div>
+}
+
+@section Scripts{
+<script>
+(() => {
+    const input = document.getElementById('exclusionSearch');
+    const rows = [...document.querySelectorAll('#activeExclusionsTable tbody tr')];
+    input?.addEventListener('input', () => {
+        const q = (input.value || '').trim().toLowerCase();
+        rows.forEach(row => row.hidden = q.length > 0 && !(row.dataset.search || '').includes(q));
+    });
+})();
+</script>
+}

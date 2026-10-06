@@ -159,6 +159,85 @@ ON CONFLICT(TrainingId,SamAccountName) DO UPDATE SET
         await cmd.ExecuteNonQueryAsync();
     }
 
+    public async Task<List<DirectoryExclusion>> GetDirectoryExclusionsAsync(bool activeOnly = false)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = activeOnly
+            ? "SELECT * FROM DirectoryExclusions WHERE IsActive=1 ORDER BY DisplayName, Email, SamAccountName;"
+            : "SELECT * FROM DirectoryExclusions ORDER BY IsActive DESC, DisplayName, Email, SamAccountName;";
+        using var r = await cmd.ExecuteReaderAsync();
+        var list = new List<DirectoryExclusion>();
+        while (await r.ReadAsync()) list.Add(MapDirectoryExclusion(r));
+        return list;
+    }
+
+    public async Task<bool> IsDirectoryExcludedAsync(string sam, string? email = null)
+    {
+        sam = (sam ?? string.Empty).Trim();
+        email = (email ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(sam) && string.IsNullOrWhiteSpace(email)) return false;
+
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT 1
+FROM DirectoryExclusions
+WHERE IsActive=1
+  AND (
+        ($sam<>'' AND lower(SamAccountName)=lower($sam))
+        OR ($email<>'' AND lower(Email)=lower($email))
+      )
+LIMIT 1;";
+        cmd.Parameters.AddWithValue("$sam", sam);
+        cmd.Parameters.AddWithValue("$email", email);
+        return await cmd.ExecuteScalarAsync() is not null;
+    }
+
+    public async Task UpsertDirectoryExclusionAsync(AdUser user, string category, string reason, string actor)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+INSERT INTO DirectoryExclusions(
+    SamAccountName,DisplayName,Email,Category,Reason,ExcludedAtUtc,ExcludedBy,IsActive,ReincludedAtUtc,ReincludedBy)
+VALUES($sam,$display,$email,$category,$reason,$when,$actor,1,NULL,NULL)
+ON CONFLICT(SamAccountName) DO UPDATE SET
+    DisplayName=excluded.DisplayName,
+    Email=excluded.Email,
+    Category=excluded.Category,
+    Reason=excluded.Reason,
+    ExcludedAtUtc=excluded.ExcludedAtUtc,
+    ExcludedBy=excluded.ExcludedBy,
+    IsActive=1,
+    ReincludedAtUtc=NULL,
+    ReincludedBy=NULL;";
+        cmd.Parameters.AddWithValue("$sam", user.SamAccountName.Trim().ToLowerInvariant());
+        cmd.Parameters.AddWithValue("$display", user.DisplayName?.Trim() ?? "");
+        cmd.Parameters.AddWithValue("$email", user.Email?.Trim().ToLowerInvariant() ?? "");
+        cmd.Parameters.AddWithValue("$category", category.Trim());
+        cmd.Parameters.AddWithValue("$reason", reason.Trim());
+        cmd.Parameters.AddWithValue("$when", DateTime.UtcNow.ToString("O"));
+        cmd.Parameters.AddWithValue("$actor", actor);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task ReincludeDirectoryUserAsync(string sam, string actor)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+UPDATE DirectoryExclusions
+SET IsActive=0,
+    ReincludedAtUtc=$when,
+    ReincludedBy=$actor
+WHERE lower(SamAccountName)=lower($sam) AND IsActive=1;";
+        cmd.Parameters.AddWithValue("$sam", (sam ?? string.Empty).Trim());
+        cmd.Parameters.AddWithValue("$when", DateTime.UtcNow.ToString("O"));
+        cmd.Parameters.AddWithValue("$actor", actor);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     public async Task<long> CreateTrainingAsync(AdminTrainingCreateViewModel m, string actor)
     {
         using var c = _db.OpenConnection();
@@ -291,6 +370,32 @@ VALUES($trainingId,$sam,$display,$email,$title,$department,$score,$total,$starte
         cmd.Parameters.AddWithValue("$pdfPath", x.EvidencePdfPath);
         cmd.Parameters.AddWithValue("$pdfHash", x.EvidencePdfSha256);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    private static DirectoryExclusion MapDirectoryExclusion(SqliteDataReader r)
+    {
+        DateTime? reincludedAt = null;
+        var reincludedAtOrdinal = r.GetOrdinal("ReincludedAtUtc");
+        if (!r.IsDBNull(reincludedAtOrdinal))
+        {
+            var value = r.GetString(reincludedAtOrdinal);
+            if (DateTime.TryParse(value, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+                reincludedAt = parsed;
+        }
+
+        return new DirectoryExclusion
+        {
+            SamAccountName = r.GetString(r.GetOrdinal("SamAccountName")),
+            DisplayName = r.GetString(r.GetOrdinal("DisplayName")),
+            Email = r.GetString(r.GetOrdinal("Email")),
+            Category = r.GetString(r.GetOrdinal("Category")),
+            Reason = r.GetString(r.GetOrdinal("Reason")),
+            ExcludedAtUtc = DateTime.Parse(r.GetString(r.GetOrdinal("ExcludedAtUtc")), null, System.Globalization.DateTimeStyles.RoundtripKind),
+            ExcludedBy = r.GetString(r.GetOrdinal("ExcludedBy")),
+            IsActive = r.GetInt32(r.GetOrdinal("IsActive")) == 1,
+            ReincludedAtUtc = reincludedAt,
+            ReincludedBy = r.IsDBNull(r.GetOrdinal("ReincludedBy")) ? "" : r.GetString(r.GetOrdinal("ReincludedBy"))
+        };
     }
 
     private static Training MapTraining(SqliteDataReader r) => new()

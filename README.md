@@ -1,27 +1,25 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.7**
+Versao: **v0.0.8**
 
-Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF e acompanhamento de pendencias de colaboradores do Active Directory.
+Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF, acompanhamento de pendencias no Active Directory e comunicacao via Teams.
 
-## Destaques da v0.0.7
+## Destaques da v0.0.8
 
-- Exclusao administrativa de colaboradores por treinamento, com motivo obrigatorio e reinclusao.
-- Excluidos deixam de contar como elegiveis/pendentes e nao recebem lembretes Teams daquele treinamento.
-- Exclusao nao altera o Active Directory e nao apaga historico de conclusoes.
-
-- separacao definitiva entre arquivos publicados e dados persistentes no servidor;
-- producao usa `C:\Automind.Treinamentos` como raiz persistente;
-- `Web` contem somente a aplicacao publicada;
-- banco, treinamentos, evidencias, logs e backup ficam fora de `Web`;
-- compatibilidade local mantida com `App_Data` durante desenvolvimento;
-- Teams passa a seguir o mesmo contrato e a mesma configuracao externa do CadColab;
-- segredo lido de `Automind__Teams__WebhookUrl`, nunca versionado;
-- mensagem de lembrete personalizada com primeiro nome, titulo, tempo estimado e link direto;
-- rota publica autenticada de treinamento padronizada como `/Training/Start/{id}`;
-- link do lembrete usa `http://treinamentos.automind.com.br/Training/Start/{id}`;
-- edicao de questoes, selecao de pendentes e envio em lote da v0.0.4 mantidos;
-- checkpoint e documentacao cumulativa atualizados.
+- a exclusao de contas deixa de ser por treinamento e passa a ser **permanente e global**;
+- nova pagina administrativa **Exclusoes**, acessivel pelo topo e pelo painel;
+- lista mostra nome, login, e-mail, tipo da conta, motivo, operador e data;
+- uma exclusao ativa vale para todos os treinamentos atuais e futuros;
+- exclusoes nao entram em elegiveis, pendentes, adesao nem lembretes Teams;
+- conta excluida nao recebe treinamento em `Meus treinamentos` e o link direto e bloqueado no backend;
+- `Reincluir` restaura a conta para todos os treinamentos;
+- historico de reinclusoes fica preservado para auditoria;
+- exclusoes antigas da v0.0.6/v0.0.7 sao migradas automaticamente para a lista global;
+- `produtos / produtos@automind.com.br` entra como exclusao inicial conhecida, classificada como e-mail geral;
+- nenhuma exclusao altera ou apaga objetos no Active Directory;
+- PDF individual continua com a segunda pagina de resumo introduzida na v0.0.7;
+- estrutura persistente separada entre `Web`, `Data`, `Treinamentos`, `Evidencias`, `Logs` e `Backup` continua mantida;
+- Teams continua reutilizando o mesmo Workflow do CadColab por `Automind__Teams__WebhookUrl`.
 
 ## Estrutura de producao
 
@@ -37,7 +35,22 @@ C:\Automind.Treinamentos\
 `-- Backup\
 ```
 
-O `appsettings.Production.json` aponta `Storage:RootPath` para `C:\Automind.Treinamentos`. O `appsettings.json` continua usando `App_Data` para execucao local.
+`Web` e descartavel/substituivel pelo Release. Banco, evidencias, snapshots, logs e backups ficam fora da pasta publicada.
+
+## Lista permanente de exclusoes
+
+A fonte inicial de colaboradores continua sendo o AD: usuarios habilitados com e-mail `@automind.com.br`.
+
+Antes de calcular indicadores ou enviar lembretes, o sistema remove as contas presentes em `DirectoryExclusions`.
+
+Exemplos de classificacao:
+
+- `E-mail geral / Caixa compartilhada`;
+- `Conta de servico`;
+- `Terceiro / Nao colaborador`;
+- `Outro`.
+
+A lista e gerenciada em `Administracao > Exclusoes`.
 
 ## Teams
 
@@ -47,13 +60,11 @@ A integracao usa o mesmo Workflow/contrato do CadColab:
 { "recipient": "usuario@automind.com.br", "text": "mensagem" }
 ```
 
-A URL real do Workflow nao esta no projeto. O IIS deve fornecer:
+A URL real do Workflow nao esta no projeto. O IIS fornece:
 
 ```text
 Automind__Teams__WebhookUrl=<segredo>
 ```
-
-O pacote inclui `deploy/Prepare-Server-v0.0.5.ps1` para preparar a nova estrutura, preservar os dados existentes e copiar a configuracao do webhook do App Pool `CadastroColaboradores` para `Automind.Treinamentos` sem imprimir o segredo.
 
 ## Repositorios
 
@@ -69,14 +80,16 @@ Azure DevOps:
 https://danielgusmao@dev.azure.com/danielgusmao/Automind.Treinamentos/_git/Automind.Treinamentos
 ```
 
-Branch inicial: `release`.
+Branch de deploy: `release`.
+
+Push na `release` deve acionar a pipeline/Release configurada pelo projeto. Nao fazer deploy manual apos push bem-sucedido, salvo falha da automacao.
 
 ## Build
 
 1. Abra `Automind.Treinamentos.sln`.
-2. Restaure os pacotes NuGet.
-3. Compile em Release.
-4. Para pipeline, publique somente o conteudo da aplicacao para a pasta `Web` do artefato.
+2. Restore dos pacotes NuGet.
+3. Build em Release.
+4. Commit e push na branch `release` para GitHub e Azure.
 
 ## Dependencias principais
 
@@ -89,8 +102,6 @@ Branch inicial: `release`.
 
 Comece por `docs/00-CHECKPOINT.md`.
 
-Mudanca v0.0.7: `docs/18-EXCLUSOES-COLABORADORES-V0.0.6.md`.
-Teste: `docs/19-TESTE-V0.0.6.md`.
-
-## v0.0.7 - evidencia com resumo
-O PDF individual de conclusao possui uma segunda pagina com o resumo do treinamento e os principais assuntos abordados. Novos treinamentos podem definir esse texto no campo administrativo `Resumo para o PDF`.
+- PDF com resumo: `docs/20-PDF-RESUMO-V0.0.7.md`;
+- exclusoes permanentes: `docs/22-EXCLUSOES-PERMANENTES-V0.0.8.md`;
+- teste da versao: `docs/23-TESTE-V0.0.8.md`.

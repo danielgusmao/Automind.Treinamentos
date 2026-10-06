@@ -11,12 +11,13 @@
     </div>
     <div class="hero-symbol"><img src="~/images/automind-symbol.png" alt="" /></div>
 </section>
-<div class="page-head"><div><span class="eyebrow">VISAO GERAL</span><h1>Painel administrativo</h1><p>Indicadores atuais do portal.</p></div><a class="btn primary" asp-action="CreateTraining">Novo treinamento</a></div>
-<div class="stats">
+<div class="page-head"><div><span class="eyebrow">VISAO GERAL</span><h1>Painel administrativo</h1><p>Indicadores atuais do portal.</p></div><div class="page-head-actions"><a class="btn secondary" asp-action="DirectoryExclusions">Exclusões permanentes</a><a class="btn primary" asp-action="CreateTraining">Novo treinamento</a></div></div>
+<div class="stats stats-five">
     <div class="stat"><strong>@Model.Count</strong><span>Treinamentos</span><small>Total cadastrado</small></div>
     <div class="stat"><strong>@ViewBag.Published</strong><span>Publicados</span><small>Disponiveis aos colaboradores</small></div>
     <div class="stat"><strong>@ViewBag.Completions</strong><span>Conclusoes</span><small>Evidencias registradas</small></div>
-    <div class="stat"><strong>@(ViewBag.EligibleAdUsers ?? "-")</strong><span>Usuarios AD elegiveis</span><small>Habilitados com e-mail Automind</small></div>
+    <div class="stat"><strong>@(ViewBag.EligibleAdUsers ?? "-")</strong><span>Pessoas elegiveis</span><small>AD menos exclusoes permanentes</small></div>
+    <div class="stat"><strong>@ViewBag.DirectoryExclusions</strong><span>Exclusoes permanentes</span><small>Contas gerais/tecnicas ignoradas</small></div>
 </div>
 @if (ViewBag.AdError is not null) { <div class="alert error">Nao foi possivel consultar o AD: @ViewBag.AdError</div> }
 <div class="card">

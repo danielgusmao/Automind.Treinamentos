@@ -37,7 +37,17 @@ public sealed class AdminController : Controller
         foreach (var t in trainings) completionCount += (await _repo.GetCompletionsAsync(t.Id)).Count;
         ViewBag.Published = published;
         ViewBag.Completions = completionCount;
-        try { ViewBag.EligibleAdUsers = (await _ad.GetEligibleUsersAsync()).Count; }
+
+        var exclusions = await _repo.GetDirectoryExclusionsAsync(activeOnly: true);
+        ViewBag.DirectoryExclusions = exclusions.Count;
+        try
+        {
+            var users = await _ad.GetEligibleUsersAsync();
+            var excludedSams = exclusions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var excludedEmails = exclusions.Where(x => !string.IsNullOrWhiteSpace(x.Email)).Select(x => x.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            ViewBag.EligibleAdUsers = users.Count(u => !excludedSams.Contains(u.SamAccountName) && !excludedEmails.Contains(u.Email));
+            ViewBag.TotalAdUsers = users.Count;
+        }
         catch (Exception ex) { ViewBag.AdError = ex.Message; }
         return View(trainings);
     }
@@ -181,17 +191,25 @@ public sealed class AdminController : Controller
         if (training is null) return NotFound();
         ViewBag.Training = training;
         ViewBag.TeamsConfigured = _teams.IsConfigured;
+
         var completions = await _repo.GetCompletionsAsync(id);
         var completed = completions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var exclusions = await _repo.GetExclusionsAsync(id);
-        var excluded = exclusions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        ViewBag.Exclusions = exclusions;
+        var exclusions = await _repo.GetDirectoryExclusionsAsync(activeOnly: true);
+        var excludedSams = exclusions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var excludedEmails = exclusions.Where(x => !string.IsNullOrWhiteSpace(x.Email)).Select(x => x.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
         ViewBag.ExcludedCount = exclusions.Count;
+
         try
         {
             var users = await _ad.GetEligibleUsersAsync();
-            var eligible = users.Where(u => !excluded.Contains(u.SamAccountName)).ToList();
-            return View(eligible.Select(u => new PendingUserViewModel { User = u, Completed = completed.Contains(u.SamAccountName) }).ToList());
+            var eligible = users
+                .Where(u => !excludedSams.Contains(u.SamAccountName) && !excludedEmails.Contains(u.Email))
+                .ToList();
+            return View(eligible.Select(u => new PendingUserViewModel
+            {
+                User = u,
+                Completed = completed.Contains(u.SamAccountName)
+            }).ToList());
         }
         catch (Exception ex)
         {
@@ -202,50 +220,109 @@ public sealed class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ExcludeUser(long trainingId, string sam, string reason)
+    public async Task<IActionResult> ExcludeUser(long trainingId, string sam, string category, string reason)
     {
         var training = await _repo.GetTrainingAsync(trainingId);
         if (training is null) return NotFound();
+
         sam = (sam ?? string.Empty).Trim();
+        category = NormalizeExclusionCategory(category);
         reason = (reason ?? string.Empty).Trim();
+
         if (string.IsNullOrWhiteSpace(sam) || string.IsNullOrWhiteSpace(reason))
         {
-            TempData["ExclusionError"] = "Informe o colaborador e o motivo da exclusao.";
+            TempData["ExclusionError"] = "Informe o colaborador e o motivo da exclusao permanente.";
             return RedirectToAction(nameof(Pending), new { id = trainingId });
         }
         if (reason.Length > 300) reason = reason[..300];
-        if (await _repo.GetCompletionAsync(trainingId, sam) is not null)
-        {
-            TempData["ExclusionError"] = "Nao e permitido excluir um colaborador que ja concluiu este treinamento.";
-            return RedirectToAction(nameof(Pending), new { id = trainingId });
-        }
 
         var users = await _ad.GetEligibleUsersAsync();
         var user = users.FirstOrDefault(x => string.Equals(x.SamAccountName, sam, StringComparison.OrdinalIgnoreCase));
         if (user is null)
         {
-            TempData["ExclusionError"] = "Colaborador nao localizado entre os usuarios elegiveis do Active Directory.";
+            TempData["ExclusionError"] = "Conta nao localizada entre os usuarios elegiveis do Active Directory.";
             return RedirectToAction(nameof(Pending), new { id = trainingId });
         }
 
-        await _repo.UpsertExclusionAsync(trainingId, user, reason, Sam());
-        await _audit.WriteAsync("training-user-exclude", "success", Sam(), new { trainingId, sam = user.SamAccountName, user.DisplayName, reason });
-        TempData["ExclusionResult"] = $"{user.DisplayName} foi excluido das obrigacoes deste treinamento.";
+        await _repo.UpsertDirectoryExclusionAsync(user, category, reason, Sam());
+        await _audit.WriteAsync("directory-exclusion-add", "success", Sam(), new
+        {
+            sam = user.SamAccountName,
+            user.DisplayName,
+            user.Email,
+            category,
+            reason,
+            sourceTrainingId = trainingId
+        });
+        TempData["ExclusionResult"] = $"{user.DisplayName} foi adicionado a lista permanente de exclusoes e nao sera considerado em nenhum treinamento.";
         return RedirectToAction(nameof(Pending), new { id = trainingId });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DirectoryExclusions()
+    {
+        var all = await _repo.GetDirectoryExclusionsAsync();
+        ViewBag.Active = all.Where(x => x.IsActive).ToList();
+        ViewBag.History = all.Where(x => !x.IsActive).ToList();
+        return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ReincludeUser(long trainingId, string sam)
+    public async Task<IActionResult> AddDirectoryExclusion(string lookup, string category, string reason)
     {
-        var training = await _repo.GetTrainingAsync(trainingId);
-        if (training is null) return NotFound();
+        lookup = (lookup ?? string.Empty).Trim();
+        category = NormalizeExclusionCategory(category);
+        reason = (reason ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(lookup) || string.IsNullOrWhiteSpace(reason))
+        {
+            TempData["DirectoryExclusionError"] = "Informe o login/e-mail e o motivo.";
+            return RedirectToAction(nameof(DirectoryExclusions));
+        }
+        if (reason.Length > 300) reason = reason[..300];
+
+        try
+        {
+            var users = await _ad.GetEligibleUsersAsync();
+            var user = users.FirstOrDefault(x =>
+                string.Equals(x.SamAccountName, lookup, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(x.Email, lookup, StringComparison.OrdinalIgnoreCase));
+            if (user is null)
+            {
+                TempData["DirectoryExclusionError"] = "Nenhuma conta elegivel foi localizada no AD com esse login ou e-mail.";
+                return RedirectToAction(nameof(DirectoryExclusions));
+            }
+
+            await _repo.UpsertDirectoryExclusionAsync(user, category, reason, Sam());
+            await _audit.WriteAsync("directory-exclusion-add", "success", Sam(), new
+            {
+                sam = user.SamAccountName,
+                user.DisplayName,
+                user.Email,
+                category,
+                reason,
+                source = "directory-exclusions-page"
+            });
+            TempData["DirectoryExclusionResult"] = $"{user.DisplayName} foi excluido permanentemente da base de treinamentos.";
+        }
+        catch (Exception ex)
+        {
+            TempData["DirectoryExclusionError"] = "Nao foi possivel consultar o AD: " + ex.Message;
+        }
+        return RedirectToAction(nameof(DirectoryExclusions));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReincludeDirectoryUser(string sam)
+    {
         sam = (sam ?? string.Empty).Trim();
-        if (string.IsNullOrWhiteSpace(sam)) return RedirectToAction(nameof(Pending), new { id = trainingId });
-        await _repo.RemoveExclusionAsync(trainingId, sam);
-        await _audit.WriteAsync("training-user-reinclude", "success", Sam(), new { trainingId, sam });
-        TempData["ExclusionResult"] = $"{sam} voltou a ser elegivel para este treinamento.";
-        return RedirectToAction(nameof(Pending), new { id = trainingId });
+        if (string.IsNullOrWhiteSpace(sam)) return RedirectToAction(nameof(DirectoryExclusions));
+
+        await _repo.ReincludeDirectoryUserAsync(sam, Sam());
+        await _audit.WriteAsync("directory-exclusion-remove", "success", Sam(), new { sam });
+        TempData["DirectoryExclusionResult"] = $"{sam} voltou a ser considerado em todos os treinamentos.";
+        return RedirectToAction(nameof(DirectoryExclusions));
     }
 
     [HttpPost]
@@ -276,8 +353,9 @@ public sealed class AdminController : Controller
 
         var completions = await _repo.GetCompletionsAsync(trainingId);
         var completed = completions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var exclusions = await _repo.GetExclusionsAsync(trainingId);
-        var excluded = exclusions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var exclusions = await _repo.GetDirectoryExclusionsAsync(activeOnly: true);
+        var excludedSams = exclusions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var excludedEmails = exclusions.Where(x => !string.IsNullOrWhiteSpace(x.Email)).Select(x => x.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var users = await _ad.GetEligibleUsersAsync();
         var usersBySam = users.ToDictionary(x => x.SamAccountName, StringComparer.OrdinalIgnoreCase);
         var baseUrl = (_portal.PublicBaseUrl ?? string.Empty).Trim().TrimEnd('/');
@@ -290,13 +368,14 @@ public sealed class AdminController : Controller
         var failed = 0;
         foreach (var sam in selected)
         {
-            if (completed.Contains(sam) || excluded.Contains(sam)) continue;
+            if (completed.Contains(sam)) continue;
             if (!usersBySam.TryGetValue(sam, out var user) || string.IsNullOrWhiteSpace(user.Email))
             {
                 failed++;
                 await _audit.WriteAsync("training-teams-reminder", "failed", Sam(), new { trainingId, sam, reason = "eligible-user-or-email-not-found" });
                 continue;
             }
+            if (excludedSams.Contains(user.SamAccountName) || excludedEmails.Contains(user.Email)) continue;
 
             var result = await _teams.SendTrainingReminderAsync(user.Email, user.DisplayName, training.Title, training.EstimatedMinutes, link, HttpContext.RequestAborted);
             if (result.Success) sent++; else failed++;
@@ -332,6 +411,19 @@ public sealed class AdminController : Controller
         var c = await _repo.GetCompletionAsync(trainingId, sam);
         if (c is null || !System.IO.File.Exists(c.EvidencePdfPath)) return NotFound();
         return PhysicalFile(c.EvidencePdfPath, "application/pdf", Path.GetFileName(c.EvidencePdfPath));
+    }
+
+    private static string NormalizeExclusionCategory(string? category)
+    {
+        var value = (category ?? string.Empty).Trim();
+        return value switch
+        {
+            "E-mail geral / Caixa compartilhada" => value,
+            "Conta de servico" => value,
+            "Terceiro / Nao colaborador" => value,
+            "Outro" => value,
+            _ => "E-mail geral / Caixa compartilhada"
+        };
     }
 
     private string Sam() => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
