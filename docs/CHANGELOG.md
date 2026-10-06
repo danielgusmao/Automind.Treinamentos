@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.14 - 2026-10-06
+
+- Mantem evidencias individuais organizadas por colaborador e cancela a proposta de separar por treinamento/versao.
+- Pasta do colaborador passa a usar somente o login AD: `Evidencias\Colaboradores\<samAccountName>`.
+- Novos PDFs usam o formato curto `<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf`.
+- Limites defensivos reduzem risco de caminhos longos em copia e backup.
+- Evidencias existentes sao migradas quando localizadas; `TrainingCompletions.EvidencePdfPath` e atualizado e o hash/conteudo do PDF permanece inalterado.
+- Em colisao de arquivo no destino, nenhum arquivo e sobrescrito.
+
 ## v0.0.13 - 2026-10-06
 - Corrigido bug em que `Publicar` podia chegar ao backend como `publish=false` e executar despublicacao.
 - Removido `TogglePublish(long id, bool publish)`.

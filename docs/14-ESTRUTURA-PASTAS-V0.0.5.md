@@ -30,7 +30,7 @@ Snapshots imutaveis/logicos por `slug/versao`, incluindo `manifest.json` e `SHA2
 
 ### Evidencias/Colaboradores
 
-Uma pasta por colaborador no formato `Nome - samAccountName`, contendo PDFs individuais de conclusao.
+Na v0.0.5 a pasta era criada no formato `Nome - samAccountName`. Essa convencao foi substituida na v0.0.14 por somente `samAccountName`/login para reduzir o comprimento dos caminhos. Os PDFs continuam agrupados por colaborador.
 
 ### Evidencias/Relatorios
 

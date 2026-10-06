@@ -1,9 +1,13 @@
 # CONTEXTO ATUAL - Automind.Treinamentos
 
-Versao de aplicacao preparada: **v0.0.13**.
+Versao de aplicacao preparada: **v0.0.14**.
 
-Mudanca mais recente: correcao do fluxo administrativo de Publicar/Despublicar para sempre fornecer feedback e bloquear publicacao sem questoes ou com nota minima invalida.
+Mudanca mais recente: caminhos curtos para evidencias, mantendo a organizacao por colaborador.
 
+
+## Evidencias - v0.0.14
+
+Novos PDFs individuais seguem `<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf`. A pasta individual usa somente o login AD: `Evidencias/Colaboradores/<login>`. Evidencias existentes sao migradas para esse padrao quando localizadas, com atualizacao do caminho no banco e sem alterar o hash do PDF.
 
 ## Publicacao - v0.0.13
 
@@ -14,7 +18,7 @@ A publicacao e despublicacao usam endpoints separados. O frontend nao envia mais
 
 O catalogo administrativo possui `Editar`. Versoes sem conclusoes podem ser alteradas diretamente. Quando ja existem evidencias, a versao fica imutavel e o salvamento cria uma nova versao em rascunho com copia das questoes. A versao publicada anterior torna-se historica quando a nova revisao e publicada.
 
-A reorganizacao da pasta `Evidencias` por treinamento/versao continua pendente e deve ser feita somente depois da validacao desta versao.
+A proposta de reorganizar `Evidencias` por treinamento/versao foi cancelada. A estrutura definitiva permanece centrada no colaborador: `Evidencias/Colaboradores/<login>`. O nome curto usa codigo do treinamento, versao, data e protocolo.
 
 # Atualizacao v0.0.11 - autorizacao administrativa em tempo real
 

@@ -1,10 +1,10 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.13**
+Versao: **v0.0.14**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF, acompanhamento de pendencias no Active Directory e comunicacao via Teams.
 
-## Destaques acumulados da v0.0.13
+## Destaques acumulados da v0.0.14
 
 - administracao autorizada exclusivamente pelo grupo AD `_treinamentos`;
 - role administrativa nao e persistida em cookie nem em sessao;
@@ -23,6 +23,9 @@ Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias P
 - `produtos / produtos@automind.com.br` entra como exclusao inicial conhecida, classificada como e-mail geral;
 - nenhuma exclusao altera ou apaga objetos no Active Directory;
 - PDF individual continua com a segunda pagina de resumo introduzida na v0.0.7;
+- novas evidencias individuais usam nome curto com codigo do treinamento, versao, data e protocolo;
+- a pasta de cada colaborador usa somente o login AD (`sAMAccountName`) para reduzir o comprimento do caminho;
+- evidencias existentes sao migradas para o caminho curto sem alterar o conteudo/hash do PDF;
 - estrutura persistente separada entre `Web`, `Data`, `Treinamentos`, `Evidencias`, `Logs` e `Backup` continua mantida;
 - Teams continua reutilizando o mesmo Workflow do CadColab por `Automind__Teams__WebhookUrl`.
 
@@ -118,6 +121,8 @@ Comece por `docs/00-CHECKPOINT.md`.
 - teste v0.0.11: `docs/30-TESTE-V0.0.11.md`;
 - publicacao explicita v0.0.13: `docs/32-CORRECAO-PUBLICACAO-EXPLICITA-V0.0.13.md`;
 - teste v0.0.13: `docs/33-TESTE-V0.0.13.md`.
+- nome dos PDFs v0.0.14: `docs/34-NOME-PDF-EVIDENCIAS-V0.0.14.md`;
+- teste v0.0.14: `docs/35-TESTE-V0.0.14.md`.
 
 
 ## Autorizacao administrativa
@@ -132,3 +137,13 @@ A partir da v0.0.11 o catalogo permite editar treinamentos. Se a versao ainda na
 ## Publicacao de treinamentos
 
 A partir da v0.0.13, publicar e despublicar sao operacoes POST distintas. O sistema nao usa mais um parametro booleano de toggle para decidir a operacao. Ao publicar, o snapshot tecnico e criado em `Treinamentos/<slug-ou-familySlug>/<versao>` antes de marcar o treinamento como publicado.
+
+## Nome dos arquivos de evidencia
+
+A partir da v0.0.14, novos PDFs individuais seguem:
+
+```text
+<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf
+```
+
+As evidencias continuam centralizadas por colaborador, mas a pasta usa somente o login AD: `Evidencias\Colaboradores\<login>`. Evidencias existentes registradas no banco sao migradas para o caminho curto quando o arquivo e localizado, com atualizacao de `EvidencePdfPath` e sem alterar o hash do PDF.

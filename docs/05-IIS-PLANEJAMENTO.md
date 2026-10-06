@@ -10,7 +10,7 @@ C:\Automind.Treinamentos\
 |-- Data\                   # SQLite e arquivos WAL/SHM
 |-- Treinamentos\           # snapshots por slug/versao e SHA-256
 |-- Evidencias\
-|   |-- Colaboradores\      # pasta individual Nome - samAccountName
+|   |-- Colaboradores\      # pasta individual pelo samAccountName/login
 |   `-- Relatorios\         # PDFs consolidados
 |-- Logs\                   # Audit.jsonl
 `-- Backup\                 # area reservada para backups operacionais

@@ -22,12 +22,15 @@ public sealed class EvidenceService
         TrainingCompletion completion)
     {
         var trainingHash = await _snapshot.GetOrCreateSnapshotHashAsync(training, questions);
-        var collaboratorFolder = $"{StorageService.SafeSegment(completion.DisplayName)} - {StorageService.SafeSegment(completion.SamAccountName)}";
+        var collaboratorFolder = EvidenceNaming.CollaboratorFolder(completion.SamAccountName);
         var dir = Path.Combine(_storage.CollaboratorsEvidencePath, collaboratorFolder);
         Directory.CreateDirectory(dir);
 
-        var localDate = completion.AcceptedAtUtc.ToLocalTime();
-        var file = $"{localDate:yyyy-MM-dd} - {StorageService.SafeSegment(training.Slug)} - {StorageService.SafeSegment(completion.Protocol)}.pdf";
+        var file = EvidenceNaming.IndividualFileName(
+            training.Code,
+            training.Version,
+            completion.AcceptedAtUtc,
+            completion.Protocol);
         var fullPath = Path.Combine(dir, file);
 
         var bytes = _pdf.CreateEvidencePdf(training, completion, trainingHash);

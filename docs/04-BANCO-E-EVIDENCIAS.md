@@ -38,8 +38,16 @@ C:\Automind.Treinamentos\Treinamentos\<slug>\<versao>\SHA256.txt
 Gerado automaticamente na conclusao em:
 
 ```text
-C:\Automind.Treinamentos\Evidencias\Colaboradores\<Nome - samAccountName>\
+C:\Automind.Treinamentos\Evidencias\Colaboradores\<samAccountName>\
 ```
+
+A partir da v0.0.14, novos arquivos seguem:
+
+```text
+<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf
+```
+
+A estrutura permanece centrada no colaborador, usando somente o login AD para manter o caminho curto e estavel. Evidencias existentes sao migradas de forma nao destrutiva quando o arquivo e localizado, com atualizacao do caminho gravado no banco.
 
 ## PDF consolidado
 

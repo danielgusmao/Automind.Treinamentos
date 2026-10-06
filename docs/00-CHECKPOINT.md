@@ -1,5 +1,20 @@
 # CHECKPOINT - Automind.Treinamentos
 
+## 2026-10-06 - v0.0.14 - Caminhos curtos das evidencias por colaborador
+
+- Decisao final: manter todas as evidencias de uma pessoa juntas, sem separar fisicamente por treinamento/versao.
+- Para reduzir risco de caminhos longos em copia/backup, a pasta individual deixa de usar `Nome - login` e passa a usar somente o login AD (`sAMAccountName`).
+- Estrutura: `Evidencias\Colaboradores\<login>\`. Exemplo: `Evidencias\Colaboradores\daniel.gusmao\`.
+- O nome do PDF tambem usa formato curto: `<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf`.
+- Exemplo: `SI-001_v1.0.0_20261006_AM-20261006-35E0.pdf`.
+- Limites defensivos: login 32, codigo 20, versao 16 e protocolo 32 caracteres.
+- Evidencias existentes registradas em `TrainingCompletions` sao migradas na inicializacao quando o arquivo e localizado: arquivo e movido para a pasta curta, renomeado pelo padrao curto e `EvidencePdfPath` e atualizado.
+- O conteudo e o hash do PDF nao sao alterados pela migracao.
+- O sistema nunca sobrescreve arquivo existente no destino; em colisao preserva o caminho atual.
+- `Evidencias\Relatorios` permanece inalterada.
+- Versao do aplicativo continua **v0.0.14**; esta revisao substitui o empacotamento anterior da propria v0.0.14.
+- Documentos: `docs/34-NOME-PDF-EVIDENCIAS-V0.0.14.md` e `docs/35-TESTE-V0.0.14.md`.
+
 ## 2026-10-06 - v0.0.13 - Publicacao explicita sem toggle booleano
 
 - Falha observada em producao na v0.0.12: clicar em `Publicar` no SI-002 executava o caminho de despublicacao e exibia `despublicado com sucesso`.

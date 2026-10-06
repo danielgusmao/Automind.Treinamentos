@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Automind.Treinamentos.Services;
 using Microsoft.Data.Sqlite;
@@ -112,6 +113,10 @@ CREATE INDEX IF NOT EXISTS IX_DirectoryExclusions_Email ON DirectoryExclusions(E
         await EnsureColumnAsync(connection, "TrainingCompletions", "StartedAtUtc", "TEXT NOT NULL DEFAULT ''");
         await EnsureColumnAsync(connection, "TrainingCompletions", "DurationSeconds", "INTEGER NOT NULL DEFAULT 0");
 
+        // v0.0.14 revisada: reduz caminhos das evidencias existentes.
+        // Pasta do colaborador = somente sAMAccountName; arquivo = codigo, versao, data e protocolo.
+        await MigrateEvidencePathsAsync(connection);
+
         // v0.0.11: FamilySlug identifica a familia logica do treinamento entre revisoes.
         // Slug continua unico e tecnico para manter compatibilidade com o banco existente.
         using (var familySlug = connection.CreateCommand())
@@ -199,6 +204,112 @@ VALUES($trainingId, $position, $text, $options, $correct);";
         var seededQuestions = await repo.GetQuestionsAsync(trainingId);
         if (training is not null)
             await _snapshot.WriteSnapshotAsync(training, seededQuestions);
+    }
+
+    private async Task MigrateEvidencePathsAsync(SqliteConnection connection)
+    {
+        var rows = new List<(long Id, string Sam, string Code, string Version, DateTime AcceptedAtUtc, string Protocol, string ExistingPath)>();
+
+        using (var select = connection.CreateCommand())
+        {
+            select.CommandText = @"
+SELECT c.Id, c.SamAccountName, t.Code, t.Version, c.AcceptedAtUtc, c.Protocol, c.EvidencePdfPath
+FROM TrainingCompletions c
+JOIN Trainings t ON t.Id = c.TrainingId
+WHERE trim(coalesce(c.EvidencePdfPath,'')) <> '';";
+
+            using var reader = await select.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var acceptedText = reader.GetString(4);
+                if (!DateTime.TryParse(acceptedText, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var acceptedAtUtc))
+                    continue;
+
+                rows.Add((
+                    reader.GetInt64(0),
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    reader.GetString(3),
+                    acceptedAtUtc,
+                    reader.GetString(5),
+                    reader.GetString(6)));
+            }
+        }
+
+        foreach (var row in rows)
+        {
+            var folder = EvidenceNaming.CollaboratorFolder(row.Sam);
+            var targetDirectory = Path.Combine(_storage.CollaboratorsEvidencePath, folder);
+            var targetFile = EvidenceNaming.IndividualFileName(row.Code, row.Version, row.AcceptedAtUtc, row.Protocol);
+            var targetPath = Path.Combine(targetDirectory, targetFile);
+
+            string currentPath;
+            string normalizedTarget;
+            try
+            {
+                currentPath = Path.GetFullPath(row.ExistingPath);
+                normalizedTarget = Path.GetFullPath(targetPath);
+            }
+            catch
+            {
+                continue;
+            }
+
+            if (string.Equals(currentPath, normalizedTarget, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var sourceExists = File.Exists(currentPath);
+            var targetExists = File.Exists(normalizedTarget);
+            if (!sourceExists && !targetExists)
+                continue;
+
+            Directory.CreateDirectory(targetDirectory);
+
+            // Nunca sobrescreve evidencia existente. Em colisao, preserva os dois arquivos e o caminho atual do banco.
+            if (sourceExists && targetExists)
+                continue;
+
+            var moved = false;
+            if (sourceExists)
+            {
+                File.Move(currentPath, normalizedTarget);
+                moved = true;
+            }
+
+            try
+            {
+                using var update = connection.CreateCommand();
+                update.CommandText = "UPDATE TrainingCompletions SET EvidencePdfPath=$path WHERE Id=$id;";
+                update.Parameters.AddWithValue("$path", normalizedTarget);
+                update.Parameters.AddWithValue("$id", row.Id);
+                await update.ExecuteNonQueryAsync();
+            }
+            catch
+            {
+                // Se o banco falhar depois da movimentacao, tenta devolver o arquivo ao caminho original.
+                if (moved && File.Exists(normalizedTarget) && !File.Exists(currentPath))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(currentPath)!);
+                    File.Move(normalizedTarget, currentPath);
+                }
+                throw;
+            }
+
+            try
+            {
+                var oldDirectory = Path.GetDirectoryName(currentPath);
+                if (!string.IsNullOrWhiteSpace(oldDirectory) &&
+                    Directory.Exists(oldDirectory) &&
+                    !Directory.EnumerateFileSystemEntries(oldDirectory).Any())
+                {
+                    Directory.Delete(oldDirectory);
+                }
+            }
+            catch
+            {
+                // Limpeza de pasta vazia e opcional; a evidencia e o caminho do banco ja foram preservados.
+            }
+        }
     }
 
     private static async Task EnsureColumnAsync(SqliteConnection connection, string table, string column, string definition)

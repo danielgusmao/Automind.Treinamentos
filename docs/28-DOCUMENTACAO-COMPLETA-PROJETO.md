@@ -1,6 +1,6 @@
 # Automind.Treinamentos - documentacao completa do projeto
 
-Estado consolidado em 06/10/2026 - atualizado ate a versao v0.0.13.
+Estado consolidado em 06/10/2026 - atualizado ate a versao v0.0.14.
 
 ## 1. Objetivo
 
@@ -251,3 +251,7 @@ A partir da v0.0.13, publicacao e despublicacao usam endpoints separados: `Publi
 Ao publicar, o sistema valida questoes e nota minima, grava o snapshot em `C:\Automind.Treinamentos\Treinamentos\<slug-ou-familySlug>\<versao>` e somente depois marca a versao como publicada. Se o snapshot falhar, a publicacao nao e concluida.
 
 A exclusao de treinamento de teste continua sendo uma operacao manual e nao existe botao de exclusao no portal.
+
+### Convencao de nome dos PDFs - v0.0.14
+
+A estrutura definitiva permanece por colaborador: `C:\Automind.Treinamentos\Evidencias\Colaboradores\<login>`. A proposta anterior de separar fisicamente por treinamento/versao foi cancelada. Novos PDFs usam `<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf`. A v0.0.14 tambem migra evidencias existentes para o caminho curto quando o arquivo e localizado e atualiza `TrainingCompletions.EvidencePdfPath` sem alterar o conteudo/hash do PDF.
