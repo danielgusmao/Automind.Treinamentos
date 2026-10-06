@@ -1,0 +1,42 @@
+@model TrainingCompletion
+@{
+    ViewData["Title"] = "Treinamento concluido";
+    var training = (Training)ViewBag.Training;
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/security-awareness.css" asp-append-version="true" />
+}
+
+<div class="training-experience">
+    <div class="training-page-toolbar">
+        <a class="training-back" asp-action="Index">&larr; Meus treinamentos</a>
+        <div class="training-toolbar-meta">
+            <span class="meta-chip">@training.Code</span>
+            <span class="meta-chip">Versao @training.Version</span>
+            <span class="status done">CONCLUIDO</span>
+        </div>
+    </div>
+
+    <section class="training-complete-hero">
+        <div class="training-complete-mark">&#10003;</div>
+        <div>
+            <span class="training-section-eyebrow">Evidencia registrada</span>
+            <h1>@training.Title</h1>
+            <p>Treinamento concluido com sucesso. O comprovante foi gravado na pasta individual do colaborador.</p>
+        </div>
+    </section>
+
+    <section class="training-card training-complete-card">
+        <div class="training-complete-grid">
+            <div class="training-complete-metric"><small>Resultado</small><strong>@Model.Score/@Model.Total - Aprovado</strong></div>
+            <div class="training-complete-metric"><small>Tempo estimado</small><strong>@training.EstimatedMinutes min</strong></div>
+            <div class="training-complete-metric"><small>Tempo realizado</small><strong>@Model.DurationLabel</strong></div>
+            <div class="training-complete-metric"><small>Conclusao</small><strong>@Model.AcceptedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong></div>
+        </div>
+        <div class="training-protocol">Protocolo @Model.Protocol</div>
+        <div class="training-actions-row">
+            <a class="btn primary" asp-action="Evidence" asp-route-trainingId="@training.Id">Baixar comprovante PDF</a>
+            <a class="btn secondary" asp-action="Index">Voltar para Meus treinamentos</a>
+        </div>
+    </section>
+</div>

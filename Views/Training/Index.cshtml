@@ -1,0 +1,53 @@
+@model List<TrainingListItemViewModel>
+@{
+    ViewData["Title"] = "Meus treinamentos";
+    var done = Model.Count(x => x.Completion is not null);
+    var pending = Model.Count - done;
+    var totalMinutes = Model.Where(x => x.Completion is null).Sum(x => x.Training.EstimatedMinutes);
+}
+<section class="dashboard-hero">
+    <div class="dashboard-hero-copy">
+        <span class="eyebrow eyebrow-light">PORTAL DE CAPACITACAO</span>
+        <h1>Meus treinamentos</h1>
+        <p>Acompanhe treinamentos obrigatorios, conclua os conteudos e mantenha suas evidencias disponiveis em PDF.</p>
+        <div class="hero-pills">
+            <span class="hero-pill">@pending pendente(s)</span>
+            <span class="hero-pill">@done concluido(s)</span>
+            <span class="hero-pill">@totalMinutes min estimados pendentes</span>
+        </div>
+    </div>
+    <div class="hero-symbol"><img src="~/images/automind-symbol.png" alt="" /></div>
+</section>
+<div class="training-grid">
+@foreach (var item in Model)
+{
+    <article class="card training-card">
+        <div class="training-card-body">
+            <div class="training-card-top">
+                <span class="status @(item.Completion is null ? "pending" : "done")">@(item.Completion is null ? "PENDENTE" : "CONCLUIDO")</span>
+                <span class="meta-chip">@item.Training.Code</span>
+            </div>
+            <h2>@item.Training.Title</h2>
+            <p>@item.Training.Description</p>
+            <div class="training-meta">
+                <span class="meta-chip">Versao @item.Training.Version</span>
+                <span class="meta-chip">~ @item.Training.EstimatedMinutes min</span>
+                <span class="meta-chip">Nota minima @item.Training.PassingScore</span>
+            </div>
+            @if (item.Completion is null)
+            {
+                <div class="training-card-actions"><a class="btn primary" asp-action="Take" asp-route-id="@item.Training.Id">Iniciar treinamento</a></div>
+            }
+            else
+            {
+                <div class="done-info">Concluido em @item.Completion.AcceptedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")<br />Nota @item.Completion.Score/@item.Completion.Total &middot; Tempo @item.Completion.DurationLabel</div>
+                <div class="training-card-actions"><a class="btn secondary" asp-action="Evidence" asp-route-trainingId="@item.Training.Id">Baixar comprovante PDF</a></div>
+            }
+        </div>
+    </article>
+}
+@if (Model.Count == 0)
+{
+    <div class="card"><span class="eyebrow">SEM PENDENCIAS</span><h2>Nenhum treinamento publicado</h2><p class="muted">Quando um novo treinamento for publicado, ele aparecera aqui.</p></div>
+}
+</div>

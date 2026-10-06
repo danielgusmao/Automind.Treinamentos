@@ -1,0 +1,56 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var isAdmin = User.IsInRole("Informatica");
+    var display = User.Identity?.Name ?? "Usuario";
+    var initial = string.IsNullOrWhiteSpace(display) ? "A" : display[..1].ToUpperInvariant();
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#17121d" />
+    <title>@ViewData["Title"] - Automind.Treinamentos</title>
+    <link rel="icon" type="image/png" href="~/images/automind-symbol.png" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+<header class="topbar-shell">
+    <div class="app-container topbar">
+        <a class="brand" asp-controller="Training" asp-action="Index" aria-label="Automind Treinamentos">
+            <img src="~/images/automind-logo-negative.png" alt="Automind - Simple Smart Reliable" />
+        </a>
+        <nav class="main-nav" aria-label="Navegacao principal">
+            <a class="@(controller == "Training" ? "active" : "")" asp-controller="Training" asp-action="Index">Meus treinamentos</a>
+            @if (isAdmin)
+            {
+                <a class="@(controller == "Admin" ? "active" : "")" asp-controller="Admin" asp-action="Index">Administracao</a>
+            }
+        </nav>
+        <div class="top-actions">
+            <span class="version-chip">@AppVersionInfo.Display</span>
+            <div class="user-chip">
+                <span class="user-avatar">@initial</span>
+                <div><strong>@display</strong><small>@(isAdmin ? "Administrador" : "Colaborador")</small></div>
+            </div>
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-ghost btn-small" type="submit">Sair</button>
+            </form>
+        </div>
+    </div>
+</header>
+<main class="page-main">
+    <div class="app-container">@RenderBody()</div>
+</main>
+<footer class="site-footer">
+    <div class="app-container footer-inner">
+        <span>&copy; @DateTime.Now.Year Automind &middot; Uso interno</span>
+        <span>Automind.Treinamentos</span>
+        <span class="footer-version">Versão @AppVersionInfo.Display</span>
+    </div>
+</footer>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

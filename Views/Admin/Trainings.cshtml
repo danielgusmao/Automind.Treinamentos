@@ -1,0 +1,6 @@
+@model List<Training>
+@{ ViewData["Title"] = "Treinamentos"; }
+<div class="page-head"><div><span class="eyebrow">ADMINISTRACAO</span><h1>Catalogo de treinamentos</h1><p>Gerencie publicacao, questoes e acompanhamento.</p></div><a class="btn primary" asp-action="CreateTraining">Novo treinamento</a></div>
+<div class="card"><div class="admin-table-shell"><table><thead><tr><th>Codigo</th><th>Titulo</th><th>Versao</th><th>Tempo</th><th>Status</th><th>Acoes</th></tr></thead><tbody>
+@foreach(var t in Model){<tr><td><strong>@t.Code</strong></td><td>@t.Title</td><td>@t.Version</td><td>~ @t.EstimatedMinutes min</td><td><span class="status @(t.IsPublished?"published":"draft")">@(t.IsPublished?"Publicado":"Rascunho")</span></td><td><div class="table-actions"><a asp-action="Questions" asp-route-id="@t.Id">Questoes</a><a asp-action="Completions" asp-route-id="@t.Id">Concluidos</a><a asp-action="Pending" asp-route-id="@t.Id">Pendentes</a><form asp-action="TogglePublish" method="post" class="inline"><input type="hidden" name="id" value="@t.Id"/><input type="hidden" name="publish" value="@(!t.IsPublished)"/><button class="link-button" type="submit">@(t.IsPublished?"Despublicar":"Publicar")</button></form></div></td></tr>}
+</tbody></table></div></div>

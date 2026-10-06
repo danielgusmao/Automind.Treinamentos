@@ -1,0 +1,25 @@
+@model AdminTrainingCreateViewModel
+@{ ViewData["Title"] = "Novo treinamento"; }
+<div class="page-head"><div><span class="eyebrow">ADMINISTRAÇÃO</span><h1>Novo treinamento</h1><p>Use o modelo abaixo para manter os treinamentos claros, padronizados e fáceis de avaliar.</p></div><a class="btn secondary" asp-action="Trainings">Voltar ao catálogo</a></div>
+<div class="card training-template-guide">
+    <div><span class="eyebrow">MODELO SUGERIDO</span><h2>Como estruturar um treinamento</h2><p>O campo <strong>Conteúdo</strong> já vem preenchido com um roteiro editável. Substitua os exemplos pelo material real e mantenha a separação por módulos.</p></div>
+    <div class="template-steps">
+        <div><strong>1. Conteúdo</strong><span>Use módulos com objetivo, explicação, boas práticas e exemplo real.</span></div>
+        <div><strong>2. Questões</strong><span>Depois de criar, adicione perguntas objetivas com 3 ou 4 alternativas e marque uma resposta correta.</span></div>
+        <div><strong>3. Nota mínima</strong><span>Defina quantas questões o colaborador precisa acertar para concluir.</span></div>
+    </div>
+    <div class="question-example"><strong>Exemplo de questão</strong><code>Pergunta: Qual é a conduta correta nesta situação?<br>A: Alternativa incorreta<br>B: Alternativa correta<br>C: Alternativa incorreta<br>Resposta correta: B</code></div>
+</div>
+<form asp-action="CreateTraining" method="post" class="card form-grid">
+    <div asp-validation-summary="ModelOnly" class="alert error span2"></div>
+    <label>Código<input asp-for="Code" placeholder="Ex.: SI-002" /></label>
+    <label>Slug<input asp-for="Slug" placeholder="ex.: phishing-2026" /><span class="form-help">Use letras minúsculas, números e hífens. Ex.: seguranca-email-2026.</span></label>
+    <label class="span2">Título<input asp-for="Title" placeholder="Ex.: Boas práticas no uso do e-mail corporativo" /></label>
+    <label class="span2">Descrição<textarea asp-for="Description" rows="2" placeholder="Resumo curto que aparecerá no catálogo do colaborador."></textarea></label>
+    <label>Versão<input asp-for="Version" /></label>
+    <label>Tempo estimado (minutos)<input asp-for="EstimatedMinutes" type="number" min="1" max="480" /><span class="form-help">Exibido ao colaborador antes de iniciar e registrado no snapshot.</span></label>
+    <label>Nota mínima<input asp-for="PassingScore" type="number" min="1" /><span class="form-help">Ex.: se houver 5 questões e todas forem obrigatórias, informe 5.</span></label>
+    <label class="span2">Conteúdo<textarea asp-for="ContentText" rows="22"></textarea><span class="form-help">O modelo acima é apenas um ponto de partida e pode ser totalmente editado.</span></label>
+    <label class="checkline"><input asp-for="RequiredForAll" /> Obrigatório para todos os usuários elegíveis do AD</label>
+    <div class="span2 form-actions"><button class="btn primary" type="submit">Criar e adicionar questões</button></div>
+</form>

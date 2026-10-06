@@ -1,0 +1,181 @@
+@model TrainingTakeViewModel
+@{
+    ViewData["Title"] = Model.Training.Title;
+    var startedAtIso = Model.StartedAtUtc.ToString("O");
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/security-awareness.css" asp-append-version="true" />
+}
+
+<div class="training-experience">
+    <div class="training-page-toolbar">
+        <a class="training-back" asp-controller="Training" asp-action="Index">&larr; Meus treinamentos</a>
+        <div class="training-toolbar-meta">
+            <span class="meta-chip">@Model.Training.Code</span>
+            <span class="meta-chip">Versao @Model.Training.Version</span>
+            <span class="status pending">EM ANDAMENTO</span>
+        </div>
+    </div>
+
+    <section class="training-hero">
+        <div class="training-hero-copy">
+            <span class="training-eyebrow">Segurança da Informação &middot; LGPD</span>
+            <h1>Treinamento de Conscientizacao em Segurança da Informação</h1>
+            <p>Leia os módulos, responda ao quiz e registre o seu aceite. O resultado e o tempo realizado serão vinculados à sua evidência.</p>
+            <div class="training-hero-meta">
+                <span class="training-pill">Tempo estimado <strong>~ @Model.Training.EstimatedMinutes min</strong></span>
+                <span class="training-pill">Quiz <strong>@Model.Questions.Count questões</strong></span>
+                <span class="training-pill">Nota mínima <strong>@Model.Training.PassingScore/@Model.Questions.Count</strong></span>
+                <span class="training-pill training-timer">Tempo nesta sessão <strong id="elapsedTime">00:00</strong></span>
+            </div>
+        </div>
+        <div class="training-hero-mark" aria-hidden="true">
+            <img src="~/images/automind-symbol.png" alt="" />
+        </div>
+    </section>
+
+    <section class="training-intro-card">
+        <div class="training-intro-icon">SI</div>
+        <p>A segurança da informação depende de todos. A maior parte dos incidentes começa por uma ação simples — uma senha fraca, um clique em um link falso, um dado compartilhado sem cuidado. Veja as boas práticas que todo colaborador da AutoMind deve seguir.</p>
+    </section>
+
+    <section class="training-modules">
+        <article class="training-card training-module">
+            <h3><span class="training-tag">1</span> Senhas e Autenticação (MFA)</h3>
+            <ul>
+                <li>Use senhas fortes: longas, com letras, números e símbolos, e difíceis de adivinhar.</li>
+                <li>Nunca reutilize a mesma senha em vários serviços.</li>
+                <li>Não compartilhe sua senha com ninguém — nem com colegas, nem com o suporte.</li>
+                <li>Ative a autenticação multifator (MFA): uma segunda verificação além da senha, que impede o acesso mesmo se a senha vazar.</li>
+                <li>Desconfie de qualquer pedido de senha por e-mail, telefone ou mensagem.</li>
+            </ul>
+        </article>
+        <article class="training-card training-module">
+            <h3><span class="training-tag">2</span> Phishing e Engenharia Social</h3>
+            <ul>
+                <li><strong>Phishing</strong> é a tentativa de enganar você para roubar dados ou credenciais, por e-mail ou mensagem que parece legítima.</li>
+                <li><strong>Sinais de alerta:</strong> urgência exagerada, remetente estranho, erros de português, links suspeitos, pedidos de senha, anexos inesperados.</li>
+                <li><strong>O que fazer:</strong> não clique, não informe dados, não baixe o anexo. Na dúvida, confirme por outro canal e reporte.</li>
+                <li>Um incidente real pode começar exatamente com o comprometimento de uma conta de e-mail.</li>
+            </ul>
+        </article>
+        <article class="training-card training-module">
+            <h3><span class="training-tag">3</span> Dados Pessoais e LGPD</h3>
+            <ul>
+                <li><strong>Dado pessoal</strong> é qualquer informação que identifique uma pessoa: nome, e-mail, telefone, CPF, etc.</li>
+                <li>Trate os dados pessoais com sigilo e use-os apenas para a finalidade do trabalho.</li>
+                <li>Não envie dados pessoais para fora da empresa sem autorização.</li>
+                <li>Os titulares têm direitos (acesso, correção, exclusão) — direcione pedidos ao Encarregado (DPO).</li>
+                <li>Ao perceber um possível incidente, <strong>abra um chamado no TOPDESK imediatamente</strong>.</li>
+            </ul>
+        </article>
+    </section>
+
+    <form asp-controller="Training" asp-action="Submit" method="post" id="trainingForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="TrainingId" value="@Model.Training.Id" />
+
+        <section class="training-card training-quiz" id="quiz-card">
+            <div class="training-section-heading">
+                <div>
+                    <span class="training-section-eyebrow">Verificação</span>
+                    <h2>Quiz de fixação</h2>
+                    <p>Marque a alternativa correta. E preciso acertar as 5 questões para liberar o Termo de Ciencia.</p>
+                </div>
+                <span class="training-validation-badge">VALIDACAO LOCAL + SERVIDOR</span>
+            </div>
+
+            @foreach (var q in Model.Questions)
+            {
+                <div class="training-question" data-qid="@q.Id" data-correct="@q.CorrectIndex">
+                    <div class="training-question-text">@q.Position. @q.Text</div>
+                    <div class="training-options">
+                        @for (var oi = 0; oi < q.Options.Count; oi++)
+                        {
+                            var letter = (char)('a' + oi);
+                            <label class="training-option" data-o="@oi">
+                                <input type="radio" name="Answers[@q.Id]" value="@oi" required />
+                                <span><strong>@letter)</strong> @q.Options[oi]</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="training-actions-row">
+                <button class="btn primary" id="checkBtn" type="button">Verificar respostas</button>
+                <span class="training-result" id="quizResult" hidden></span>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+            {
+                <div class="training-server-error">@Model.ErrorMessage</div>
+            }
+        </section>
+
+        <section class="training-card training-accept" id="aceiteCard" hidden>
+            <span class="training-section-eyebrow">Registro</span>
+            <h2>Termo de Ciência e Aceite</h2>
+            <p class="training-muted">Declaro que participei do treinamento, que li e compreendi o seu conteudo, e que me comprometo a observar a Politica de Segurança da Informação e as normas internas de protecao de dados da AutoMind.</p>
+
+            <div class="training-identity-grid">
+                <div class="training-field">
+                    <label>Nome completo</label>
+                    <input value="@Model.DisplayName" readonly />
+                </div>
+                <div class="training-field">
+                    <label>Cargo / Área</label>
+                    <input value="@((Model.JobTitle + (string.IsNullOrWhiteSpace(Model.Department) ? "" : " / " + Model.Department)).Trim(' ', '/'))" readonly />
+                </div>
+            </div>
+            <div class="training-field">
+                <label>E-mail corporativo</label>
+                <input value="@Model.Email" readonly />
+            </div>
+
+            <label class="training-check">
+                <input id="ciente" name="Accepted" value="true" type="checkbox" required />
+                <span><strong>Confirmo meu aceite.</strong><br />Li e compreendi o conteúdo deste treinamento e estou ciente das minhas responsabilidades.</span>
+            </label>
+
+            <div class="training-actions-row">
+                <button class="btn primary" id="aceiteBtn" type="submit">Registrar meu aceite e gerar evidência</button>
+            </div>
+            <p class="training-hint">O servidor registrará data/hora de início, conclusão, duração, protocolo, nota e PDF individual.</p>
+        </section>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+(function(){
+  "use strict";
+  var passed=false;
+  var qs=Array.prototype.slice.call(document.querySelectorAll(".training-question"));
+  var btn=document.getElementById("checkBtn"),res=document.getElementById("quizResult"),ac=document.getElementById("aceiteCard");
+  var started=Date.parse("@startedAtIso");
+  var elapsed=document.getElementById("elapsedTime");
+  function tick(){var s=Math.max(0,Math.floor((Date.now()-started)/1000));var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;elapsed.textContent=(h>0?String(h).padStart(2,"0")+":":"")+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");}
+  tick();setInterval(tick,1000);
+  btn.addEventListener("click",function(){
+    var correct=0,answered=0;
+    document.querySelectorAll(".training-option").forEach(function(o){o.classList.remove("correct","wrong")});
+    qs.forEach(function(q){
+      var expected=parseInt(q.getAttribute("data-correct"),10),selected=q.querySelector('input[type="radio"]:checked');
+      if(!selected)return;
+      answered++;
+      var selectedIndex=parseInt(selected.value,10),chosen=q.querySelector('.training-option[data-o="'+selectedIndex+'"]'),right=q.querySelector('.training-option[data-o="'+expected+'"]');
+      if(selectedIndex===expected){correct++;if(chosen)chosen.classList.add("correct");}
+      else{if(chosen)chosen.classList.add("wrong");if(right)right.classList.add("correct");}
+    });
+    res.hidden=false;
+    if(answered<qs.length){passed=false;res.className="training-result no";res.textContent="Responda todas as questões ("+answered+"/"+qs.length+").";ac.hidden=true;return;}
+    if(correct>=@Model.Training.PassingScore){passed=true;res.className="training-result ok";res.textContent="Você acertou "+correct+" de "+qs.length+". O Termo de Ciência foi liberado.";ac.hidden=false;ac.scrollIntoView({behavior:"smooth",block:"start"});}
+    else{passed=false;res.className="training-result no";res.textContent="Você acertou "+correct+" de "+qs.length+". Revise os itens destacados e tente novamente.";ac.hidden=true;}
+  });
+  document.getElementById("trainingForm").addEventListener("submit",function(ev){
+    if(!passed){ev.preventDefault();res.hidden=false;res.className="training-result no";res.textContent="Verifique o quiz e alcance a nota mínima antes de registrar o aceite.";document.getElementById("quiz-card").scrollIntoView({behavior:"smooth"});}
+  });
+})();
+</script>
+}

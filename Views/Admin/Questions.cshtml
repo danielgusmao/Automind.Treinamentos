@@ -1,0 +1,17 @@
+@model AdminQuestionCreateViewModel
+@{ var training=(Training)ViewBag.Training; var questions=(List<TrainingQuestion>)ViewBag.Questions; ViewData["Title"]="Questões"; }
+<div class="page-head"><div><div class="eyebrow">ADMINISTRAÇÃO</div><h1>@training.Title</h1><p>Versão @training.Version · Nota mínima @training.PassingScore</p></div><a class="btn secondary" asp-action="Trainings">Voltar ao catálogo</a></div>
+@if(TempData["Message"] is string message){<div class="alert success">@message</div>}
+<div class="card"><div class="section-title-row"><div><span class="eyebrow">BANCO DE QUESTOES</span><h2>Questões cadastradas</h2></div><span class="meta-chip">@questions.Count questão(ões)</span></div>
+@if(questions.Count==0){<p>Nenhuma questão ainda.</p>}else{
+@foreach(var q in questions){<div class="question-admin"><div class="question-admin-content"><strong>@q.Position. @q.Text</strong><ol type="A">@foreach(var o in q.Options){<li>@o</li>}</ol><small>Resposta correta: @((char)('A'+q.CorrectIndex))</small></div><div class="question-admin-actions"><a class="btn secondary btn-small" asp-action="EditQuestion" asp-route-trainingId="@training.Id" asp-route-questionId="@q.Id">Editar</a><form asp-action="DeleteQuestion" method="post"><input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="questionId" value="@q.Id"/><button class="btn danger btn-small" type="submit">Excluir</button></form></div></div>}
+}</div>
+<form asp-action="AddQuestion" method="post" class="card form-grid">
+<input asp-for="TrainingId" type="hidden" />
+<div class="span2 section-title-row"><div><span class="eyebrow">NOVA QUESTAO</span><h2>Adicionar questão</h2></div><span class="muted">Preencha as alternativas e indique o gabarito.</span></div>
+<label class="span2">Pergunta<input asp-for="Text" placeholder="Ex.: Qual atitude deve ser tomada ao receber uma mensagem suspeita?" /></label>
+<label>Alternativa A<input asp-for="OptionA" placeholder="Primeira alternativa" /></label><label>Alternativa B<input asp-for="OptionB" placeholder="Segunda alternativa" /></label>
+<label>Alternativa C<input asp-for="OptionC" placeholder="Terceira alternativa" /></label><label>Alternativa D (opcional)<input asp-for="OptionD" placeholder="Quarta alternativa, se necessária" /></label>
+<label>Resposta correta<select asp-for="CorrectIndex"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+<div class="span2 form-actions"><button class="btn primary" type="submit">Adicionar questão</button> <a class="btn secondary" asp-action="Trainings">Concluir depois</a></div>
+</form>

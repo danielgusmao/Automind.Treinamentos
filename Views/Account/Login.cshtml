@@ -1,0 +1,54 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Acesso";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#121016" />
+    <title>Acesso - Automind.Treinamentos</title>
+    <link rel="icon" type="image/png" href="~/images/automind-symbol.png" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="login-body">
+<main class="login-shell">
+    <section class="login-visual" aria-hidden="true">
+        <div class="login-visual-overlay"></div>
+        <div class="login-visual-content">
+            <img class="login-visual-logo" src="~/images/automind-logo-negative.png" alt="" />
+            <div>
+                <span class="eyebrow eyebrow-light">DESENVOLVIMENTO DE PESSOAS</span>
+                <h1>Treinar.<br />Comprovar.<br />Evoluir.</h1>
+                <p>Um ambiente interno para capacitacao, conhecimento e evidencias de conclusao vinculadas ao colaborador.</p>
+            </div>
+            <span class="login-tagline">SIMPLE &middot; SMART &middot; RELIABLE</span>
+        </div>
+    </section>
+    <section class="login-panel">
+        <div class="login-panel-inner">
+            <img class="login-mobile-logo" src="~/images/automind-logo-positive.png" alt="Automind" />
+            <span class="eyebrow">ACESSO CORPORATIVO</span>
+            <h2>Entre com sua conta Automind</h2>
+            <p class="login-subtitle">Use o mesmo usuario e senha do Active Directory. O sistema identifica automaticamente seus treinamentos e seu perfil de acesso.</p>
+            @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) { <div class="alert error">@Model.ErrorMessage</div> }
+            <form asp-action="Login" method="post" class="form-stack">
+                @Html.AntiForgeryToken()
+                <input asp-for="ReturnUrl" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="alert error"></div>
+                <label asp-for="Username">Usuario</label>
+                <div class="input-with-icon"><span>U</span><input asp-for="Username" autocomplete="username" placeholder="daniel.gusmao" autofocus /></div>
+                <span asp-validation-for="Username"></span>
+                <label asp-for="Password">Senha</label>
+                <div class="input-with-icon"><span>&bull;</span><input asp-for="Password" autocomplete="current-password" placeholder="Sua senha corporativa" /></div>
+                <span asp-validation-for="Password"></span>
+                <button class="btn primary btn-login" type="submit">Entrar no portal</button>
+            </form>
+            <div class="security-note"><span class="status-dot status-dot-safe"></span><p><strong>Credenciais nao sao armazenadas.</strong><br />A senha e utilizada apenas para validacao no Active Directory.</p></div>
+        </div>
+    </section>
+</main>
+</body>
+</html>

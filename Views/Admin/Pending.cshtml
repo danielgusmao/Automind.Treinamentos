@@ -1,0 +1,52 @@
+@model List<PendingUserViewModel>
+@{
+    var training=(Training)ViewBag.Training;
+    ViewData["Title"]="Pendentes";
+    var pending=Model.Count(x=>!x.Completed);
+    var completed=Model.Count-pending;
+    var teamsConfigured = ViewBag.TeamsConfigured is bool value && value;
+}
+<div class="page-head"><div><span class="eyebrow">ACTIVE DIRECTORY</span><h1>Pendências do treinamento</h1><p>@training.Title</p></div><a class="btn secondary" asp-action="Index">Voltar</a></div>
+<div class="stats"><div class="stat"><strong>@Model.Count</strong><span>Elegíveis</span></div><div class="stat"><strong>@completed</strong><span>Concluídos</span></div><div class="stat"><strong>@pending</strong><span>Pendentes</span></div><div class="stat"><strong>@(Model.Count == 0 ? 0 : Math.Round((double)completed / Model.Count * 100, 1))%</strong><span>Adesão</span></div></div>
+@if(ViewBag.AdError is not null){<div class="alert error">Falha ao consultar o AD: @ViewBag.AdError</div>}
+@if(TempData["TeamsResult"] is string result){<div class="alert success">@result</div>}
+@if(TempData["TeamsError"] is string teamsError){<div class="alert error">@teamsError</div>}
+@if(!teamsConfigured){<div class="alert info"><strong>Teams:</strong> os controles já estão disponíveis, mas o webhook precisa ser configurado no ambiente do App Pool para habilitar os envios.</div>}
+<div class="card">
+    <div class="pending-toolbar">
+        <div><span class="eyebrow">LEMBRETES</span><h2>Colaboradores elegíveis</h2><p class="muted">Selecione somente os pendentes e envie um lembrete pelo Teams com o link direto deste treinamento.</p></div>
+        <div class="pending-toolbar-actions">
+            <button class="btn secondary" type="button" id="toggleAllPending" disabled="@(pending==0)">Marcar todos os pendentes</button>
+            <form id="batchReminderForm" asp-action="SendTeamsReminders" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="trainingId" value="@training.Id" />
+                <button class="btn primary" type="submit" disabled="@(!teamsConfigured || pending==0)">Enviar Teams aos selecionados</button>
+            </form>
+        </div>
+    </div>
+    <div class="admin-table-shell"><table><thead><tr><th class="select-col">Marcar</th><th>Status</th><th>Nome</th><th>Login</th><th>E-mail</th><th>Cargo</th><th>Departamento</th><th>Ação</th></tr></thead><tbody>
+    @foreach(var x in Model.OrderBy(x=>x.Completed).ThenBy(x=>x.User.DisplayName)){
+        <tr class="@(x.Completed?"row-completed":"")">
+            <td class="select-col">@if(!x.Completed){<input class="pending-check" type="checkbox" name="selectedSams" value="@x.User.SamAccountName" form="batchReminderForm" aria-label="Selecionar @x.User.DisplayName" />}</td>
+            <td><span class="status @(x.Completed?"done":"pending")">@(x.Completed?"Concluído":"Pendente")</span></td>
+            <td><strong>@x.User.DisplayName</strong></td><td>@x.User.SamAccountName</td><td>@x.User.Email</td><td>@x.User.JobTitle</td><td>@x.User.Department</td>
+            <td>@if(!x.Completed){<form asp-action="SendTeamsReminders" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="selectedSams" value="@x.User.SamAccountName"/><button class="btn secondary btn-small" type="submit" disabled="@(!teamsConfigured)">Enviar Teams</button></form>}else{<span class="muted">Concluído</span>}</td>
+        </tr>
+    }
+    </tbody></table></div>
+</div>
+@section Scripts{
+<script>
+(() => {
+    const button = document.getElementById('toggleAllPending');
+    if (!button) return;
+    button.addEventListener('click', () => {
+        const boxes = [...document.querySelectorAll('.pending-check')];
+        if (!boxes.length) return;
+        const mark = boxes.some(x => !x.checked);
+        boxes.forEach(x => x.checked = mark);
+        button.textContent = mark ? 'Desmarcar todos' : 'Marcar todos os pendentes';
+    });
+})();
+</script>
+}
