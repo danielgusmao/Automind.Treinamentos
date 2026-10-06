@@ -1,3 +1,10 @@
+# Changelog
+
+## v0.0.12 - 2026-10-06
+- Corrigido fluxo de Publicar/Despublicar com feedback de validacao e erro.
+- Antiforgery token explicito no formulario de publicacao.
+- Treinamento sem questoes direciona o administrador para cadastrar questoes.
+
 ## v0.0.11 - 2026-10-06
 
 - Edicao de treinamento pelo catalogo.

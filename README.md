@@ -1,10 +1,10 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.11**
+Versao: **v0.0.12**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF, acompanhamento de pendencias no Active Directory e comunicacao via Teams.
 
-## Destaques acumulados da v0.0.11
+## Destaques acumulados da v0.0.12
 
 - administracao autorizada exclusivamente pelo grupo AD `_treinamentos`;
 - role administrativa nao e persistida em cookie nem em sessao;
@@ -114,8 +114,8 @@ Comece por `docs/00-CHECKPOINT.md`.
 - autorizacao administrativa atual: `docs/26-AUTORIZACAO-ADMIN-TEMPO-REAL-V0.0.10.md`;
 - teste de autorizacao v0.0.10: `docs/27-TESTE-V0.0.10.md`;
 - consolidacao completa do projeto: `docs/28-DOCUMENTACAO-COMPLETA-PROJETO.md`;
-- edicao/versionamento v0.0.11: `docs/29-EDICAO-E-VERSIONAMENTO-TREINAMENTOS-V0.0.11.md`;
-- teste v0.0.11: `docs/30-TESTE-V0.0.11.md`.
+- edicao/versionamento v0.0.12: `docs/29-EDICAO-E-VERSIONAMENTO-TREINAMENTOS-V0.0.11.md`;
+- teste v0.0.12: `docs/30-TESTE-V0.0.11.md`.
 
 
 ## Autorizacao administrativa
@@ -125,4 +125,4 @@ Administracao autorizada exclusivamente pelo grupo AD `_treinamentos`, com consu
 
 ## Edicao e versionamento
 
-A partir da v0.0.11 o catalogo permite editar treinamentos. Se a versao ainda nao possui conclusoes, a alteracao e direta. Se ja existem evidencias, o sistema preserva a versao anterior e cria uma nova revisao em rascunho com as questoes copiadas.
+A partir da v0.0.12 o catalogo permite editar treinamentos. Se a versao ainda nao possui conclusoes, a alteracao e direta. Se ja existem evidencias, o sistema preserva a versao anterior e cria uma nova revisao em rascunho com as questoes copiadas.

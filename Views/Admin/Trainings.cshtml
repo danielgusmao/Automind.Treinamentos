@@ -2,6 +2,7 @@
 @{ ViewData["Title"] = "Treinamentos"; }
 <div class="page-head"><div><span class="eyebrow">ADMINISTRACAO</span><h1>Catalogo de treinamentos</h1><p>Gerencie publicacao, edicao, questoes e acompanhamento.</p></div><a class="btn primary" asp-action="CreateTraining">Novo treinamento</a></div>
 @if(TempData["TrainingMessage"] is string message){<div class="alert success">@message</div>}
+@if(TempData["TrainingError"] is string error){<div class="alert danger">@error</div>}
 <div class="card"><div class="admin-table-shell"><table><thead><tr><th>Codigo</th><th>Titulo</th><th>Versao</th><th>Tempo</th><th>Status</th><th>Acoes</th></tr></thead><tbody>
 @foreach(var t in Model){
     var statusText = t.IsArchived ? "Historico" : (t.IsPublished ? "Publicado" : "Rascunho");
@@ -14,7 +15,7 @@
             <a asp-action="Questions" asp-route-id="@t.Id">Questoes</a>
             <a asp-action="Completions" asp-route-id="@t.Id">Concluidos</a>
             @if(!t.IsArchived){<a asp-action="Pending" asp-route-id="@t.Id">Pendentes</a>}
-            @if(!t.IsArchived){<form asp-action="TogglePublish" method="post" class="inline"><input type="hidden" name="id" value="@t.Id"/><input type="hidden" name="publish" value="@(!t.IsPublished)"/><button class="link-button" type="submit">@(t.IsPublished?"Despublicar":"Publicar")</button></form>}
+            @if(!t.IsArchived){<form asp-controller="Admin" asp-action="TogglePublish" method="post" class="inline">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@t.Id"/><input type="hidden" name="publish" value="@(!t.IsPublished)"/><button class="link-button" type="submit">@(t.IsPublished?"Despublicar":"Publicar")</button></form>}
         </div></td>
     </tr>
 }

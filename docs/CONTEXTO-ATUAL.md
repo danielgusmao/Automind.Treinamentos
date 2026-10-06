@@ -1,3 +1,9 @@
+# CONTEXTO ATUAL - Automind.Treinamentos
+
+Versao de aplicacao preparada: **v0.0.12**.
+
+Mudanca mais recente: correcao do fluxo administrativo de Publicar/Despublicar para sempre fornecer feedback e bloquear publicacao sem questoes ou com nota minima invalida.
+
 
 ## Edicao de treinamentos - v0.0.11
 

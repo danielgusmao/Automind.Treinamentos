@@ -1,3 +1,15 @@
+# CHECKPOINT - Automind.Treinamentos
+
+## 2026-10-06 - v0.0.12 - Correcao do fluxo Publicar/Despublicar
+
+- Corrigido o fluxo do botao **Publicar** no catalogo administrativo.
+- O POST agora envia antiforgery token explicitamente.
+- Treinamento sem questoes nao retorna mais BadRequest sem contexto: o administrador e direcionado para a tela de questoes com mensagem clara.
+- Nota minima maior que a quantidade de questoes tambem gera mensagem de validacao.
+- Falhas ao gerar snapshot, gravar banco ou auditar sao exibidas no catalogo em vez de parecer que o clique nao teve efeito.
+- Publicacao/despublicacao bem sucedida exibe confirmacao.
+- A reorganizacao das evidencias por `<slug>/<versao>/Colaboradores|Relatorios` permanece pendente ate concluir a validacao da edicao/publicacao.
+
 ## 2026-10-06 - v0.0.11 edicao e versionamento seguro de treinamentos
 
 - Adicionada acao `Editar` no catalogo administrativo.

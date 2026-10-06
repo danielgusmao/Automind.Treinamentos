@@ -312,20 +312,46 @@ public sealed class AdminController : Controller
     {
         var training = await _repo.GetTrainingAsync(id);
         if (training is null) return NotFound();
+
         if (publish && training.IsArchived)
         {
-            TempData["TrainingMessage"] = "Versoes historicas nao podem ser republicadas. Crie uma nova versao.";
+            TempData["TrainingError"] = "Versoes historicas nao podem ser republicadas. Crie uma nova versao.";
             return RedirectToAction(nameof(Trainings));
         }
+
         var questions = await _repo.GetQuestionsAsync(id);
         if (publish)
         {
-            if (questions.Count == 0) return BadRequest("Treinamento sem questões.");
-            if (training.PassingScore > questions.Count) return BadRequest("Nota mínima maior que a quantidade de questões.");
-            await _snapshot.WriteSnapshotAsync(training, questions);
+            if (questions.Count == 0)
+            {
+                TempData["Message"] = "Para publicar este treinamento, adicione pelo menos uma questao.";
+                return RedirectToAction(nameof(Questions), new { id });
+            }
+
+            if (training.PassingScore > questions.Count)
+            {
+                TempData["Message"] = $"A nota minima ({training.PassingScore}) e maior que a quantidade de questoes ({questions.Count}). Ajuste o treinamento antes de publicar.";
+                return RedirectToAction(nameof(Questions), new { id });
+            }
         }
-        await _repo.SetPublishedAsync(id, publish);
-        await _audit.WriteAsync("training-publish", "success", Sam(), new { id, publish });
+
+        try
+        {
+            if (publish)
+                await _snapshot.WriteSnapshotAsync(training, questions);
+
+            await _repo.SetPublishedAsync(id, publish);
+            await _audit.WriteAsync("training-publish", "success", Sam(), new { id, publish });
+            TempData["TrainingMessage"] = publish
+                ? $"Treinamento {training.Code} - versao {training.Version} publicado com sucesso."
+                : $"Treinamento {training.Code} - versao {training.Version} despublicado com sucesso.";
+        }
+        catch (Exception ex)
+        {
+            await _audit.WriteAsync("training-publish", "error", Sam(), new { id, publish, error = ex.Message });
+            TempData["TrainingError"] = "Nao foi possivel alterar a publicacao do treinamento: " + ex.Message;
+        }
+
         return RedirectToAction(nameof(Trainings));
     }
 

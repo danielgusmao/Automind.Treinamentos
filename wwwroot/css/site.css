@@ -44,3 +44,5 @@ button,input,select,textarea{font:inherit}a{color:inherit}.app-container{width:m
 /* v0.0.8 - exclusoes permanentes da base de colaboradores */
 .page-head-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.status.excluded{background:#f4edf7;color:var(--purple);white-space:normal;line-height:1.25}.exclusion-add-card{margin-bottom:20px}.exclusion-search{min-width:min(320px,100%)}.exclusion-search label{margin-top:0}.exclusion-search input{margin-top:5px}.empty-state-inline{padding:22px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);background:#fcfafc;text-align:center}.excluded-card td{vertical-align:top}.excluded-card td:nth-child(5){min-width:220px}
 @media(max-width:760px){.page-head-actions{width:100%;justify-content:flex-start}.page-head-actions .btn{flex:1 1 auto;text-align:center}.exclusion-search{width:100%;min-width:0}}
+
+.alert.danger{border:1px solid #efc7cf;background:#fff5f7;color:var(--danger);}
