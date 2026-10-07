@@ -8,32 +8,33 @@
 @if(TempData["TrainingMessage"] is string trainingMessage){<div class="alert info">@trainingMessage</div>}
 <section class="dashboard-hero">
     <div class="dashboard-hero-copy">
-        <span class="eyebrow eyebrow-light">PORTAL DE CAPACITACAO</span>
+        <span class="eyebrow eyebrow-light">PORTAL DE CAPACITAÇÃO</span>
         <h1>Meus treinamentos</h1>
-        <p>Acompanhe treinamentos obrigatorios, conclua os conteudos e mantenha suas evidencias disponiveis em PDF.</p>
+        <p>Acompanhe treinamentos obrigatórios, conclua os conteúdos e mantenha suas evidências disponíveis em PDF.</p>
         <div class="hero-pills">
             <span class="hero-pill">@pending pendente(s)</span>
-            <span class="hero-pill">@done concluido(s)</span>
+            <span class="hero-pill">@done concluído(s)</span>
             <span class="hero-pill">@totalMinutes min estimados pendentes</span>
         </div>
     </div>
     <div class="hero-symbol"><img src="~/images/automind-symbol.png" alt="" /></div>
 </section>
+<div class="page-head training-list-head"><div><span class="eyebrow">CAPACITAÇÃO</span><h2>Treinamentos atribuídos</h2><p>Conteúdos disponíveis para o seu perfil.</p></div></div>
 <div class="training-grid">
 @foreach (var item in Model)
 {
     <article class="card training-card">
         <div class="training-card-body">
             <div class="training-card-top">
-                <span class="status @(item.Completion is null ? "pending" : "done")">@(item.Completion is null ? "PENDENTE" : "CONCLUIDO")</span>
+                <span class="status @(item.Completion is null ? "pending" : "done")">@(item.Completion is null ? "PENDENTE" : "CONCLUÍDO")</span>
                 <span class="meta-chip">@item.Training.Code</span>
             </div>
             <h2>@item.Training.Title</h2>
             <p>@item.Training.Description</p>
             <div class="training-meta">
-                <span class="meta-chip">Versao @item.Training.Version</span>
+                <span class="meta-chip">Versão @item.Training.Version</span>
                 <span class="meta-chip">~ @item.Training.EstimatedMinutes min</span>
-                <span class="meta-chip">Nota minima @item.Training.PassingScore</span>
+                <span class="meta-chip">Nota mínima @item.Training.PassingScore</span>
             </div>
             @if (item.Completion is null)
             {
@@ -41,14 +42,10 @@
             }
             else
             {
-                <div class="done-info">Concluido em @item.Completion.AcceptedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")<br />Nota @item.Completion.Score/@item.Completion.Total &middot; Tempo @item.Completion.DurationLabel</div>
-                <div class="training-card-actions"><a class="btn secondary" asp-action="Evidence" asp-route-trainingId="@item.Training.Id">Baixar comprovante PDF</a></div>
+                <div class="done-info">Concluído em @item.Completion.AcceptedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")<br />Nota @item.Completion.Score/@item.Completion.Total &middot; Tempo @item.Completion.DurationLabel</div>
+                <div class="training-card-actions"><a class="btn secondary" asp-action="Evidence" asp-route-trainingId="@item.Training.Id">Baixar comprovante</a></div>
             }
         </div>
     </article>
-}
-@if (Model.Count == 0)
-{
-    <div class="card"><span class="eyebrow">SEM PENDENCIAS</span><h2>Nenhum treinamento publicado</h2><p class="muted">Quando um novo treinamento for publicado, ele aparecera aqui.</p></div>
 }
 </div>

@@ -1,5 +1,17 @@
 # CHECKPOINT - Automind.Treinamentos
 
+## 2026-10-07 - v0.0.14 - Revisão visual institucional sem alteração de lógica
+
+- Aplicado redesign completo da camada visual baseado no site institucional da Automind.
+- Identidade: linhas retas, sem cantos arredondados, cabeçalho escuro, logo negativa sobre fundos escuros e paleta plum/purple/magenta.
+- Reformulados visualmente login, layout global, catálogo administrativo, lista de treinamentos e treinamento dedicado de Segurança da Informação.
+- Placeholder do usuário no login alterado de `daniel.gusmao` para `nome.sobrenome`.
+- Nenhum arquivo de backend, autorização, autenticação, banco, serviços, controllers, publicação, evidências, Teams ou deploy foi alterado.
+- Rotas, nomes de campos, IDs funcionais e ações Razor foram preservados.
+- JavaScript de validação/quiz do treinamento dedicado permaneceu idêntico.
+- Versão continua **v0.0.14**; trata-se de revisão exclusivamente visual do pacote já validado funcionalmente.
+- Documento: `docs/36-REDESIGN-INSTITUCIONAL-V0.0.14.md`.
+
 ## 2026-10-06 - v0.0.14 - Caminhos curtos das evidencias por colaborador
 
 - Decisao final: manter todas as evidencias de uma pessoa juntas, sem separar fisicamente por treinamento/versao.

@@ -2,7 +2,12 @@
 
 Versao de aplicacao preparada: **v0.0.14**.
 
-Mudanca mais recente: caminhos curtos para evidencias, mantendo a organizacao por colaborador.
+Mudanca mais recente: revisão visual institucional, sem alteração da lógica do sistema.
+
+## Revisão visual institucional - 2026-10-07
+
+A v0.0.14 recebeu uma revisão somente de interface, baseada no site institucional da Automind. A lógica funcional permanece exatamente a mesma. O layout usa geometria reta, cabeçalho escuro com logo negativa e paleta institucional plum/purple/magenta. O exemplo do campo de usuário no login agora é `nome.sobrenome`.
+
 
 
 ## Evidencias - v0.0.14

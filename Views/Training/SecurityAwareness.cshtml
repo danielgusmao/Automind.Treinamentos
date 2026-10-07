@@ -8,17 +8,9 @@
 }
 
 <div class="training-experience">
-    <div class="training-page-toolbar">
-        <a class="training-back" asp-controller="Training" asp-action="Index">&larr; Meus treinamentos</a>
-        <div class="training-toolbar-meta">
-            <span class="meta-chip">@Model.Training.Code</span>
-            <span class="meta-chip">Versao @Model.Training.Version</span>
-            <span class="status pending">EM ANDAMENTO</span>
-        </div>
-    </div>
-
     <section class="training-hero">
         <div class="training-hero-copy">
+            <a class="training-back training-back-on-dark" asp-controller="Training" asp-action="Index">&larr; Meus treinamentos</a>
             <span class="training-eyebrow">Segurança da Informação &middot; LGPD</span>
             <h1>@Model.Training.Title</h1>
             <p>@Model.Training.Description</p>
@@ -29,46 +21,63 @@
                 <span class="training-pill training-timer">Tempo nesta sessão <strong id="elapsedTime">00:00</strong></span>
             </div>
         </div>
-        <div class="training-hero-mark" aria-hidden="true">
-            <img src="~/images/automind-symbol.png" alt="" />
+        <div class="training-hero-side">
+            <div class="training-toolbar-meta">
+                <span class="meta-chip meta-chip-dark">@Model.Training.Code</span>
+                <span class="meta-chip meta-chip-dark">Versão @Model.Training.Version</span>
+                <span class="status pending">EM ANDAMENTO</span>
+            </div>
+            <div class="training-hero-mark" aria-hidden="true">
+                <img src="~/images/automind-symbol.png" alt="" />
+            </div>
         </div>
     </section>
 
     <section class="training-intro-card">
         <div class="training-intro-icon">SI</div>
-        <p>A segurança da informação depende de todos. A maior parte dos incidentes começa por uma ação simples — uma senha fraca, um clique em um link falso, um dado compartilhado sem cuidado. Veja as boas práticas que todo colaborador da AutoMind deve seguir.</p>
+        <div>
+            <span class="training-section-eyebrow">VISÃO GERAL</span>
+            <h2 class="training-block-title">Sobre este treinamento</h2>
+            <p>A segurança da informação depende de todos. A maior parte dos incidentes começa por uma ação simples — uma senha fraca, um clique em um link falso, um dado compartilhado sem cuidado. Veja as boas práticas que todo colaborador da AutoMind deve seguir.</p>
+        </div>
     </section>
 
-    <section class="training-modules">
-        <article class="training-card training-module">
-            <h3><span class="training-tag">1</span> Senhas e Autenticação (MFA)</h3>
-            <ul>
-                <li>Use senhas fortes: longas, com letras, números e símbolos, e difíceis de adivinhar.</li>
-                <li>Nunca reutilize a mesma senha em vários serviços.</li>
-                <li>Não compartilhe sua senha com ninguém — nem com colegas, nem com o suporte.</li>
-                <li>Ative a autenticação multifator (MFA): uma segunda verificação além da senha, que impede o acesso mesmo se a senha vazar.</li>
-                <li>Desconfie de qualquer pedido de senha por e-mail, telefone ou mensagem.</li>
-            </ul>
-        </article>
-        <article class="training-card training-module">
-            <h3><span class="training-tag">2</span> Phishing e Engenharia Social</h3>
-            <ul>
-                <li><strong>Phishing</strong> é a tentativa de enganar você para roubar dados ou credenciais, por e-mail ou mensagem que parece legítima.</li>
-                <li><strong>Sinais de alerta:</strong> urgência exagerada, remetente estranho, erros de português, links suspeitos, pedidos de senha, anexos inesperados.</li>
-                <li><strong>O que fazer:</strong> não clique, não informe dados, não baixe o anexo. Na dúvida, confirme por outro canal e reporte.</li>
-                <li>Um incidente real pode começar exatamente com o comprometimento de uma conta de e-mail.</li>
-            </ul>
-        </article>
-        <article class="training-card training-module">
-            <h3><span class="training-tag">3</span> Dados Pessoais e LGPD</h3>
-            <ul>
-                <li><strong>Dado pessoal</strong> é qualquer informação que identifique uma pessoa: nome, e-mail, telefone, CPF, etc.</li>
-                <li>Trate os dados pessoais com sigilo e use-os apenas para a finalidade do trabalho.</li>
-                <li>Não envie dados pessoais para fora da empresa sem autorização.</li>
-                <li>Os titulares têm direitos (acesso, correção, exclusão) — direcione pedidos ao Encarregado (DPO).</li>
-                <li>Ao perceber um possível incidente, <strong>abra um chamado no TOPDESK imediatamente</strong>.</li>
-            </ul>
-        </article>
+    <section class="training-content-shell">
+        <div class="training-content-heading">
+            <div class="training-intro-icon">01</div>
+            <div><span class="training-section-eyebrow">CONTEÚDO</span><h2 class="training-block-title">Conteúdo do treinamento</h2><p>Leia os módulos abaixo com atenção. Ao final, responda ao quiz para registrar a sua participação.</p></div>
+        </div>
+        <div class="training-modules">
+            <article class="training-card training-module">
+                <h3><span class="training-tag">1</span> Senhas e Autenticação (MFA)</h3>
+                <ul>
+                    <li>Use senhas fortes: longas, com letras, números e símbolos, e difíceis de adivinhar.</li>
+                    <li>Nunca reutilize a mesma senha em vários serviços.</li>
+                    <li>Não compartilhe sua senha com ninguém — nem com colegas, nem com o suporte.</li>
+                    <li>Ative a autenticação multifator (MFA): uma segunda verificação além da senha, que impede o acesso mesmo se a senha vazar.</li>
+                    <li>Desconfie de qualquer pedido de senha por e-mail, telefone ou mensagem.</li>
+                </ul>
+            </article>
+            <article class="training-card training-module">
+                <h3><span class="training-tag">2</span> Phishing e Engenharia Social</h3>
+                <ul>
+                    <li><strong>Phishing</strong> é a tentativa de enganar você para roubar dados ou credenciais, por e-mail ou mensagem que parece legítima.</li>
+                    <li><strong>Sinais de alerta:</strong> urgência exagerada, remetente estranho, erros de português, links suspeitos, pedidos de senha, anexos inesperados.</li>
+                    <li><strong>O que fazer:</strong> não clique, não informe dados, não baixe o anexo. Na dúvida, confirme por outro canal e reporte.</li>
+                    <li>Um incidente real pode começar exatamente com o comprometimento de uma conta de e-mail.</li>
+                </ul>
+            </article>
+            <article class="training-card training-module">
+                <h3><span class="training-tag">3</span> Dados Pessoais e LGPD</h3>
+                <ul>
+                    <li><strong>Dado pessoal</strong> é qualquer informação que identifique uma pessoa: nome, e-mail, telefone, CPF, etc.</li>
+                    <li>Trate os dados pessoais com sigilo e use-os apenas para a finalidade do trabalho.</li>
+                    <li>Não envie dados pessoais para fora da empresa sem autorização.</li>
+                    <li>Os titulares têm direitos (acesso, correção, exclusão) — direcione pedidos ao Encarregado (DPO).</li>
+                    <li>Ao perceber um possível incidente, <strong>abra um chamado no TOPDESK imediatamente</strong>.</li>
+                </ul>
+            </article>
+        </div>
     </section>
 
     <form asp-controller="Training" asp-action="Submit" method="post" id="trainingForm">
@@ -78,11 +87,11 @@
         <section class="training-card training-quiz" id="quiz-card">
             <div class="training-section-heading">
                 <div>
-                    <span class="training-section-eyebrow">Verificação</span>
+                    <span class="training-section-eyebrow">VERIFICAÇÃO</span>
                     <h2>Quiz de fixação</h2>
                     <p>Marque a alternativa correta. E preciso atingir @Model.Training.PassingScore de @Model.Questions.Count questoes para liberar o Termo de Ciencia.</p>
                 </div>
-                <span class="training-validation-badge">VALIDACAO LOCAL + SERVIDOR</span>
+                <span class="training-validation-badge">VALIDAÇÃO LOCAL + SERVIDOR</span>
             </div>
 
             @foreach (var q in Model.Questions)
@@ -114,7 +123,7 @@
         </section>
 
         <section class="training-card training-accept" id="aceiteCard" hidden>
-            <span class="training-section-eyebrow">Registro</span>
+            <span class="training-section-eyebrow">REGISTRO</span>
             <h2>Termo de Ciência e Aceite</h2>
             <p class="training-muted">Declaro que participei do treinamento, que li e compreendi o seu conteudo, e que me comprometo a observar a Politica de Segurança da Informação e as normas internas de protecao de dados da AutoMind.</p>
 

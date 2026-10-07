@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.14 - revisão visual 2026-10-07
+
+- Redesign exclusivamente visual baseado no site institucional da Automind.
+- Removidos cantos arredondados e adotadas linhas retas/geométricas.
+- Logo negativa obrigatória nos fundos escuros.
+- Paleta e blocos de conteúdo alinhados ao padrão institucional.
+- Login passa a exibir `nome.sobrenome` como exemplo de usuário.
+- Backend, regras de acesso, banco, serviços, publicação, quiz, evidências e Teams permanecem inalterados.
+
 ## v0.0.14 - 2026-10-06
 
 - Mantem evidencias individuais organizadas por colaborador e cancela a proposta de separar por treinamento/versao.

@@ -1,19 +1,27 @@
 @model List<Training>
 @{ ViewData["Title"] = "Treinamentos"; }
-<div class="page-head"><div><span class="eyebrow">ADMINISTRACAO</span><h1>Catalogo de treinamentos</h1><p>Gerencie publicacao, edicao, questoes e acompanhamento.</p></div><a class="btn primary" asp-action="CreateTraining">Novo treinamento</a></div>
+<section class="catalog-hero">
+    <div class="catalog-hero-copy">
+        <span class="eyebrow eyebrow-light">ADMINISTRAÇÃO</span>
+        <h1>Catálogo de treinamentos</h1>
+        <p>Gerencie publicação, edição, questões e acompanhamento.</p>
+    </div>
+    <div class="hero-symbol" aria-hidden="true"><img src="~/images/automind-symbol.png" alt="" /></div>
+</section>
+<div class="catalog-action-row"><a class="btn primary" asp-action="CreateTraining"><span class="btn-plus">+</span> Novo treinamento</a></div>
 @if(TempData["TrainingMessage"] is string message){<div class="alert success">@message</div>}
 @if(TempData["TrainingError"] is string error){<div class="alert danger">@error</div>}
-<div class="card"><div class="admin-table-shell"><table><thead><tr><th>Codigo</th><th>Titulo</th><th>Versao</th><th>Tempo</th><th>Status</th><th>Acoes</th></tr></thead><tbody>
+<div class="card catalog-card"><div class="admin-table-shell"><table><thead><tr><th>Código</th><th>Título</th><th>Versão</th><th>Tempo</th><th>Status</th><th>Ações</th></tr></thead><tbody>
 @foreach(var t in Model){
-    var statusText = t.IsArchived ? "Historico" : (t.IsPublished ? "Publicado" : "Rascunho");
+    var statusText = t.IsArchived ? "Histórico" : (t.IsPublished ? "Publicado" : "Rascunho");
     var statusClass = t.IsArchived ? "draft" : (t.IsPublished ? "published" : "draft");
     <tr>
         <td><strong>@t.Code</strong></td><td>@t.Title</td><td>@t.Version</td><td>~ @t.EstimatedMinutes min</td>
         <td><span class="status @statusClass">@statusText</span></td>
         <td><div class="table-actions">
             <a asp-action="EditTraining" asp-route-id="@t.Id">Editar</a>
-            <a asp-action="Questions" asp-route-id="@t.Id">Questoes</a>
-            <a asp-action="Completions" asp-route-id="@t.Id">Concluidos</a>
+            <a asp-action="Questions" asp-route-id="@t.Id">Questões</a>
+            <a asp-action="Completions" asp-route-id="@t.Id">Concluídos</a>
             @if(!t.IsArchived){<a asp-action="Pending" asp-route-id="@t.Id">Pendentes</a>}
             @if(!t.IsArchived && t.IsPublished){<form asp-controller="Admin" asp-action="UnpublishTraining" method="post" class="inline"><input type="hidden" name="id" value="@t.Id"/><button class="link-button" type="submit">Despublicar</button></form>}
             @if(!t.IsArchived && !t.IsPublished){<form asp-controller="Admin" asp-action="PublishTraining" method="post" class="inline"><input type="hidden" name="id" value="@t.Id"/><button class="link-button" type="submit">Publicar</button></form>}

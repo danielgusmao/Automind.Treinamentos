@@ -9,7 +9,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#17121d" />
+    <meta name="theme-color" content="#121019" />
     <title>@ViewData["Title"] - Automind.Treinamentos</title>
     <link rel="icon" type="image/png" href="~/images/automind-symbol.png" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -21,12 +21,12 @@
         <a class="brand" asp-controller="Training" asp-action="Index" aria-label="Automind Treinamentos">
             <img src="~/images/automind-logo-negative.png" alt="Automind - Simple Smart Reliable" />
         </a>
-        <nav class="main-nav" aria-label="Navegacao principal">
+        <nav class="main-nav" aria-label="Navegação principal">
             <a class="@(controller == "Training" ? "active" : "")" asp-controller="Training" asp-action="Index">Meus treinamentos</a>
             @if (isAdmin)
             {
-                <a class="@(controller == "Admin" ? "active" : "")" asp-controller="Admin" asp-action="Index">Administracao</a>
-                <a asp-controller="Admin" asp-action="DirectoryExclusions">Exclusoes</a>
+                <a class="@(controller == "Admin" ? "active" : "")" asp-controller="Admin" asp-action="Index">Administração</a>
+                <a asp-controller="Admin" asp-action="DirectoryExclusions">Exclusões</a>
             }
         </nav>
         <div class="top-actions">
