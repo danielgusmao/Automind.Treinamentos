@@ -26,7 +26,7 @@ public sealed class TrainingDb
         var connection = new SqliteConnection(cs);
         connection.Open();
         using var pragma = connection.CreateCommand();
-        pragma.CommandText = "PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;";
+        pragma.CommandText = "PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;";
         pragma.ExecuteNonQuery();
         return connection;
     }

@@ -1,5 +1,28 @@
 # CHECKPOINT - Automind.Treinamentos
 
+## 2026-10-08 - v0.0.15 - Hardening, consistencia, performance e limpeza
+
+- Pacote baseado na v0.0.14 com layout institucional preservado.
+- Logica funcional do portal mantida; alteracoes concentradas em seguranca, consistencia, validacao, observabilidade, performance e limpeza de codigo.
+- Rate limit adicionado ao login.
+- Sessao de usuario comum revalida conta habilitada/elegivel no AD em cache curto de 2 minutos.
+- Autorizacao administrativa continua em `_treinamentos`, server-side, com membership revalidada e fail-closed.
+- Timeouts LDAP e caches curtos reduzem consultas repetidas.
+- Quiz passa a rejeitar respostas incompletas, IDs desconhecidos e indices invalidos no servidor.
+- Gabarito nao e mais enviado no HTML do treinamento dedicado.
+- Conclusao/PDF nao e desfeita por falha posterior de auditoria.
+- Snapshot e validado contra o estado atual e escrito atomicamente.
+- SQLite recebe UNIQUE `Code+Version`, triggers de integridade, indices adicionais e `SchemaMigrations`.
+- PDF usa versao real do assembly.
+- Auditoria diaria com retencao configuravel e correlation id.
+- `/health` adicionado.
+- App Pool perde escrita em `Backup`; script de servidor cria backup SQLite antes da atualizacao.
+- N+1 removido da pagina inicial e do total de conclusoes do dashboard.
+- Removidos metodos/model legado sem consumidores e atributo HttpPost duplicado.
+- PDF consolidado persistente agora usa POST + antiforgery.
+- SSL/HTTPS continua PENDENTE por ausencia de certificado; URL e cookies continuam HTTP nesta versao por decisao operacional.
+- Documentos: `docs/37-HARDENING-E-OTIMIZACOES-V0.0.15.md` e `docs/38-TESTE-V0.0.15.md`.
+
 ## 2026-10-07 - v0.0.14 - Revisão visual institucional sem alteração de lógica
 
 - Aplicado redesign completo da camada visual baseado no site institucional da Automind.

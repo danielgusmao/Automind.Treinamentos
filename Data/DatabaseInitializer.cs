@@ -22,6 +22,12 @@ public sealed class DatabaseInitializer
     {
         _storage.EnsureDirectories();
         using var connection = _db.OpenConnection();
+        using (var databasePragmas = connection.CreateCommand())
+        {
+            databasePragmas.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;";
+            await databasePragmas.ExecuteNonQueryAsync();
+        }
+
         using (var command = connection.CreateCommand())
         {
             command.CommandText = @"
@@ -124,6 +130,9 @@ CREATE INDEX IF NOT EXISTS IX_DirectoryExclusions_Email ON DirectoryExclusions(E
             familySlug.CommandText = "UPDATE Trainings SET FamilySlug=Slug WHERE trim(coalesce(FamilySlug,''))='';";
             await familySlug.ExecuteNonQueryAsync();
         }
+
+        // v0.0.15: hardening de integridade e registro explicito da migration aplicada.
+        await ApplyV015SchemaHardeningAsync(connection);
 
         // v0.0.8: converte as exclusoes antigas por treinamento em uma lista permanente
         // aplicavel a todos os treinamentos. A tabela legada e preservada apenas para historico/rollback.
@@ -310,6 +319,79 @@ WHERE trim(coalesce(c.EvidencePdfPath,'')) <> '';";
                 // Limpeza de pasta vazia e opcional; a evidencia e o caminho do banco ja foram preservados.
             }
         }
+    }
+
+    private static async Task ApplyV015SchemaHardeningAsync(SqliteConnection connection)
+    {
+        using (var migrations = connection.CreateCommand())
+        {
+            migrations.CommandText = @"
+CREATE TABLE IF NOT EXISTS SchemaMigrations (
+    Version TEXT PRIMARY KEY,
+    AppliedAtUtc TEXT NOT NULL
+);";
+            await migrations.ExecuteNonQueryAsync();
+        }
+
+        using (var duplicate = connection.CreateCommand())
+        {
+            duplicate.CommandText = @"
+SELECT Code, Version, COUNT(*)
+FROM Trainings
+GROUP BY lower(Code), lower(Version)
+HAVING COUNT(*) > 1
+LIMIT 1;";
+            using var reader = await duplicate.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+                throw new InvalidOperationException($"Banco possui duplicidade de treinamento para codigo '{reader.GetString(0)}' e versao '{reader.GetString(1)}'. Corrija antes de aplicar v0.0.15.");
+        }
+
+        using (var hardening = connection.CreateCommand())
+        {
+            hardening.CommandText = @"
+CREATE UNIQUE INDEX IF NOT EXISTS UX_Trainings_Code_Version
+ON Trainings(Code COLLATE NOCASE, Version COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS IX_Trainings_Published_Archived
+ON Trainings(IsPublished, IsArchived, Title);
+CREATE INDEX IF NOT EXISTS IX_TrainingCompletions_Sam_Training
+ON TrainingCompletions(SamAccountName COLLATE NOCASE, TrainingId);
+
+CREATE TRIGGER IF NOT EXISTS TR_Trainings_Validate_Insert
+BEFORE INSERT ON Trainings
+WHEN NEW.PassingScore < 1 OR NEW.EstimatedMinutes < 1 OR NEW.EstimatedMinutes > 480
+  OR NEW.IsPublished NOT IN (0,1) OR NEW.IsArchived NOT IN (0,1) OR NEW.RequiredForAll NOT IN (0,1)
+BEGIN SELECT RAISE(ABORT, 'Treinamento com valores invalidos.'); END;
+
+CREATE TRIGGER IF NOT EXISTS TR_Trainings_Validate_Update
+BEFORE UPDATE ON Trainings
+WHEN NEW.PassingScore < 1 OR NEW.EstimatedMinutes < 1 OR NEW.EstimatedMinutes > 480
+  OR NEW.IsPublished NOT IN (0,1) OR NEW.IsArchived NOT IN (0,1) OR NEW.RequiredForAll NOT IN (0,1)
+BEGIN SELECT RAISE(ABORT, 'Treinamento com valores invalidos.'); END;
+
+CREATE TRIGGER IF NOT EXISTS TR_Questions_Validate_Insert
+BEFORE INSERT ON TrainingQuestions
+WHEN NEW.Position < 1 OR NEW.CorrectIndex < 0 OR json_valid(NEW.OptionsJson)=0
+  OR json_array_length(NEW.OptionsJson) < 2 OR NEW.CorrectIndex >= json_array_length(NEW.OptionsJson)
+BEGIN SELECT RAISE(ABORT, 'Questao com valores invalidos.'); END;
+
+CREATE TRIGGER IF NOT EXISTS TR_Questions_Validate_Update
+BEFORE UPDATE ON TrainingQuestions
+WHEN NEW.Position < 1 OR NEW.CorrectIndex < 0 OR json_valid(NEW.OptionsJson)=0
+  OR json_array_length(NEW.OptionsJson) < 2 OR NEW.CorrectIndex >= json_array_length(NEW.OptionsJson)
+BEGIN SELECT RAISE(ABORT, 'Questao com valores invalidos.'); END;
+
+CREATE TRIGGER IF NOT EXISTS TR_Completions_Validate_Insert
+BEFORE INSERT ON TrainingCompletions
+WHEN NEW.Score < 0 OR NEW.Total < 1 OR NEW.Score > NEW.Total OR NEW.DurationSeconds < 0
+BEGIN SELECT RAISE(ABORT, 'Conclusao com valores invalidos.'); END;
+";
+            await hardening.ExecuteNonQueryAsync();
+        }
+
+        using var mark = connection.CreateCommand();
+        mark.CommandText = "INSERT OR IGNORE INTO SchemaMigrations(Version, AppliedAtUtc) VALUES('0.0.15', $now);";
+        mark.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
+        await mark.ExecuteNonQueryAsync();
     }
 
     private static async Task EnsureColumnAsync(SqliteConnection connection, string table, string column, string definition)

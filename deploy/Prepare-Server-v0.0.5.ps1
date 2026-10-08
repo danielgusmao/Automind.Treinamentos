@@ -26,8 +26,7 @@ $writeFolders = @(
     (Join-Path $root 'Data'),
     (Join-Path $root 'Treinamentos'),
     (Join-Path $root 'Evidencias'),
-    (Join-Path $root 'Logs'),
-    (Join-Path $root 'Backup')
+    (Join-Path $root 'Logs')
 )
 
 if (-not (Test-Path "IIS:\AppPools\$targetPool")) {
@@ -69,12 +68,28 @@ try {
         }
     }
 
+    # Backup operacional antes da atualizacao. Executado pela identidade administrativa do Release,
+    # nunca pela identidade do processo web.
+    $dbPath = Join-Path $root 'Data\Automind.Treinamentos.db'
+    $backupDir = Join-Path $root 'Backup'
+    if (Test-Path $dbPath) {
+        $backupSet = Join-Path $backupDir (Get-Date -Format 'yyyyMMdd-HHmmss')
+        New-Item -ItemType Directory -Path $backupSet -Force | Out-Null
+        Get-ChildItem -Path ($dbPath + '*') -File -ErrorAction SilentlyContinue | ForEach-Object {
+            Copy-Item -LiteralPath $_.FullName -Destination $backupSet -Force
+        }
+        Write-Host "Backup consistente do conjunto SQLite criado antes da atualizacao: $backupSet"
+    }
+
     foreach ($folder in $writeFolders) {
         & icacls.exe $folder /grant "${appPoolIdentity}:(OI)(CI)M" /T /C | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "Falha ao aplicar ACL em '$folder'."
         }
     }
+
+    # Menor privilegio: o App Pool nao deve alterar os backups usados para recuperacao.
+    & icacls.exe $backupDir /remove:g $appPoolIdentity /T /C | Out-Null
 
     $sourceFilter = "system.applicationHost/applicationPools/add[@name='$sourcePool']/environmentVariables/add[@name='$secretName']"
     $sourceProperty = Get-WebConfigurationProperty -PSPath $psPath -Filter $sourceFilter -Name 'value' -ErrorAction Stop
@@ -106,7 +121,7 @@ try {
     }
 
     Write-Host 'Estrutura criada e dados legados copiados.'
-    Write-Host 'ACLs de escrita aplicadas somente nas pastas persistentes.'
+    Write-Host 'ACLs de escrita aplicadas somente onde o processo web precisa gravar; Backup permanece fora do escopo de escrita do App Pool.'
     Write-Host 'Webhook Teams copiado do CadastroColaboradores sem exibir o segredo.'
     Write-Host 'Web\App_Data foi preservado para rollback e nao foi removido.'
 }

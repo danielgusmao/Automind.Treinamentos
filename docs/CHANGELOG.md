@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.0.15 - 2026-10-08
+
+- Hardening de login, sessao AD, headers e webhook Teams.
+- Validacao server-side reforcada no quiz e nos campos administrativos.
+- Snapshot/evidencia mais consistentes e escrita atomica.
+- Integridade SQLite reforcada com indice unico, triggers e registro de migration.
+- Auditoria diaria, correlation id e health check.
+- Otimizacoes de consultas SQLite/AD e remocao de codigo legado sem uso.
+- Backup pre-deploy e menor privilegio para a pasta Backup.
+- PDF consolidado via POST + antiforgery.
+- HTTPS permanece pendente por ausencia de certificado.
+
 ## v0.0.14 - revisão visual 2026-10-07
 
 - Redesign exclusivamente visual baseado no site institucional da Automind.

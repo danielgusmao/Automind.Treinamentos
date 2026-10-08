@@ -1,8 +1,13 @@
 # CONTEXTO ATUAL - Automind.Treinamentos
 
-Versao de aplicacao preparada: **v0.0.14**.
+Versao de aplicacao preparada: **v0.0.15**.
 
-Mudanca mais recente: revisão visual institucional, sem alteração da lógica do sistema.
+## v0.0.15 - estado atual
+
+A v0.0.15 preserva o layout institucional e as regras funcionais da v0.0.14, adicionando hardening, validacao, consistencia de evidencias, performance, observabilidade e limpeza de codigo. O unico item da auditoria deliberadamente nao ativado e HTTPS/TLS, porque o servidor ainda nao possui certificado.
+
+
+Mudanca mais recente: hardening, consistencia de evidencias, performance, observabilidade e limpeza de codigo na v0.0.15; HTTPS permanece pendente por ausencia de certificado.
 
 ## Revisão visual institucional - 2026-10-07
 

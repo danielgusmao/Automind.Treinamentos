@@ -1,25 +1,29 @@
 using System.DirectoryServices;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace Automind.Treinamentos.Services;
 
 /// <summary>
-/// Consulta a autorizacao administrativa diretamente no LDAP a cada requisicao.
-/// Nenhuma decisao de privilegio e persistida em cookie ou sessao.
+/// Revalida a autorizacao administrativa diretamente no LDAP.
+/// A decisao de membership nunca e persistida em cookie/sessao.
+/// Apenas o DN do grupo e cacheado por curto periodo para evitar pesquisa redundante.
 /// </summary>
 public sealed class AdAdminAuthorizationService
 {
     private const string MatchingRuleInChain = "1.2.840.113556.1.4.1941";
-
     private readonly ActiveDirectoryOptions _options;
     private readonly ILogger<AdAdminAuthorizationService> _logger;
+    private readonly IMemoryCache _cache;
 
     public AdAdminAuthorizationService(
         IOptions<ActiveDirectoryOptions> options,
-        ILogger<AdAdminAuthorizationService> logger)
+        ILogger<AdAdminAuthorizationService> logger,
+        IMemoryCache cache)
     {
         _options = options.Value;
         _logger = logger;
+        _cache = cache;
     }
 
     public bool IsInAdminGroup(string samAccountName)
@@ -31,8 +35,14 @@ public sealed class AdAdminAuthorizationService
         try
         {
             using var root = CreateDirectoryRoot();
+            var cacheKey = $"ad-admin-group-dn:{_options.AdminGroup.ToLowerInvariant()}:{GetLdapTarget().ToLowerInvariant()}";
+            if (!_cache.TryGetValue(cacheKey, out string? groupDn) || string.IsNullOrWhiteSpace(groupDn))
+            {
+                groupDn = FindGroupDistinguishedName(root, _options.AdminGroup);
+                if (!string.IsNullOrWhiteSpace(groupDn))
+                    _cache.Set(cacheKey, groupDn, TimeSpan.FromMinutes(5));
+            }
 
-            var groupDn = FindGroupDistinguishedName(root, _options.AdminGroup);
             if (string.IsNullOrWhiteSpace(groupDn))
             {
                 _logger.LogWarning(
@@ -42,12 +52,12 @@ public sealed class AdAdminAuthorizationService
                 return false;
             }
 
-            // Consulta o AD diretamente, em vez de usar GetAuthorizationGroups/tokenGroups.
-            // O matching rule in chain contempla membership direta e grupos aninhados.
             using var searcher = new DirectorySearcher(root)
             {
                 SearchScope = SearchScope.Subtree,
                 PageSize = 1,
+                ClientTimeout = TimeSpan.FromSeconds(10),
+                ServerTimeLimit = TimeSpan.FromSeconds(10),
                 Filter =
                     $"(&(objectCategory=person)(objectClass=user)" +
                     $"(sAMAccountName={EscapeLdapFilter(sam)})" +
@@ -55,12 +65,10 @@ public sealed class AdAdminAuthorizationService
                     $"(memberOf:{MatchingRuleInChain}:={EscapeLdapFilter(groupDn)}))"
             };
             searcher.PropertiesToLoad.Add("distinguishedName");
-
             return searcher.FindOne() is not null;
         }
         catch (Exception ex)
         {
-            // Autorizacao administrativa sempre falha fechada.
             _logger.LogWarning(
                 ex,
                 "Falha ao revalidar no AD o grupo administrativo {AdminGroup} para {SamAccountName} usando {LdapTarget}.",
@@ -88,6 +96,8 @@ public sealed class AdAdminAuthorizationService
         {
             SearchScope = SearchScope.Subtree,
             PageSize = 1,
+            ClientTimeout = TimeSpan.FromSeconds(10),
+            ServerTimeLimit = TimeSpan.FromSeconds(10),
             Filter = $"(&(objectCategory=group)(sAMAccountName={EscapeLdapFilter(groupSamAccountName)}))"
         };
         searcher.PropertiesToLoad.Add("distinguishedName");

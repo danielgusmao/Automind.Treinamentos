@@ -17,8 +17,9 @@ public sealed class AdminController : Controller
     private readonly AuditService _audit;
     private readonly TeamsWebhookService _teams;
     private readonly PortalOptions _portal;
+    private readonly ILogger<AdminController> _logger;
 
-    public AdminController(TrainingRepository repo, AdDirectoryService ad, TrainingSnapshotService snapshot, EvidenceService evidence, AuditService audit, TeamsWebhookService teams, IOptions<PortalOptions> portal)
+    public AdminController(TrainingRepository repo, AdDirectoryService ad, TrainingSnapshotService snapshot, EvidenceService evidence, AuditService audit, TeamsWebhookService teams, IOptions<PortalOptions> portal, ILogger<AdminController> logger)
     {
         _repo = repo;
         _ad = ad;
@@ -27,14 +28,14 @@ public sealed class AdminController : Controller
         _audit = audit;
         _teams = teams;
         _portal = portal.Value;
+        _logger = logger;
     }
 
     public async Task<IActionResult> Index()
     {
         var trainings = await _repo.GetAllTrainingsAsync();
         var published = trainings.Count(x => x.IsPublished);
-        var completionCount = 0;
-        foreach (var t in trainings) completionCount += (await _repo.GetCompletionsAsync(t.Id)).Count;
+        var completionCount = await _repo.GetTotalCompletionCountAsync();
         ViewBag.Published = published;
         ViewBag.Completions = completionCount;
 
@@ -48,7 +49,11 @@ public sealed class AdminController : Controller
             ViewBag.EligibleAdUsers = users.Count(u => !excludedSams.Contains(u.SamAccountName) && !excludedEmails.Contains(u.Email));
             ViewBag.TotalAdUsers = users.Count;
         }
-        catch (Exception ex) { ViewBag.AdError = ex.Message; }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao consultar usuarios elegiveis no AD para dashboard.");
+            ViewBag.AdError = "Nao foi possivel consultar o Active Directory.";
+        }
         return View(trainings);
     }
 
@@ -62,6 +67,11 @@ public sealed class AdminController : Controller
     public async Task<IActionResult> CreateTraining(AdminTrainingCreateViewModel model)
     {
         if (!ModelState.IsValid) return View(model);
+        if (await _repo.TrainingVersionExistsAsync(model.Code, model.Version))
+        {
+            ModelState.AddModelError(nameof(model.Version), $"A versao {model.Version} ja existe para o codigo {model.Code}.");
+            return View(model);
+        }
         try
         {
             var id = await _repo.CreateTrainingAsync(model, Sam());
@@ -70,7 +80,8 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("", "Não foi possível cadastrar. Verifique se o slug já existe. " + ex.Message);
+            _logger.LogWarning(ex, "Falha ao criar treinamento {Code} {Version}.", model.Code, model.Version);
+            ModelState.AddModelError("", "Nao foi possivel cadastrar. Verifique codigo, versao e slug informados.");
             return View(model);
         }
     }
@@ -174,8 +185,7 @@ public sealed class AdminController : Controller
 
             await _repo.UpdateTrainingAsync(model);
             var updated = await _repo.GetTrainingAsync(training.Id);
-            if (updated?.IsPublished == true)
-                await _snapshot.WriteSnapshotAsync(updated, await _repo.GetQuestionsAsync(updated.Id));
+            await RefreshPublishedSnapshotBestEffortAsync(updated);
 
             await _audit.WriteAsync("training-edit", "success", Sam(), new
             {
@@ -190,7 +200,8 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("", "Nao foi possivel salvar o treinamento. " + ex.Message);
+            _logger.LogWarning(ex, "Falha ao editar treinamento {TrainingId}.", model.Id);
+            ModelState.AddModelError("", "Nao foi possivel salvar o treinamento. Consulte a TI se o problema persistir.");
             return View(model);
         }
     }
@@ -231,8 +242,7 @@ public sealed class AdminController : Controller
         }
         await _repo.AddQuestionAsync(model);
         var updatedTraining = await _repo.GetTrainingAsync(model.TrainingId);
-        if (updatedTraining?.IsPublished == true)
-            await _snapshot.WriteSnapshotAsync(updatedTraining, await _repo.GetQuestionsAsync(model.TrainingId));
+        await RefreshPublishedSnapshotBestEffortAsync(updatedTraining);
         await _audit.WriteAsync("training-question-add", "success", Sam(), new { model.TrainingId, model.Text });
         return RedirectToAction(nameof(Questions), new { id = model.TrainingId });
     }
@@ -280,8 +290,7 @@ public sealed class AdminController : Controller
         }
 
         await _repo.UpdateQuestionAsync(model);
-        if (training.IsPublished)
-            await _snapshot.WriteSnapshotAsync(training, await _repo.GetQuestionsAsync(training.Id));
+        await RefreshPublishedSnapshotBestEffortAsync(training);
         await _audit.WriteAsync("training-question-edit", "success", Sam(), new { model.TrainingId, model.QuestionId, model.Text });
         TempData["Message"] = "Questao atualizada com sucesso.";
         return RedirectToAction(nameof(Questions), new { id = model.TrainingId });
@@ -300,8 +309,7 @@ public sealed class AdminController : Controller
         }
         await _repo.DeleteQuestionAsync(trainingId, questionId);
         var updatedTraining = await _repo.GetTrainingAsync(trainingId);
-        if (updatedTraining?.IsPublished == true)
-            await _snapshot.WriteSnapshotAsync(updatedTraining, await _repo.GetQuestionsAsync(trainingId));
+        await RefreshPublishedSnapshotBestEffortAsync(updatedTraining);
         await _audit.WriteAsync("training-question-delete", "success", Sam(), new { trainingId, questionId });
         return RedirectToAction(nameof(Questions), new { id = trainingId });
     }
@@ -347,8 +355,9 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            await _audit.WriteAsync("training-publish", "error", Sam(), new { id, publish = true, error = ex.Message });
-            TempData["TrainingError"] = "Nao foi possivel publicar o treinamento: " + ex.Message;
+            _logger.LogWarning(ex, "Falha ao publicar treinamento {TrainingId}.", id);
+            await _audit.WriteAsync("training-publish", "error", Sam(), new { id, publish = true, error = ex.GetType().Name, code = ex.HResult });
+            TempData["TrainingError"] = "Nao foi possivel publicar o treinamento. Consulte a TI se o problema persistir.";
         }
 
         return RedirectToAction(nameof(Trainings));
@@ -381,8 +390,9 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            await _audit.WriteAsync("training-unpublish", "error", Sam(), new { id, publish = false, error = ex.Message });
-            TempData["TrainingError"] = "Nao foi possivel despublicar o treinamento: " + ex.Message;
+            _logger.LogWarning(ex, "Falha ao despublicar treinamento {TrainingId}.", id);
+            await _audit.WriteAsync("training-unpublish", "error", Sam(), new { id, publish = false, error = ex.GetType().Name, code = ex.HResult });
+            TempData["TrainingError"] = "Nao foi possivel despublicar o treinamento. Consulte a TI se o problema persistir.";
         }
 
         return RedirectToAction(nameof(Trainings));
@@ -431,7 +441,8 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            ViewBag.AdError = ex.Message;
+            _logger.LogWarning(ex, "Falha ao consultar usuarios elegiveis no AD.");
+            ViewBag.AdError = "Nao foi possivel consultar o Active Directory.";
             return View(new List<PendingUserViewModel>());
         }
     }
@@ -525,7 +536,8 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            TempData["DirectoryExclusionError"] = "Nao foi possivel consultar o AD: " + ex.Message;
+            _logger.LogWarning(ex, "Falha ao consultar AD para exclusao permanente.");
+            TempData["DirectoryExclusionError"] = "Nao foi possivel consultar o Active Directory.";
         }
         return RedirectToAction(nameof(DirectoryExclusions));
     }
@@ -617,7 +629,8 @@ public sealed class AdminController : Controller
         return RedirectToAction(nameof(Pending), new { id = trainingId });
     }
 
-    [HttpGet]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConsolidatedPdf(long id)
     {
         var training = await _repo.GetTrainingAsync(id);
@@ -634,6 +647,20 @@ public sealed class AdminController : Controller
         var c = await _repo.GetCompletionAsync(trainingId, sam);
         if (c is null || !System.IO.File.Exists(c.EvidencePdfPath)) return NotFound();
         return PhysicalFile(c.EvidencePdfPath, "application/pdf", Path.GetFileName(c.EvidencePdfPath));
+    }
+
+    private async Task RefreshPublishedSnapshotBestEffortAsync(Training? training)
+    {
+        if (training?.IsPublished != true) return;
+        try
+        {
+            await _snapshot.WriteSnapshotAsync(training, await _repo.GetQuestionsAsync(training.Id));
+        }
+        catch (Exception ex)
+        {
+            // O banco e a fonte autoritativa. Na conclusao, EvidenceService valida/reconstroi o snapshot.
+            _logger.LogWarning(ex, "Treinamento {TrainingId} foi atualizado, mas o refresh imediato do snapshot falhou.", training.Id);
+        }
     }
 
     private static string NormalizeExclusionCategory(string? category)

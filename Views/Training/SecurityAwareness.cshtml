@@ -96,7 +96,7 @@
 
             @foreach (var q in Model.Questions)
             {
-                <div class="training-question" data-qid="@q.Id" data-correct="@q.CorrectIndex">
+                <div class="training-question" data-qid="@q.Id">
                     <div class="training-question-text">@q.Position. @q.Text</div>
                     <div class="training-options">
                         @for (var oi = 0; oi < q.Options.Count; oi++)
@@ -159,7 +159,7 @@
 <script>
 (function(){
   "use strict";
-  var passed=false;
+  var ready=false;
   var qs=Array.prototype.slice.call(document.querySelectorAll(".training-question"));
   var btn=document.getElementById("checkBtn"),res=document.getElementById("quizResult"),ac=document.getElementById("aceiteCard");
   var started=Date.parse("@startedAtIso");
@@ -167,23 +167,17 @@
   function tick(){var s=Math.max(0,Math.floor((Date.now()-started)/1000));var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;elapsed.textContent=(h>0?String(h).padStart(2,"0")+":":"")+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");}
   tick();setInterval(tick,1000);
   btn.addEventListener("click",function(){
-    var correct=0,answered=0;
-    document.querySelectorAll(".training-option").forEach(function(o){o.classList.remove("correct","wrong")});
-    qs.forEach(function(q){
-      var expected=parseInt(q.getAttribute("data-correct"),10),selected=q.querySelector('input[type="radio"]:checked');
-      if(!selected)return;
-      answered++;
-      var selectedIndex=parseInt(selected.value,10),chosen=q.querySelector('.training-option[data-o="'+selectedIndex+'"]'),right=q.querySelector('.training-option[data-o="'+expected+'"]');
-      if(selectedIndex===expected){correct++;if(chosen)chosen.classList.add("correct");}
-      else{if(chosen)chosen.classList.add("wrong");if(right)right.classList.add("correct");}
-    });
+    var answered=qs.filter(function(q){return q.querySelector('input[type="radio"]:checked');}).length;
     res.hidden=false;
-    if(answered<qs.length){passed=false;res.className="training-result no";res.textContent="Responda todas as questões ("+answered+"/"+qs.length+").";ac.hidden=true;return;}
-    if(correct>=@Model.Training.PassingScore){passed=true;res.className="training-result ok";res.textContent="Você acertou "+correct+" de "+qs.length+". O Termo de Ciência foi liberado.";ac.hidden=false;ac.scrollIntoView({behavior:"smooth",block:"start"});}
-    else{passed=false;res.className="training-result no";res.textContent="Você acertou "+correct+" de "+qs.length+". Revise os itens destacados e tente novamente.";ac.hidden=true;}
+    if(answered<qs.length){ready=false;res.className="training-result no";res.textContent="Responda todas as questões ("+answered+"/"+qs.length+").";ac.hidden=true;return;}
+    ready=true;
+    res.className="training-result ok";
+    res.textContent="Todas as questões foram respondidas. O servidor validará a nota ao registrar o aceite.";
+    ac.hidden=false;
+    ac.scrollIntoView({behavior:"smooth",block:"start"});
   });
   document.getElementById("trainingForm").addEventListener("submit",function(ev){
-    if(!passed){ev.preventDefault();res.hidden=false;res.className="training-result no";res.textContent="Verifique o quiz e alcance a nota mínima antes de registrar o aceite.";document.getElementById("quiz-card").scrollIntoView({behavior:"smooth"});}
+    if(!ready){ev.preventDefault();res.hidden=false;res.className="training-result no";res.textContent="Responda todas as questões antes de registrar o aceite.";document.getElementById("quiz-card").scrollIntoView({behavior:"smooth"});}
   });
 })();
 </script>

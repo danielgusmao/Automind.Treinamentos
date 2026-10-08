@@ -1,10 +1,23 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.14**
+Versao: **v0.0.15**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF, acompanhamento de pendencias no Active Directory e comunicacao via Teams.
 
-## Destaques acumulados da v0.0.14
+## Destaques da v0.0.15
+
+- hardening de login e sessao AD;
+- rate limit no login;
+- validacao server-side reforcada do quiz;
+- snapshots validados/atomicos;
+- integridade SQLite reforcada;
+- auditoria diaria com correlation id;
+- health check `/health`;
+- consultas AD/SQLite otimizadas;
+- menor privilegio na pasta Backup;
+- limpeza de codigo legado sem uso;
+- HTTPS continua pendente ate existir certificado.
+
 
 - administracao autorizada exclusivamente pelo grupo AD `_treinamentos`;
 - role administrativa nao e persistida em cookie nem em sessao;
@@ -123,6 +136,9 @@ Comece por `docs/00-CHECKPOINT.md`.
 - teste v0.0.13: `docs/33-TESTE-V0.0.13.md`.
 - nome dos PDFs v0.0.14: `docs/34-NOME-PDF-EVIDENCIAS-V0.0.14.md`;
 - teste v0.0.14: `docs/35-TESTE-V0.0.14.md`.
+- hardening/otimizacoes v0.0.15: `docs/37-HARDENING-E-OTIMIZACOES-V0.0.15.md`;
+- teste v0.0.15: `docs/38-TESTE-V0.0.15.md`;
+- status da auditoria: `docs/39-STATUS-AUDITORIA-POS-V0.0.15.md`.
 
 
 ## Autorizacao administrativa

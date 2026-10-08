@@ -1,20 +1,27 @@
 using System.DirectoryServices;
 using Automind.Treinamentos.Models;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace Automind.Treinamentos.Services;
 
 public sealed class AdDirectoryService
 {
+    private const string CacheKey = "ad-eligible-users";
     private readonly ActiveDirectoryOptions _options;
+    private readonly IMemoryCache _cache;
 
-    public AdDirectoryService(IOptions<ActiveDirectoryOptions> options)
+    public AdDirectoryService(IOptions<ActiveDirectoryOptions> options, IMemoryCache cache)
     {
         _options = options.Value;
+        _cache = cache;
     }
 
     public Task<List<AdUser>> GetEligibleUsersAsync()
     {
+        if (_cache.TryGetValue(CacheKey, out List<AdUser>? cached) && cached is not null)
+            return Task.FromResult(cached.Select(Clone).ToList());
+
         return Task.Run(() =>
         {
             var result = new List<AdUser>();
@@ -23,12 +30,15 @@ public sealed class AdDirectoryService
             {
                 Filter = $"(&(objectCategory=person)(objectClass=user)(mail=*{EscapeLdapFilter(_options.AllowedMailSuffix)})(!(userAccountControl:1.2.840.113556.1.4.803:=2)))",
                 PageSize = 1000,
-                SearchScope = SearchScope.Subtree
+                SearchScope = SearchScope.Subtree,
+                ClientTimeout = TimeSpan.FromSeconds(10),
+                ServerTimeLimit = TimeSpan.FromSeconds(10)
             };
             foreach (var p in new[] { "sAMAccountName", "displayName", "mail", "title", "department" })
                 searcher.PropertiesToLoad.Add(p);
 
-            foreach (SearchResult item in searcher.FindAll())
+            using var found = searcher.FindAll();
+            foreach (SearchResult item in found)
             {
                 var sam = First(item, "sAMAccountName");
                 var mail = First(item, "mail");
@@ -45,16 +55,27 @@ public sealed class AdDirectoryService
                 });
             }
 
-            return result.OrderBy(x => x.DisplayName, StringComparer.CurrentCultureIgnoreCase).ToList();
+            var ordered = result.OrderBy(x => x.DisplayName, StringComparer.CurrentCultureIgnoreCase).ToList();
+            _cache.Set(CacheKey, ordered.Select(Clone).ToList(), TimeSpan.FromMinutes(1));
+            return ordered;
         });
     }
 
+    private static AdUser Clone(AdUser user) => new()
+    {
+        SamAccountName = user.SamAccountName,
+        DisplayName = user.DisplayName,
+        Email = user.Email,
+        JobTitle = user.JobTitle,
+        Department = user.Department
+    };
+
     private static string First(SearchResult r, string name) =>
         r.Properties.Contains(name) && r.Properties[name].Count > 0
-            ? r.Properties[name][0]?.ToString() ?? ""
-            : "";
+            ? r.Properties[name][0]?.ToString() ?? string.Empty
+            : string.Empty;
 
-    private static string EscapeLdapFilter(string value) => value
+    private static string EscapeLdapFilter(string value) => (value ?? string.Empty)
         .Replace("\\", "\\5c")
         .Replace("*", "\\2a")
         .Replace("(", "\\28")

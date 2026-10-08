@@ -7,3 +7,8 @@ App_Data/
 *.db
 *.db-shm
 *.db-wal
+.env
+.env.*
+secrets.json
+*.pfx
+*.p12

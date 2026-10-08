@@ -9,7 +9,10 @@ public sealed class TeamsWebhookService(
     ILogger<TeamsWebhookService> logger)
 {
     private string WebhookUrl => configuration["Automind:Teams:WebhookUrl"]?.Trim() ?? string.Empty;
-    public bool IsConfigured => configuration.GetValue("Automind:Teams:Enabled", true) && Uri.TryCreate(WebhookUrl, UriKind.Absolute, out _);
+    public bool IsConfigured =>
+        configuration.GetValue("Automind:Teams:Enabled", true) &&
+        Uri.TryCreate(WebhookUrl, UriKind.Absolute, out var uri) &&
+        string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
 
     public async Task<TeamsSendResult> SendTrainingReminderAsync(
         string recipient,

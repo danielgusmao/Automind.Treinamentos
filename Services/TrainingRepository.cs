@@ -14,15 +14,43 @@ public sealed class TrainingRepository
         _db = db;
     }
 
-    public async Task<List<Training>> GetPublishedTrainingsAsync()
+    public async Task<List<TrainingListItemViewModel>> GetPublishedTrainingItemsAsync(string sam)
+    {
+        using var c = _db.OpenConnection();
+        var trainings = new List<Training>();
+        using (var cmd = c.CreateCommand())
+        {
+            cmd.CommandText = "SELECT * FROM Trainings WHERE IsPublished=1 AND IsArchived=0 ORDER BY Title;";
+            using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync()) trainings.Add(MapTraining(r));
+        }
+
+        var completions = new Dictionary<long, TrainingCompletion>();
+        using (var cmd = c.CreateCommand())
+        {
+            cmd.CommandText = "SELECT * FROM TrainingCompletions WHERE lower(SamAccountName)=lower($sam);";
+            cmd.Parameters.AddWithValue("$sam", sam);
+            using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+            {
+                var completion = MapCompletion(r);
+                completions[completion.TrainingId] = completion;
+            }
+        }
+
+        return trainings.Select(t => new TrainingListItemViewModel
+        {
+            Training = t,
+            Completion = completions.GetValueOrDefault(t.Id)
+        }).ToList();
+    }
+
+    public async Task<int> GetTotalCompletionCountAsync()
     {
         using var c = _db.OpenConnection();
         using var cmd = c.CreateCommand();
-        cmd.CommandText = "SELECT * FROM Trainings WHERE IsPublished=1 AND IsArchived=0 ORDER BY Title;";
-        using var r = await cmd.ExecuteReaderAsync();
-        var list = new List<Training>();
-        while (await r.ReadAsync()) list.Add(MapTraining(r));
-        return list;
+        cmd.CommandText = "SELECT COUNT(*) FROM TrainingCompletions;";
+        return Convert.ToInt32(await cmd.ExecuteScalarAsync());
     }
 
     public async Task<List<Training>> GetAllTrainingsAsync()
@@ -211,73 +239,6 @@ ORDER BY Position, Id;";
 
         tx.Commit();
         return newId;
-    }
-
-    public async Task<List<TrainingExclusion>> GetExclusionsAsync(long trainingId)
-    {
-        using var c = _db.OpenConnection();
-        using var cmd = c.CreateCommand();
-        cmd.CommandText = "SELECT * FROM TrainingExclusions WHERE TrainingId=$trainingId ORDER BY DisplayName, SamAccountName;";
-        cmd.Parameters.AddWithValue("$trainingId", trainingId);
-        using var r = await cmd.ExecuteReaderAsync();
-        var list = new List<TrainingExclusion>();
-        while (await r.ReadAsync())
-        {
-            list.Add(new TrainingExclusion
-            {
-                TrainingId = r.GetInt64(r.GetOrdinal("TrainingId")),
-                SamAccountName = r.GetString(r.GetOrdinal("SamAccountName")),
-                DisplayName = r.GetString(r.GetOrdinal("DisplayName")),
-                Email = r.GetString(r.GetOrdinal("Email")),
-                Reason = r.GetString(r.GetOrdinal("Reason")),
-                ExcludedAtUtc = DateTime.Parse(r.GetString(r.GetOrdinal("ExcludedAtUtc")), null, System.Globalization.DateTimeStyles.RoundtripKind),
-                ExcludedBy = r.GetString(r.GetOrdinal("ExcludedBy"))
-            });
-        }
-        return list;
-    }
-
-    public async Task<bool> IsExcludedAsync(long trainingId, string sam)
-    {
-        using var c = _db.OpenConnection();
-        using var cmd = c.CreateCommand();
-        cmd.CommandText = "SELECT 1 FROM TrainingExclusions WHERE TrainingId=$trainingId AND lower(SamAccountName)=lower($sam) LIMIT 1;";
-        cmd.Parameters.AddWithValue("$trainingId", trainingId);
-        cmd.Parameters.AddWithValue("$sam", sam.Trim());
-        return await cmd.ExecuteScalarAsync() is not null;
-    }
-
-    public async Task UpsertExclusionAsync(long trainingId, AdUser user, string reason, string actor)
-    {
-        using var c = _db.OpenConnection();
-        using var cmd = c.CreateCommand();
-        cmd.CommandText = @"
-INSERT INTO TrainingExclusions(TrainingId,SamAccountName,DisplayName,Email,Reason,ExcludedAtUtc,ExcludedBy)
-VALUES($trainingId,$sam,$display,$email,$reason,$when,$actor)
-ON CONFLICT(TrainingId,SamAccountName) DO UPDATE SET
-    DisplayName=excluded.DisplayName,
-    Email=excluded.Email,
-    Reason=excluded.Reason,
-    ExcludedAtUtc=excluded.ExcludedAtUtc,
-    ExcludedBy=excluded.ExcludedBy;";
-        cmd.Parameters.AddWithValue("$trainingId", trainingId);
-        cmd.Parameters.AddWithValue("$sam", user.SamAccountName.Trim().ToLowerInvariant());
-        cmd.Parameters.AddWithValue("$display", user.DisplayName?.Trim() ?? "");
-        cmd.Parameters.AddWithValue("$email", user.Email?.Trim() ?? "");
-        cmd.Parameters.AddWithValue("$reason", reason.Trim());
-        cmd.Parameters.AddWithValue("$when", DateTime.UtcNow.ToString("O"));
-        cmd.Parameters.AddWithValue("$actor", actor);
-        await cmd.ExecuteNonQueryAsync();
-    }
-
-    public async Task RemoveExclusionAsync(long trainingId, string sam)
-    {
-        using var c = _db.OpenConnection();
-        using var cmd = c.CreateCommand();
-        cmd.CommandText = "DELETE FROM TrainingExclusions WHERE TrainingId=$trainingId AND lower(SamAccountName)=lower($sam);";
-        cmd.Parameters.AddWithValue("$trainingId", trainingId);
-        cmd.Parameters.AddWithValue("$sam", sam.Trim());
-        await cmd.ExecuteNonQueryAsync();
     }
 
     public async Task<List<DirectoryExclusion>> GetDirectoryExclusionsAsync(bool activeOnly = false)
