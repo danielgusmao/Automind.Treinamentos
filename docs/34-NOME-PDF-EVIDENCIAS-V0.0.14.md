@@ -1,6 +1,6 @@
 # v0.0.14 - Caminhos curtos das evidencias
 
-## Decisao final
+## Decisao finalll
 
 A estrutura continua centrada no colaborador, mas a pasta passa a usar somente o login AD (`sAMAccountName`). Isso reduz o caminho e mantem um identificador unico e estavel mesmo se o nome da pessoa mudar.
 
