@@ -1,6 +1,6 @@
 # Arquitetura - estado atual v0.0.10
 
-```text
+`Text
 Navegador
    |
    v
