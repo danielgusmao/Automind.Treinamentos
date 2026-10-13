@@ -1,10 +1,15 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.15**
+Versao: **v0.0.16**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF, acompanhamento de pendencias no Active Directory e comunicacao via Teams.
 
-## Destaques da v0.0.15
+## Destaques da v0.0.16
+- revisão visual global: hero/capa no padrão aprovado (opção 2);
+- gradiente institucional padronizado em `#fa094e -> #4d1056`;
+- botões, cards, chips, destaques, login e treinamento dedicado harmonizados;
+- nenhuma regra de negócio alterada.
+
 
 - hardening de login e sessao AD;
 - rate limit no login;

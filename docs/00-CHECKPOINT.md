@@ -1,5 +1,14 @@
 # CHECKPOINT - Automind.Treinamentos
 
+## 2026-10-13 - v0.0.16 - Ajuste visual global de destaque e gradiente
+
+- Revisao exclusivamente visual, sem alteracao de regra de negocio, autenticação, autorização, banco, controllers, services, publicacao, evidencias ou fluxos.
+- Hero/capa principal reformulado em todo o sistema seguindo a referencia aprovada da opcao 2: simbolo Automind maior e mais destacado na lateral direita, sem se misturar com o fundo.
+- Gradiente institucional corrigido para usar `#fa094e -> #4d1056` nos pontos de destaque.
+- Atualizados layout global, cards, botoes, chips, destaques, modais, campos com icone e tela de login para manter a mesma linguagem visual no sistema todo.
+- Ajustado tambem o treinamento dedicado de Seguranca da Informacao para seguir a mesma identidade visual, preservando comportamento e JavaScript.
+- Escopo alterado apenas em `wwwroot/css/site.css`, `wwwroot/css/security-awareness.css` e `VERSION.txt`.
+
 ## 2026-10-08 - v0.0.15 - Hardening, consistencia, performance e limpeza
 
 - Pacote baseado na v0.0.14 com layout institucional preservado.
