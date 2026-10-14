@@ -23,12 +23,12 @@
 .training-toolbar-meta{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 
 .training-hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 420px;align-items:center;min-height:360px;padding:46px 50px;color:#fff;background:linear-gradient(108deg,var(--tr-night) 0%,#19131f 42%,#32113c 69%,var(--tr-purple) 100%);border:1px solid #2c2232;box-shadow:0 16px 38px rgba(27,19,31,.12);margin-bottom:26px}
-.training-hero:before{content:"";position:absolute;inset:0 0 0 auto;width:54%;background:linear-gradient(125deg,transparent 6%,rgba(250,9,78,.10) 6% 30%,transparent 30% 40%,rgba(77,16,86,.52) 40% 61%,transparent 61% 71%,rgba(250,9,78,.24) 71% 86%,transparent 86%);transform:skewX(-10deg) translateX(36px)}
+.training-hero:before{content:none}
 .training-hero-copy{position:relative;z-index:2}
-.training-hero-mark{position:absolute;right:-1.5%;bottom:-3%;z-index:2;display:grid;place-items:end center;width:min(40vw,520px);height:100%;pointer-events:none}
-.training-hero-mark img{width:min(100%,440px);opacity:.98;filter:brightness(1.02) saturate(1.08) drop-shadow(0 24px 48px rgba(0,0,0,.18));transform:translateX(6%)}
+.training-hero-mark{position:absolute;right:-4%;top:-24%;z-index:2;display:grid;place-items:center;width:min(48vw,700px);height:150%;pointer-events:none}
+.training-hero-mark img{width:min(100%,660px);opacity:.98;filter:brightness(1.02) saturate(1.08) drop-shadow(0 24px 48px rgba(0,0,0,.18));transform:translateX(5%)}
 .training-eyebrow,.training-section-eyebrow{display:block;font-size:.67rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
-.training-eyebrow{color:#ff6c96}
+.training-eyebrow{color:var(--tr-magenta-2)}
 .training-section-eyebrow{color:var(--tr-purple);margin-bottom:7px}
 .training-hero h1{margin:9px 0 14px;max-width:850px;font-size:clamp(2.7rem,4.6vw,5rem);line-height:.95;letter-spacing:-.058em;color:#fff}
 .training-hero p{max-width:760px;margin:0;color:#e0d7e3;font-size:1rem;line-height:1.68}

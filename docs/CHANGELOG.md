@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.0.17 - 2026-10-14
+
+- Refinamento exclusivamente visual baseado na v0.0.16.
+- Textos rosa claro de destaque padronizados em `#fa094e`.
+- Removidas as linhas/faixas neon decorativas da primeira tela de login, mantendo o fundo existente.
+- Removidas as barras degradê decorativas dos banners/hero.
+- Símbolo Automind ampliado para preencher melhor os banners, sem adicionar novos elementos gráficos.
+- Mesmo refinamento aplicado ao hero do treinamento dedicado de Segurança da Informação.
+- Nenhuma alteração em regra de negócio, AD, banco, Teams, PDFs, Controllers, Services ou Models.
+
+## v0.0.16 - 2026-10-13
+
+- Aplicada a composição visual aprovada da opção 2.
+- Gradiente institucional consolidado em `#fa094e -> #4d1056`.
+- Ajustes visuais globais em hero, login, botões, cards, chips, destaques e treinamento dedicado.
+- Nenhuma regra de negócio alterada.
+
 ## v0.0.15 - 2026-10-08
 
 - Hardening de login, sessao AD, headers e webhook Teams.

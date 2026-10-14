@@ -1,5 +1,19 @@
 # CHECKPOINT - Automind.Treinamentos
 
+## 2026-10-14 - v0.0.17 - Refinamento visual final do login e banners
+
+- Atualização baseada integralmente na v0.0.16 e limitada à camada visual, versionamento e documentação.
+- Mantida a decisão anterior de não alterar autenticação, autorização AD, regras de negócio, banco SQLite, Controllers, Services, Models, Teams, PDFs, publicação, evidências ou estrutura de produção.
+- Textos de destaque que usavam rosa claro (`#ff6c96`) foram padronizados no magenta institucional `#fa094e`.
+- A cor informada no pedido como `#fa094` foi normalizada para `#fa094e`, pois hexadecimal CSS de cinco dígitos não é válido e `#fa094e` já é a cor institucional adotada pelo projeto.
+- Login: removidas as duas faixas/linhas neon inclinadas; o fundo em gradiente aprovado foi preservado sem alteração de composição textual ou fluxo de autenticação.
+- Hero principal do portal e hero administrativo: removidas as barras degradê decorativas de fundo; o símbolo Automind permanece como único elemento gráfico e foi ampliado para preencher mais a área direita do banner.
+- Treinamento dedicado de Segurança da Informação recebeu o mesmo tratamento: sem barras decorativas, símbolo Automind maior e texto de destaque em `#fa094e`.
+- Responsividade existente foi preservada; em telas menores o símbolo continua oculto conforme regra já existente.
+- Versão atualizada para `v0.0.17` em `Automind.Treinamentos.csproj` e `VERSION.txt`.
+- Documentação consolidada em `README.md`, `docs/CHANGELOG.md`, `docs/CONTEXTO-ATUAL.md`, `docs/41-REFINO-VISUAL-V0.0.17.md` e `docs/42-TESTE-V0.0.17.md`.
+- Branch de publicação permanece `release`; push bem-sucedido deve seguir a pipeline/Release automática já configurada, sem deploy manual salvo falha da automação.
+
 ## 2026-10-13 - v0.0.16 - Ajuste visual global de destaque e gradiente
 
 - Revisao exclusivamente visual, sem alteracao de regra de negocio, autenticação, autorização, banco, controllers, services, publicacao, evidencias ou fluxos.

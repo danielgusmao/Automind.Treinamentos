@@ -5,9 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Automind.Treinamentos</RootNamespace>
     <AssemblyName>Automind.Treinamentos</AssemblyName>
-    <Version>0.0.16</Version>
-    <FileVersion>0.0.16.0</FileVersion>
-    <InformationalVersion>0.0.16</InformationalVersion>
+    <Version>0.0.17</Version>
+    <FileVersion>0.0.17.0</FileVersion>
+    <InformationalVersion>0.0.17</InformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>

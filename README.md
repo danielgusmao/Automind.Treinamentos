@@ -1,14 +1,23 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.16**
+Versao: **v0.0.17**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidencias PDF, acompanhamento de pendencias no Active Directory e comunicacao via Teams.
 
-## Destaques da v0.0.16
-- revisão visual global: hero/capa no padrão aprovado (opção 2);
-- gradiente institucional padronizado em `#fa094e -> #4d1056`;
-- botões, cards, chips, destaques, login e treinamento dedicado harmonizados;
-- nenhuma regra de negócio alterada.
+## Destaques da v0.0.17
+- refinamento exclusivamente visual sobre a v0.0.16, sem alteração de regra de negócio;
+- textos de destaque que estavam em rosa claro passam a usar o magenta institucional `#fa094e`;
+- tela de login preserva o fundo aprovado, mas remove as linhas/faixas neon inclinadas;
+- banners/hero removem as barras degradê decorativas do fundo;
+- símbolo Automind passa a ser o único elemento gráfico do hero, ampliado para preencher melhor a área visual;
+- treinamento dedicado de Segurança da Informação recebe o mesmo refinamento visual;
+- versão de assembly, `VERSION.txt`, documentação e hashes atualizados para v0.0.17.
+
+## Base visual preservada da v0.0.16
+- composição aprovada da opção 2;
+- gradiente institucional `#fa094e -> #4d1056` nos componentes de destaque;
+- botões, cards, chips, destaques e blocos visuais permanecem harmonizados;
+- nenhuma regra de negócio foi alterada.
 
 
 - hardening de login e sessao AD;
@@ -143,7 +152,10 @@ Comece por `docs/00-CHECKPOINT.md`.
 - teste v0.0.14: `docs/35-TESTE-V0.0.14.md`.
 - hardening/otimizacoes v0.0.15: `docs/37-HARDENING-E-OTIMIZACOES-V0.0.15.md`;
 - teste v0.0.15: `docs/38-TESTE-V0.0.15.md`;
-- status da auditoria: `docs/39-STATUS-AUDITORIA-POS-V0.0.15.md`.
+- status da auditoria: `docs/39-STATUS-AUDITORIA-POS-V0.0.15.md`;
+- revisão visual global v0.0.16: `docs/40-REVISAO-VISUAL-GRADIENTE-V0.0.16.md`;
+- refinamento visual v0.0.17: `docs/41-REFINO-VISUAL-V0.0.17.md`;
+- validação v0.0.17: `docs/42-TESTE-V0.0.17.md`.
 
 
 ## Autorizacao administrativa

@@ -1,8 +1,20 @@
 # CONTEXTO ATUAL - Automind.Treinamentos
 
-Versao de aplicacao preparada: **v0.0.15**.
+Versao de aplicacao preparada: **v0.0.17**.
 
-## v0.0.15 - estado atual
+## v0.0.17 - estado atual
+
+A v0.0.17 é uma revisão exclusivamente visual sobre a v0.0.16. A lógica funcional continua intacta. Os textos de destaque antes em rosa claro usam `#fa094e`; as linhas/faixas neon da tela de login foram removidas mantendo o fundo; os banners deixaram de usar barras degradê decorativas e passam a destacar apenas o símbolo Automind em escala maior. O mesmo padrão foi aplicado ao treinamento dedicado de Segurança da Informação.
+
+A base visual da v0.0.16 permanece: opção 2 aprovada e gradiente institucional `#fa094e -> #4d1056` em componentes de destaque.
+
+Mudança mais recente: refinamento visual de login e banners na v0.0.17. Não houve alteração de autenticação, autorização, AD, SQLite, Teams, PDFs, evidências, publicação ou regras de negócio.
+
+## v0.0.16 - revisão visual global
+
+A v0.0.16 adotou a opção 2 aprovada e padronizou `#fa094e -> #4d1056` em hero, botões, cards, chips, destaques e blocos visuais em todo o sistema, sem alterar comportamento funcional.
+
+## v0.0.15 - estado preservado
 
 A v0.0.15 preserva o layout institucional e as regras funcionais da v0.0.14, adicionando hardening, validacao, consistencia de evidencias, performance, observabilidade e limpeza de codigo. O unico item da auditoria deliberadamente nao ativado e HTTPS/TLS, porque o servidor ainda nao possui certificado.
 
