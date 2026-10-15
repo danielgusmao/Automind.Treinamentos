@@ -39,7 +39,7 @@ button,.btn,input,textarea,select,.card,.status,.meta-chip,.hero-pill,.version-c
 
 .app-container{width:min(var(--am-max),calc(100% - 56px));margin:0 auto}
 
-/* topo */
+/* topo  */
 .topbar-shell{position:sticky;top:0;z-index:1000;background:linear-gradient(90deg,#100e16 0%,#1c1222 48%,var(--am-accent-b) 100%);border-bottom:1px solid rgba(255,255,255,.12)}
 .topbar-shell:after{content:"";display:block;height:3px;background:linear-gradient(90deg,var(--am-accent-a),var(--am-accent-b),transparent 78%)}
 .topbar{min-height:88px;display:grid;grid-template-columns:260px 1fr auto;align-items:stretch;gap:24px}
