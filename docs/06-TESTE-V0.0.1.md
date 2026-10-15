@@ -47,8 +47,8 @@ Esperado:
 
 - protocolo criado pelo servidor;
 - conclusão no SQLite;
-- PDF em `App_Data\Evidencias\Colaboradores\<Nome> - <login>`;
-- snapshot em `App_Data\Treinamentos\seguranca-da-informacao\1.0.0`;
+- PDF em `App_Data\Evidências\Colaboradores\<Nome> - <login>`;
+- snapshot em `App_Data\Treinamentos\segurança-da-informação\1.0.0`;
 - registro no `Audit.jsonl`.
 
 ## Teste 5 - `_informatica`

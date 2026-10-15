@@ -54,7 +54,7 @@ public sealed class TrainingCompletion
     {
         get
         {
-            if (DurationSeconds <= 0) return "Nao registrado";
+            if (DurationSeconds <= 0) return "Não registrado";
             var t = TimeSpan.FromSeconds(DurationSeconds);
             if (t.TotalHours >= 1) return $"{(int)t.TotalHours} h {t.Minutes:D2} min";
             return t.Seconds > 0 ? $"{t.Minutes} min {t.Seconds:D2} s" : $"{t.Minutes} min";

@@ -1,28 +1,28 @@
-# v0.0.8 - Exclusoes permanentes da base de colaboradores
+# v0.0.8 - Exclusões permanentes da base de colaboradores
 
 ## Objetivo
 
-Separar contas que existem no Active Directory, mas nao representam pessoas, da populacao real de colaboradores que deve participar dos treinamentos.
+Separar contas que existem no Active Directory, mas não representam pessoas, da populacao real de colaboradores que deve participar dos treinamentos.
 
-Exemplos: caixas compartilhadas, e-mails gerais de areas, contas tecnicas e outros objetos com e-mail `@automind.com.br` que nao correspondem a uma pessoa.
+Exemplos: caixas compartilhadas, e-mails gerais de areas, contas técnicas e outros objetos com e-mail `@automind.com.br` que não correspondem a uma pessoa.
 
 ## Regra aprovada
 
-A exclusao e global e permanente enquanto estiver ativa.
+A exclusão e global e permanente enquanto estiver ativa.
 
 Uma conta presente na lista `DirectoryExclusions`:
 
-- nao entra em elegiveis;
-- nao entra em pendentes;
-- nao altera a taxa de adesao;
-- nao recebe lembretes Teams;
-- nao ve treinamentos em `Meus treinamentos`;
-- nao consegue iniciar treinamento por link direto;
+- não entra em elegíveis;
+- não entra em pendentes;
+- não altera a taxa de adesão;
+- não recebe lembretes Teams;
+- não ve treinamentos em `Meus treinamentos`;
+- não consegue iniciar treinamento por link direto;
 - continua existindo normalmente no Active Directory.
 
-## Administracao
+## Administração
 
-A pagina `Administracao > Exclusoes` mostra:
+A página `Administração > Exclusões` mostra:
 
 - nome;
 - login;
@@ -33,17 +33,17 @@ A pagina `Administracao > Exclusoes` mostra:
 - data/hora;
 - acao `Reincluir`.
 
-A pagina tambem preserva o historico de contas reincluidas com operador e data.
+A página tambem preserva o histórico de contas reincluidas com operador e data.
 
 ## Migracao da lista anterior
 
-Na primeira inicializacao da v0.0.8, registros existentes em `TrainingExclusions` sao copiados para `DirectoryExclusions` sem apagar a tabela antiga. Assim, as exclusoes ja feitas no ambiente continuam existindo e passam a valer para todos os treinamentos.
+Na primeira inicializacao da v0.0.8, registros existentes em `TrainingExclusions` são copiados para `DirectoryExclusions` sem apagar a tabela antiga. Assim, as exclusões já feitas no ambiente continuam existindo e passam a valer para todos os treinamentos.
 
 Foi adicionada a conta conhecida:
 
 - `Produtos` / `produtos` / `produtos@automind.com.br`;
 - tipo: `E-mail geral / Caixa compartilhada`;
-- motivo: e-mail de uso geral da empresa, nao representa uma pessoa.
+- motivo: e-mail de uso geral da empresa, não representa uma pessoa.
 
 ## Banco
 
@@ -64,10 +64,10 @@ Campos relevantes:
 - `ReincludedAtUtc`;
 - `ReincludedBy`.
 
-A tabela e persistente no SQLite em `C:\Automind.Treinamentos\Data` e nao e apagada em deploy.
+A tabela e persistente no SQLite em `C:\Automind.Treinamentos\Data` e não e apagada em deploy.
 
 ## Auditoria
 
-A inclusao e a reinclusao sao registradas no `Audit.jsonl`.
+A inclusão e a reinclusão são registradas no `Audit.jsonl`.
 
 Nenhuma operacao desta funcionalidade escreve ou exclui objetos no AD.

@@ -49,7 +49,7 @@ public sealed class AccountController : Controller
         }
         finally
         {
-            // A senha nunca e persistida, registrada ou adicionada a claims.
+            // A senha nunca é persistida, registrada ou adicionada a claims.
             model.Password = "";
         }
 
@@ -68,8 +68,8 @@ public sealed class AccountController : Controller
             new("job_title", adUser.JobTitle ?? ""),
             new("department", adUser.Department ?? "")
         };
-        // Nenhuma role administrativa e persistida no cookie.
-        // A autorizacao e reconsultada diretamente no AD em cada requisicao.
+        // Nenhuma role administrativa é persistida no cookie.
+        // A autorização é reconsultada diretamente no AD em cada requisicao.
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
         var isAdminNow = _adminAuthorization.IsInAdminGroup(adUser.SamAccountName);

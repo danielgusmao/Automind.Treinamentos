@@ -1,25 +1,25 @@
-# v0.0.14 - Caminhos curtos das evidencias
+# v0.0.14 - Caminhos curtos das evidências
 
-## Decisao final
+## Decisão final
 
 A estrutura continua centrada no colaborador, mas a pasta passa a usar somente o login AD (`sAMAccountName`). Isso reduz o caminho e mantem um identificador unico e estavel mesmo se o nome da pessoa mudar.
 
 ```text
-C:\Automind.Treinamentos\Evidencias\Colaboradores\<login>\
+C:\Automind.Treinamentos\Evidências\Colaboradores\<login>\
 ```
 
 Exemplo:
 
 ```text
-C:\Automind.Treinamentos\Evidencias\Colaboradores\daniel.gusmao\
+C:\Automind.Treinamentos\Evidências\Colaboradores\daniel.gusmao\
 ```
 
 ## Nome curto do PDF
 
-Cada novo PDF individual continua identificando treinamento, versao, data e protocolo, mas usa o codigo curto do treinamento:
+Cada novo PDF individual continua identificando treinamento, versão, data e protocolo, mas usa o código curto do treinamento:
 
 ```text
-<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf
+<Código>_v<Versão>_<AAAAMMDD>_<Protocolo>.pdf
 ```
 
 Exemplo:
@@ -31,22 +31,22 @@ SI-001_v1.0.0_20261006_AM-20261006-35E0.pdf
 Limites defensivos:
 
 - login/pasta: ate 32 caracteres;
-- codigo: ate 20 caracteres;
-- versao: ate 16 caracteres;
+- código: ate 20 caracteres;
+- versão: ate 16 caracteres;
 - protocolo: ate 32 caracteres.
 
-## Migracao das evidencias existentes
+## Migracao das evidências existentes
 
-Na inicializacao, o sistema procura evidencias ja registradas em `TrainingCompletions` e, quando o arquivo existe, migra de forma nao destrutiva para o novo caminho curto:
+Na inicializacao, o sistema procura evidências já registradas em `TrainingCompletions` e, quando o arquivo existe, migra de forma não destrutiva para o novo caminho curto:
 
 ```text
-Evidencias\Colaboradores\<Nome - login>\arquivo-antigo.pdf
+Evidências\Colaboradores\<Nome - login>\arquivo-antigo.pdf
         ->
-Evidencias\Colaboradores\<login>\<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf
+Evidências\Colaboradores\<login>\<Código>_v<Versão>_<AAAAMMDD>_<Protocolo>.pdf
 ```
 
-O campo `TrainingCompletions.EvidencePdfPath` e atualizado apos a movimentacao. O hash do PDF nao muda porque o conteudo do arquivo nao e alterado.
+O campo `TrainingCompletions.EvidencePdfPath` e atualizado apos a movimentacao. O hash do PDF não muda porque o conteúdo do arquivo não é alterado.
 
-O sistema nunca sobrescreve um arquivo ja existente no destino. Em caso de colisao, preserva o caminho atual para evitar perda de evidencia.
+O sistema nunca sobrescreve um arquivo já existente no destino. Em caso de colisão, preserva o caminho atual para evitar perda de evidência.
 
-`Evidencias\Relatorios` permanece inalterada.
+`Evidências\Relatorios` permanece inalterada.

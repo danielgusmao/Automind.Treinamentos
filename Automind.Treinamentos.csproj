@@ -5,9 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Automind.Treinamentos</RootNamespace>
     <AssemblyName>Automind.Treinamentos</AssemblyName>
-    <Version>0.0.17</Version>
-    <FileVersion>0.0.17.0</FileVersion>
-    <InformationalVersion>0.0.17</InformationalVersion>
+    <Version>0.0.18</Version>
+    <FileVersion>0.0.18.0</FileVersion>
+    <InformationalVersion>0.0.18</InformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +20,7 @@
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.12" />
   </ItemGroup>
 
-  <!-- A versao do assembly e a fonte oficial exibida pela UI. -->
+  <!-- A versão do assembly e a fonte oficial exibida pela UI. -->
   <Target Name="WriteBuildVersionFile" AfterTargets="Build">
     <WriteLinesToFile File="$(OutputPath)VERSION.txt" Lines="v$(Version)" Overwrite="true" Encoding="UTF-8" />
   </Target>

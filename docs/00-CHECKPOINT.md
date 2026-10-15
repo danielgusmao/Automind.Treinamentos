@@ -1,5 +1,16 @@
 # CHECKPOINT - Automind.Treinamentos
 
+## 2026-10-15 - v0.0.18 - Revisão ortográfica geral e ajuste final de gradiente
+
+- Baseada na v0.0.17, sem alteração de autenticação, autorização AD, regras de negócio, banco SQLite, Services, Teams, PDFs, publicação ou evidências.
+- Revisados textos do portal para português brasileiro, com correção de acentos e grafias em telas de login, administração, treinamento e mensagens auxiliares.
+- Corrigidos especificamente termos solicitados como capacitação, evidência e conclusão, além de ajustes em gestão, catálogo, módulos, pendências, código e identificação técnica.
+- Aviso de credenciais da tela de login atualizado para “Credenciais não são armazenadas. A senha é utilizada apenas para validação no Active Directory.”
+- Fundo do bloco “Treinar. Comprovar. Evoluir.” ajustado para o gradiente institucional já adotado nos banners principais.
+- Banners principais e hero do treinamento dedicado seguem com símbolo Automind ampliado e sem barras decorativas adicionais.
+- Versão atualizada para `v0.0.18` em `Automind.Treinamentos.csproj`, `VERSION.txt`, `README.md`, `docs/CHANGELOG.md` e `docs/CONTEXTO-ATUAL.md`.
+- Evidência desta rodada documentada em `docs/43-REVISAO-ORTOGRAFIA-V0.0.18.md`.
+
 ## 2026-10-14 - v0.0.17 - Refinamento visual final do login e banners
 
 - Atualização baseada integralmente na v0.0.16 e limitada à camada visual, versionamento e documentação.
@@ -16,34 +27,34 @@
 
 ## 2026-10-13 - v0.0.16 - Ajuste visual global de destaque e gradiente
 
-- Revisao exclusivamente visual, sem alteracao de regra de negocio, autenticação, autorização, banco, controllers, services, publicacao, evidencias ou fluxos.
+- Revisão exclusivamente visual, sem alteração de regra de negocio, autenticação, autorização, banco, controllers, services, publicacao, evidências ou fluxos.
 - Hero/capa principal reformulado em todo o sistema seguindo a referencia aprovada da opcao 2: simbolo Automind maior e mais destacado na lateral direita, sem se misturar com o fundo.
 - Gradiente institucional corrigido para usar `#fa094e -> #4d1056` nos pontos de destaque.
 - Atualizados layout global, cards, botoes, chips, destaques, modais, campos com icone e tela de login para manter a mesma linguagem visual no sistema todo.
-- Ajustado tambem o treinamento dedicado de Seguranca da Informacao para seguir a mesma identidade visual, preservando comportamento e JavaScript.
+- Ajustado tambem o treinamento dedicado de Segurança da Informação para seguir a mesma identidade visual, preservando comportamento e JavaScript.
 - Escopo alterado apenas em `wwwroot/css/site.css`, `wwwroot/css/security-awareness.css` e `VERSION.txt`.
 
 ## 2026-10-08 - v0.0.15 - Hardening, consistencia, performance e limpeza
 
 - Pacote baseado na v0.0.14 com layout institucional preservado.
-- Logica funcional do portal mantida; alteracoes concentradas em seguranca, consistencia, validacao, observabilidade, performance e limpeza de codigo.
+- Logica funcional do portal mantida; alterações concentradas em segurança, consistencia, validação, observabilidade, performance e limpeza de código.
 - Rate limit adicionado ao login.
-- Sessao de usuario comum revalida conta habilitada/elegivel no AD em cache curto de 2 minutos.
-- Autorizacao administrativa continua em `_treinamentos`, server-side, com membership revalidada e fail-closed.
+- Sessão de usuário comum revalida conta habilitada/elegivel no AD em cache curto de 2 minutos.
+- Autorização administrativa continua em `_treinamentos`, server-side, com membership revalidada e fail-closed.
 - Timeouts LDAP e caches curtos reduzem consultas repetidas.
-- Quiz passa a rejeitar respostas incompletas, IDs desconhecidos e indices invalidos no servidor.
-- Gabarito nao e mais enviado no HTML do treinamento dedicado.
-- Conclusao/PDF nao e desfeita por falha posterior de auditoria.
+- Quiz passa a rejeitar respostas incompletas, IDs desconhecidos e indices inválidos no servidor.
+- Gabarito não e mais enviado no HTML do treinamento dedicado.
+- Conclusão/PDF não e desfeita por falha posterior de auditoria.
 - Snapshot e validado contra o estado atual e escrito atomicamente.
 - SQLite recebe UNIQUE `Code+Version`, triggers de integridade, indices adicionais e `SchemaMigrations`.
-- PDF usa versao real do assembly.
+- PDF usa versão real do assembly.
 - Auditoria diaria com retencao configuravel e correlation id.
 - `/health` adicionado.
 - App Pool perde escrita em `Backup`; script de servidor cria backup SQLite antes da atualizacao.
-- N+1 removido da pagina inicial e do total de conclusoes do dashboard.
+- N+1 removido da página inicial e do total de conclusões do dashboard.
 - Removidos metodos/model legado sem consumidores e atributo HttpPost duplicado.
 - PDF consolidado persistente agora usa POST + antiforgery.
-- SSL/HTTPS continua PENDENTE por ausencia de certificado; URL e cookies continuam HTTP nesta versao por decisao operacional.
+- SSL/HTTPS continua PENDENTE por ausencia de certificado; URL e cookies continuam HTTP nesta versão por decisão operacional.
 - Documentos: `docs/37-HARDENING-E-OTIMIZACOES-V0.0.15.md` e `docs/38-TESTE-V0.0.15.md`.
 
 ## 2026-10-07 - v0.0.14 - Revisão visual institucional sem alteração de lógica
@@ -58,108 +69,108 @@
 - Versão continua **v0.0.14**; trata-se de revisão exclusivamente visual do pacote já validado funcionalmente.
 - Documento: `docs/36-REDESIGN-INSTITUCIONAL-V0.0.14.md`.
 
-## 2026-10-06 - v0.0.14 - Caminhos curtos das evidencias por colaborador
+## 2026-10-06 - v0.0.14 - Caminhos curtos das evidências por colaborador
 
-- Decisao final: manter todas as evidencias de uma pessoa juntas, sem separar fisicamente por treinamento/versao.
+- Decisão final: manter todas as evidências de uma pessoa juntas, sem separar fisicamente por treinamento/versão.
 - Para reduzir risco de caminhos longos em copia/backup, a pasta individual deixa de usar `Nome - login` e passa a usar somente o login AD (`sAMAccountName`).
-- Estrutura: `Evidencias\Colaboradores\<login>\`. Exemplo: `Evidencias\Colaboradores\daniel.gusmao\`.
-- O nome do PDF tambem usa formato curto: `<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf`.
+- Estrutura: `Evidências\Colaboradores\<login>\`. Exemplo: `Evidências\Colaboradores\daniel.gusmao\`.
+- O nome do PDF tambem usa formato curto: `<Código>_v<Versão>_<AAAAMMDD>_<Protocolo>.pdf`.
 - Exemplo: `SI-001_v1.0.0_20261006_AM-20261006-35E0.pdf`.
-- Limites defensivos: login 32, codigo 20, versao 16 e protocolo 32 caracteres.
-- Evidencias existentes registradas em `TrainingCompletions` sao migradas na inicializacao quando o arquivo e localizado: arquivo e movido para a pasta curta, renomeado pelo padrao curto e `EvidencePdfPath` e atualizado.
-- O conteudo e o hash do PDF nao sao alterados pela migracao.
-- O sistema nunca sobrescreve arquivo existente no destino; em colisao preserva o caminho atual.
-- `Evidencias\Relatorios` permanece inalterada.
-- Versao do aplicativo continua **v0.0.14**; esta revisao substitui o empacotamento anterior da propria v0.0.14.
+- Limites defensivos: login 32, código 20, versão 16 e protocolo 32 caracteres.
+- Evidências existentes registradas em `TrainingCompletions` são migradas na inicializacao quando o arquivo e localizado: arquivo e movido para a pasta curta, renomeado pelo padrao curto e `EvidencePdfPath` e atualizado.
+- O conteúdo e o hash do PDF não são alterados pela migracao.
+- O sistema nunca sobrescreve arquivo existente no destino; em colisão preserva o caminho atual.
+- `Evidências\Relatorios` permanece inalterada.
+- Versão do aplicativo continua **v0.0.14**; esta revisão substitui o empacotamento anterior da propria v0.0.14.
 - Documentos: `docs/34-NOME-PDF-EVIDENCIAS-V0.0.14.md` e `docs/35-TESTE-V0.0.14.md`.
 
 ## 2026-10-06 - v0.0.13 - Publicacao explicita sem toggle booleano
 
 - Falha observada em producao na v0.0.12: clicar em `Publicar` no SI-002 executava o caminho de despublicacao e exibia `despublicado com sucesso`.
-- Confirmado no codigo que o catalogo usava um unico endpoint `TogglePublish(id, bool publish)` e dependia do bind de um campo booleano oculto.
+- Confirmado no código que o catálogo usava um unico endpoint `TogglePublish(id, bool publish)` e dependia do bind de um campo booleano oculto.
 - Removido o toggle booleano da interface e do controller para eliminar ambiguidade de binding.
 - Criados endpoints POST separados: `PublishTraining(long id)` e `UnpublishTraining(long id)`.
 - O botao `Publicar` agora chama somente `PublishTraining`; o botao `Despublicar` chama somente `UnpublishTraining`.
-- Ao publicar, o snapshot e gravado antes da alteracao de estado em `C:\Automind.Treinamentos\Treinamentos\<familySlug-ou-slug>\<versao>`.
-- Publicacao valida questoes e nota minima; falha de snapshot/banco e mostrada ao administrador.
-- Nenhum botao de exclusao de treinamento foi criado; exclusao de treinamento de teste continua sendo procedimento manual e controlado.
-- A reorganizacao de `Evidencias` por treinamento/versao continua pendente ate a publicacao ser validada.
+- Ao publicar, o snapshot e gravado antes da alteração de estado em `C:\Automind.Treinamentos\Treinamentos\<familySlug-ou-slug>\<versão>`.
+- Publicacao valida questões e nota mínima; falha de snapshot/banco e mostrada ao administrador.
+- Nenhum botao de exclusão de treinamento foi criado; exclusão de treinamento de teste continua sendo procedimento manual e controlado.
+- A reorganizacao de `Evidências` por treinamento/versão continua pendente ate a publicacao ser validada.
 
 ## 2026-10-06 - v0.0.12 - Correcao do fluxo Publicar/Despublicar
 
-- Corrigido o fluxo do botao **Publicar** no catalogo administrativo.
+- Corrigido o fluxo do botao **Publicar** no catálogo administrativo.
 - O POST agora envia antiforgery token explicitamente.
-- Treinamento sem questoes nao retorna mais BadRequest sem contexto: o administrador e direcionado para a tela de questoes com mensagem clara.
-- Nota minima maior que a quantidade de questoes tambem gera mensagem de validacao.
-- Falhas ao gerar snapshot, gravar banco ou auditar sao exibidas no catalogo em vez de parecer que o clique nao teve efeito.
+- Treinamento sem questões não retorna mais BadRequest sem contexto: o administrador e direcionado para a tela de questões com mensagem clara.
+- Nota mínima maior que a quantidade de questões tambem gera mensagem de validação.
+- Falhas ao gerar snapshot, gravar banco ou auditar são exibidas no catálogo em vez de parecer que o clique não teve efeito.
 - Publicacao/despublicacao bem sucedida exibe confirmacao.
-- A reorganizacao das evidencias por `<slug>/<versao>/Colaboradores|Relatorios` permanece pendente ate concluir a validacao da edicao/publicacao.
+- A reorganizacao das evidências por `<slug>/<versão>/Colaboradores|Relatorios` permanece pendente ate concluir a validação da edição/publicacao.
 
-## 2026-10-06 - v0.0.11 edicao e versionamento seguro de treinamentos
+## 2026-10-06 - v0.0.11 edição e versionamento seguro de treinamentos
 
-- Adicionada acao `Editar` no catalogo administrativo.
-- `Code` e `Slug` passam a ser tratados como identificadores tecnicos imutaveis depois da criacao.
-- Treinamento sem conclusoes pode ser editado diretamente.
-- Treinamento com conclusoes/evidencias nao e alterado retroativamente: salvar cria nova versao em rascunho e copia as questoes.
-- Nova versao sugerida automaticamente incrementa o patch quando o formato atual e `X.Y.Z`.
-- Questoes de versao com conclusoes ficam somente leitura no frontend e sao bloqueadas tambem no backend.
+- Adicionada acao `Editar` no catálogo administrativo.
+- `Code` e `Slug` passam a ser tratados como identificadores técnicos imutaveis depois da criação.
+- Treinamento sem conclusões pode ser editado diretamente.
+- Treinamento com conclusões/evidências não é alterado retroativamente: salvar cria nova versão em rascunho e copia as questões.
+- Nova versão sugerida automaticamente incrementa o patch quando o formato atual e `X.Y.Z`.
+- Questões de versão com conclusões ficam somente leitura no frontend e são bloqueadas tambem no backend.
 - Adicionados `Trainings.FamilySlug` e `Trainings.IsArchived` por migracao automatica, sem apagar dados existentes.
-- Ao publicar nova versao do mesmo codigo, a versao publicada anterior vira `Historico`; historicos nao recebem Pendentes/Teams nem podem ser republicados diretamente.
-- `TrainingController.Completed` passou a localizar a conclusao diretamente por ID + usuario, mantendo acesso a evidencia mesmo quando a versao do treinamento se torna historica.
-- O layout dedicado `security-awareness-v1` agora usa titulo e descricao vindos do banco, mas os modulos visuais continuam controlados pelo template; por isso o conteudo livre nao e oferecido para edicao nesse layout.
-- A reorganizacao de `Evidencias` por treinamento/versao foi deliberadamente adiada para depois da validacao desta edicao.
+- Ao publicar nova versão do mesmo código, a versão publicada anterior vira `Histórico`; históricos não recebem Pendentes/Teams nem podem ser republicados diretamente.
+- `TrainingController.Completed` passou a localizar a conclusão diretamente por ID + usuário, mantendo acesso a evidência mesmo quando a versão do treinamento se torna histórica.
+- O layout dedicado `security-awareness-v1` agora usa título e descrição vindos do banco, mas os módulos visuais continuam controlados pelo template; por isso o conteúdo livre não e oferecido para edição nesse layout.
+- A reorganizacao de `Evidências` por treinamento/versão foi deliberadamente adiada para depois da validação desta edição.
 - Documentos: `docs/29-EDICAO-E-VERSIONAMENTO-TREINAMENTOS-V0.0.11.md` e `docs/30-TESTE-V0.0.11.md`.
 
-## 2026-10-06 - v0.0.10 autorizacao administrativa LDAP direta
+## 2026-10-06 - v0.0.10 autorização administrativa LDAP direta
 
-- Evidencia real: v0.0.9 estava publicada e exibia `Colaborador`; Daniel Gusmao foi novamente incluido em `_treinamentos` no AD, mas a area administrativa nao apareceu na requisicao seguinte.
-- Revisados todos os pontos de autorizacao do projeto: login/cookie (`AccountController`), autenticacao e ordem de middlewares (`Program.cs`), consulta AD (`AdAuthenticationService`), policy do backend (`AdminController`) e exibicao do menu (`_Layout.cshtml`).
+- Evidência real: v0.0.9 estava publicada e exibia `Colaborador`; Daniel Gusmao foi novamente incluido em `_treinamentos` no AD, mas a area administrativa não apareceu na requisicao seguinte.
+- Revisados todos os pontos de autorização do projeto: login/cookie (`AccountController`), autenticacao e ordem de middlewares (`Program.cs`), consulta AD (`AdAuthenticationService`), policy do backend (`AdminController`) e exibicao do menu (`_Layout.cshtml`).
 - Causa arquitetural corrigida: `GetAuthorizationGroups()` deixou de ser a fonte de membership administrativa dinamica.
 - Nova fonte: consulta LDAP direta ao grupo configurado, usando matching rule in chain para membership direta e aninhada.
-- Nenhuma role administrativa e persistida no cookie ou sessao. O cookie guarda apenas identidade basica do colaborador.
-- Em cada requisicao, roles antigas `TreinamentosAdmin`/`Informatica` sao removidas do principal em memoria; a role `TreinamentosAdmin` e recriada somente se o LDAP confirmar membership atual.
-- Middleware de consulta roda depois de `UseAuthentication` e antes de `UseAuthorization`, garantindo que menu e `[Authorize(Policy = "TreinamentosAdmin")]` usem a mesma decisao.
+- Nenhuma role administrativa é persistida no cookie ou sessão. O cookie guarda apenas identidade basica do colaborador.
+- Em cada requisicao, roles antigas `TreinamentosAdmin`/`Informatica` são removidas do principal em memoria; a role `TreinamentosAdmin` e recriada somente se o LDAP confirmar membership atual.
+- Middleware de consulta roda depois de `UseAuthentication` e antes de `UseAuthorization`, garantindo que menu e `[Authorize(Policy = "TreinamentosAdmin")]` usem a mesma decisão.
 - Falha de consulta continua fail-closed.
 - Criado `ActiveDirectory:AuthorizationServer` opcional. Vazio = dominio escolhe o DC; pode ser definido via `ActiveDirectory__AuthorizationServer` no App Pool se for necessario fixar um DC por causa de replicacao.
 - Documentos: `docs/26-AUTORIZACAO-ADMIN-TEMPO-REAL-V0.0.10.md` e `docs/27-TESTE-V0.0.10.md`.
-- Gerada consolidacao completa: `docs/28-DOCUMENTACAO-COMPLETA-PROJETO.md`, cobrindo ambiente, AD, autorizacao, exclusoes, PDFs, Teams, pipeline, seguranca, TLS pendente e proximos passos.
-- Proxima fase apos validar esta versao: HTTPS/TLS interno.
+- Gerada consolidacao completa: `docs/28-DOCUMENTACAO-COMPLETA-PROJETO.md`, cobrindo ambiente, AD, autorização, exclusões, PDFs, Teams, pipeline, segurança, TLS pendente e proximos passos.
+- Proxima fase apos validar esta versão: HTTPS/TLS interno.
 
-## 2026-10-06 - v0.0.9 correcao critica de autorizacao administrativa
+## 2026-10-06 - v0.0.9 correcao critica de autorização administrativa
 
 - Grupo administrativo oficial do Automind.Treinamentos: `_treinamentos`.
 - Corrigida a configuracao padrao que ainda apontava para `_informatica`.
-- A role interna passou de `Informatica` para `TreinamentosAdmin`; cookies antigos com a role legada nao concedem mais acesso.
-- Problema identificado: a role administrativa ficava gravada no cookie por ate 8 horas, portanto uma mudanca de grupo no AD/configuracao nao removia o acesso imediatamente.
-- A partir da v0.0.9, cada requisicao autenticada revalida no AD se o usuario pertence atualmente ao grupo `_treinamentos` (ou ao grupo configurado em `ActiveDirectory:AdminGroup`).
-- Usuario removido do grupo perde Administracao na requisicao seguinte sem precisar logout; usuario adicionado recebe a role na requisicao seguinte.
-- Em falha de consulta ao AD, o comportamento e fail-closed: nao concede privilegio administrativo.
-- Usuario fora do grupo continua podendo usar normalmente `Meus treinamentos`.
+- A role interna passou de `Informatica` para `TreinamentosAdmin`; cookies antigos com a role legada não concedem mais acesso.
+- Problema identificado: a role administrativa ficava gravada no cookie por ate 8 horas, portanto uma mudanca de grupo no AD/configuracao não removia o acesso imediatamente.
+- A partir da v0.0.9, cada requisicao autenticada revalida no AD se o usuário pertence atualmente ao grupo `_treinamentos` (ou ao grupo configurado em `ActiveDirectory:AdminGroup`).
+- Usuário removido do grupo perde Administração na requisicao seguinte sem precisar logout; usuário adicionado recebe a role na requisicao seguinte.
+- Em falha de consulta ao AD, o comportamento e fail-closed: não concede privilegio administrativo.
+- Usuário fora do grupo continua podendo usar normalmente `Meus treinamentos`.
 - Documentos: `docs/24-AUTORIZACAO-ADMIN-V0.0.9.md` e `docs/25-TESTE-V0.0.9.md`.
-- HTTPS/TLS permanece como proxima fase; servidor `10.1.2.21` e interno e nao sera exposto a Internet.
+- HTTPS/TLS permanece como proxima fase; servidor `10.1.2.21` e interno e não será exposto a Internet.
 
-## 2026-10-06 - v0.0.8 lista global permanente de exclusoes e versao corrigida
+## 2026-10-06 - v0.0.8 lista global permanente de exclusões e versão corrigida
 
-- Exclusoes deixam de ser uma excecao por treinamento e passam a formar uma lista global permanente de contas que nao representam pessoas.
-- Nova pagina `Administracao > Exclusoes` mostra nome, login, e-mail, tipo, motivo, operador e data.
-- Toda exclusao pode ser revertida por `Reincluir`; o historico de reinclusao e preservado.
-- Exclusoes globais nao entram em elegiveis, pendentes, adesao, Teams nem em `Meus treinamentos`, e o backend bloqueia link direto.
-- Registros existentes de `TrainingExclusions` sao migrados automaticamente para `DirectoryExclusions`, preservando a tabela anterior para historico/rollback.
+- Exclusões deixam de ser uma excecao por treinamento e passam a formar uma lista global permanente de contas que não representam pessoas.
+- Nova página `Administração > Exclusões` mostra nome, login, e-mail, tipo, motivo, operador e data.
+- Toda exclusão pode ser revertida por `Reincluir`; o histórico de reinclusão e preservado.
+- Exclusões globais não entram em elegíveis, pendentes, adesão, Teams nem em `Meus treinamentos`, e o backend bloqueia link direto.
+- Registros existentes de `TrainingExclusions` são migrados automaticamente para `DirectoryExclusions`, preservando a tabela anterior para histórico/rollback.
 - `produtos / produtos@automind.com.br` foi adicionado como conta geral inicial conhecida.
 - A lista fica no SQLite persistente em `C:\Automind.Treinamentos\Data`, portanto permanece entre deploys.
-- Corrigido o versionamento: a v0.0.7 tinha `VERSION.txt=v0.0.7`, mas o `.csproj` ainda compilava o assembly como `0.0.6`; por isso a UI continuou exibindo a versao anterior.
+- Corrigido o versionamento: a v0.0.7 tinha `VERSION.txt=v0.0.7`, mas o `.csproj` ainda compilava o assembly como `0.0.6`; por isso a UI continuou exibindo a versão anterior.
 - Na v0.0.8, `Automind.Treinamentos.csproj` usa `0.0.8` para assembly/file/informational version e o build/publish gera `VERSION.txt` a partir da mesma propriedade.
-- A UI continua lendo a versao do assembly, evitando depender de arquivo antigo no servidor.
-- Pipeline/Release automaticos na branch `release`: apos push bem-sucedido, nao orientar deploy manual.
+- A UI continua lendo a versão do assembly, evitando depender de arquivo antigo no servidor.
+- Pipeline/Release automaticos na branch `release`: apos push bem-sucedido, não orientar deploy manual.
 - Documentos: `docs/22-EXCLUSOES-PERMANENTES-V0.0.8.md` e `docs/23-TESTE-V0.0.8.md`.
 
-## 2026-10-06 - v0.0.6 exclusao administrativa de colaboradores
+## 2026-10-06 - v0.0.6 exclusão administrativa de colaboradores
 
-- Adicionado `Excluir` apenas para colaboradores pendentes na tela de elegiveis.
-- Exclusao exige motivo e vale somente para o treinamento selecionado.
-- Excluidos saem dos contadores de elegiveis/pendentes/adesao, nao podem receber Teams e nao veem o treinamento em `Meus treinamentos`.
-- Administracao mostra secao de excluidos com motivo, operador, data e acao `Reincluir`.
-- Nao existe exclusao ou modificacao de usuario no Active Directory.
+- Adicionado `Excluir` apenas para colaboradores pendentes na tela de elegíveis.
+- Exclusão exige motivo e vale somente para o treinamento selecionado.
+- Excluidos saem dos contadores de elegíveis/pendentes/adesão, não podem receber Teams e não veem o treinamento em `Meus treinamentos`.
+- Administração mostra secao de excluidos com motivo, operador, data e acao `Reincluir`.
+- Não éxiste exclusão ou modificacao de usuário no Active Directory.
 - Nova tabela `TrainingExclusions`; migracao automatica e sem perda do banco existente.
 - Documento: `docs/18-EXCLUSOES-COLABORADORES-V0.0.6.md`.
 - Teste: `docs/19-TESTE-V0.0.6.md`.
@@ -169,12 +180,12 @@
 ### Decisoes aprovadas
 
 - Separar aplicacao publicada de dados persistentes no servidor.
-- Estrutura final: `Web`, `Data`, `Treinamentos`, `Evidencias`, `Logs`, `Backup` diretamente sob `C:\Automind.Treinamentos`.
-- `Evidencias` permanece dividida em `Colaboradores` e `Relatorios`.
+- Estrutura final: `Web`, `Data`, `Treinamentos`, `Evidências`, `Logs`, `Backup` diretamente sob `C:\Automind.Treinamentos`.
+- `Evidências` permanece dividida em `Colaboradores` e `Relatorios`.
 - `Web` passa a ser descartavel/substituivel por pipeline/release; dados persistentes nunca devem ser limpos pelo deploy.
 - Production usa `C:\Automind.Treinamentos` como `Storage:RootPath`; desenvolvimento continua usando `App_Data`.
 - A migracao inicial deve COPIAR o estado atual de `Web\App_Data` para as pastas novas e manter o antigo `App_Data` temporariamente para rollback.
-- App Pool `Automind.Treinamentos` precisa de Modify somente nas pastas persistentes, nao em toda a pasta `Web`.
+- App Pool `Automind.Treinamentos` precisa de Modify somente nas pastas persistentes, não em toda a pasta `Web`.
 
 ### Teams
 
@@ -182,7 +193,7 @@
 - Mesmo contrato HTTP: POST JSON `{ recipient, text }`.
 - Mesmo segredo externo: `Automind__Teams__WebhookUrl`.
 - Mesmo `HttpClient` nomeado `TeamsWebhook` com timeout de 15 segundos.
-- O segredo nao entra em Git, appsettings, docs, SQLite ou auditoria.
+- O segredo não entra em Git, appsettings, docs, SQLite ou auditoria.
 - O preparo do servidor deve copiar o valor da variavel do App Pool `CadastroColaboradores` para `Automind.Treinamentos` sem imprimir o valor.
 - Mensagem aprovada: primeiro nome + treinamento pendente + tempo estimado + link direto.
 - Base publica: `http://treinamentos.automind.com.br`.
@@ -195,7 +206,7 @@
 - Azure DevOps: `https://danielgusmao@dev.azure.com/danielgusmao/Automind.Treinamentos/_git/Automind.Treinamentos`.
 - Branch inicial: `release`.
 - Pasta local correta: `C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos`.
-- Nao executar comandos deste projeto dentro de `Automind.CadastroColaboradores`.
+- Não éxecutar comandos deste projeto dentro de `Automind.CadastroColaboradores`.
 
 ### Documentos novos
 
@@ -254,34 +265,34 @@ Automind__Teams__WebhookUrl=<segredo configurado somente no ambiente do IIS>
 
 ### Regra permanente
 
-O grupo AD `_informatica` continua sendo a autorização administrativa, mesmo que seu nome não seja exibido no cabeçalho. A remoção é somente visual.
+O grupo AD `_informatica` continua sendo a autorização administrativa, mesmo que seu nome não sejá exibido no cabeçalho. A remoção é somente visual.
 
 ---
 
 # Automind.Treinamentos - CHECKPOINT
 
-> Documento cumulativo. Sempre adicionar a entrada mais recente no topo. Nao remover decisoes aceitas sem registrar substituicao explicita.
+> Documento cumulativo. Sempre adicionar a entrada mais recente no topo. Não remover decisoes aceitas sem registrar substituicao explicita.
 
 ## 2026-10-05 - v0.0.3 treinamento integrado ao layout principal
 
 ### Correcao solicitada
 
-Foi confirmado que o arquivo de treinamento baseado no HTML fornecido nao deve abrir com um layout independente. O treinamento precisa permanecer visualmente dentro da mesma pagina/shell do portal Automind.Treinamentos.
+Foi confirmado que o arquivo de treinamento baseado no HTML fornecido não deve abrir com um layout independente. O treinamento precisa permanecer visualmente dentro da mesma página/shell do portal Automind.Treinamentos.
 
-### Alteracoes realizadas
+### Alterações realizadas
 
-- `SecurityAwareness.cshtml` nao usa mais `Layout = null`.
-- O treinamento agora usa `_Layout.cshtml`, mantendo topbar, logo, navegacao, usuario, versao e botao `Sair`.
+- `SecurityAwareness.cshtml` não usa mais `Layout = null`.
+- O treinamento agora usa `_Layout.cshtml`, mantendo topbar, logo, navegacao, usuário, versão e botao `Sair`.
 - A tela `Completed.cshtml` recebeu a mesma correcao e tambem permanece no layout principal.
-- `_Layout.cshtml` recebeu secao opcional `Styles` para CSS especifico por pagina.
+- `_Layout.cshtml` recebeu secao opcional `Styles` para CSS especifico por página.
 - `security-awareness.css` foi escopado em `.training-experience`, evitando alterar topbar e componentes globais.
-- O conteudo do treinamento de SI, quiz 5/5, Termo de Ciencia, cronometro, validacao do servidor e geracao de PDF foram mantidos.
-- Versao atualizada para `v0.0.3`.
-- Nenhuma alteracao foi feita no servidor `10.1.2.21`.
+- O conteúdo do treinamento de SI, quiz 5/5, Termo de Ciência, cronometro, validação do servidor e geracao de PDF foram mantidos.
+- Versão atualizada para `v0.0.3`.
+- Nenhuma alteração foi feita no servidor `10.1.2.21`.
 
 ### Regra permanente de UX
 
-Treinamentos publicados devem abrir dentro do mesmo shell visual do `Automind.Treinamentos`. Um treinamento pode ter composicao interna propria, mas nao deve substituir topbar/navegacao geral por um documento HTML independente.
+Treinamentos publicados devem abrir dentro do mesmo shell visual do `Automind.Treinamentos`. Um treinamento pode ter composicao interna propria, mas não deve substituir topbar/navegacao geral por um documento HTML independente.
 
 ### Proximo passo
 
@@ -294,14 +305,14 @@ Build e teste local seguindo `docs/10-TESTE-V0.0.3.md`.
 ### Pedido incorporado
 
 - Melhorar expressivamente o layout do portal.
-- Reutilizar a identidade visual e as imagens ja usadas no projeto `Automind.CadastroColaboradores` como referencia.
+- Reutilizar a identidade visual e as imagens já usadas no projeto `Automind.CadastroColaboradores` como referencia.
 - Melhorar o comprovante PDF individual, incluindo a marca Automind e uma composicao visual profissional.
 - Registrar e exibir o tempo do treinamento.
 - Manter toda a documentacao cumulativa.
 
 ### Identidade visual aplicada
 
-Foram incorporados ao projeto, a partir do pacote CadColab fornecido pelo usuario:
+Foram incorporados ao projeto, a partir do pacote CadColab fornecido pelo usuário:
 
 - `wwwroot/images/automind-logo-negative.png`;
 - `wwwroot/images/automind-logo-positive.png`;
@@ -314,12 +325,12 @@ O novo layout usa a mesma linguagem visual do Cadastro de Colaboradores: fundo c
 ### Tempo do treinamento
 
 - Cada treinamento agora possui `EstimatedMinutes`.
-- O treinamento inicial de Seguranca da Informacao usa **8 minutos estimados**.
+- O treinamento inicial de Segurança da Informação usa **8 minutos estimados**.
 - O tempo real comeca quando o colaborador abre o treinamento.
-- O inicio e mantido na sessao do servidor por treinamento.
-- Na conclusao o servidor grava `StartedAtUtc`, `AcceptedAtUtc` e `DurationSeconds`.
-- O tempo real aparece na tela de conclusao, em `Meus Treinamentos`, no painel administrativo, no PDF individual e no PDF consolidado.
-- O navegador mostra um cronometro visual, mas a evidencia usa o tempo calculado no servidor.
+- O inicio e mantido na sessão do servidor por treinamento.
+- Na conclusão o servidor grava `StartedAtUtc`, `AcceptedAtUtc` e `DurationSeconds`.
+- O tempo real aparece na tela de conclusão, em `Meus Treinamentos`, no painel administrativo, no PDF individual e no PDF consolidado.
+- O navegador mostra um cronometro visual, mas a evidência usa o tempo calculado no servidor.
 
 ### Banco e compatibilidade
 
@@ -329,7 +340,7 @@ A inicializacao ganhou atualizacao segura de esquema para bancos v0.0.1 existent
 - `TrainingCompletions.StartedAtUtc TEXT NOT NULL DEFAULT ''`;
 - `TrainingCompletions.DurationSeconds INTEGER NOT NULL DEFAULT 0`.
 
-A rotina verifica `PRAGMA table_info` antes de executar `ALTER TABLE`, evitando recriacao do banco.
+A rotina verifica `PRAGMA table_info` antes de executar `ALTER TABLE`, evitando recriação do banco.
 
 ### PDF v0.0.2
 
@@ -339,11 +350,11 @@ O comprovante individual deixou de ser um bloco de texto simples e passou a ter:
 - faixa institucional e identidade magenta/purpura;
 - status APROVADO;
 - nota;
-- versao;
+- versão;
 - tempo estimado;
 - tempo realizado;
 - nome, login AD, e-mail, cargo e departamento;
-- inicio e conclusao;
+- inicio e conclusão;
 - termo de ciencia;
 - protocolo;
 - declaracao;
@@ -354,23 +365,23 @@ O relatorio consolidado tambem foi redesenhado em paisagem e inclui tempo realiz
 ### Layout do portal
 
 - Login em tela dividida com wallpaper e marca Automind.
-- Topbar baseada no CadColab, com logo, navegacao, usuario, perfil e versao.
+- Topbar baseada no CadColab, com logo, navegacao, usuário, perfil e versão.
 - `Meus Treinamentos` ganhou hero, indicadores e cards mais ricos.
-- Administracao ganhou dashboard, indicadores, tabelas e status visuais.
-- O treinamento de SI ganhou hero, tempo estimado, cronometro da sessao, cards de modulos, quiz e aceite com melhor hierarquia visual.
+- Administração ganhou dashboard, indicadores, tabelas e status visuais.
+- O treinamento de SI ganhou hero, tempo estimado, cronometro da sessão, cards de módulos, quiz e aceite com melhor hierarquia visual.
 
-### Seguranca mantida
+### Segurança mantida
 
 - Senha AD continua sem persistencia.
-- Usuario comum continua sem acesso administrativo.
+- Usuário comum continua sem acesso administrativo.
 - `_informatica` continua sendo o grupo administrativo.
 - HTTP continua temporario e somente para teste interno/localhost ate existir certificado.
-- Nenhuma alteracao foi feita no servidor `10.1.2.21`.
+- Nenhuma alteração foi feita no servidor `10.1.2.21`.
 
-### Validacao do pacote
+### Validação do pacote
 
 - O exemplo visual do novo PDF foi renderizado em PNG e inspecionado: logo, faixas, cards, tipografia, dados e rodape sem cortes ou sobreposicoes visiveis.
-- Arquivo de referencia: `docs/reference/PDF-EVIDENCIA-v0.0.2-EXEMPLO.pdf` (marcado como exemplo, nao como evidencia real).
+- Arquivo de referencia: `docs/reference/PDF-EVIDENCIA-v0.0.2-EXEMPLO.pdf` (marcado como exemplo, não como evidência real).
 - Foi feita verificacao estatica do `csproj`, delimitadores dos arquivos C# e existencia dos assets de marca.
 - O ambiente de geracao continua sem SDK `dotnet`; portanto o build final deve ser executado no Visual Studio da Automind antes de qualquer publicacao.
 
@@ -380,7 +391,7 @@ O relatorio consolidado tambem foi redesenhado em paisagem e inclui tempo realiz
 2. Restore.
 3. Build Debug.
 4. Executar por HTTP local.
-5. Validar login, pagina de treinamentos, cronometro e conclusao.
+5. Validar login, página de treinamentos, cronometro e conclusão.
 6. Abrir o PDF individual gerado e conferir logo, dados e tempo realizado.
 7. Somente depois discutir publicacao no IIS.
 
@@ -466,10 +477,10 @@ C:\Automind.Treinamentos\
 ├── Data\
 │   └── Automind.Treinamentos.db
 ├── Treinamentos\
-│   └── <slug>\<versao>\
+│   └── <slug>\<versão>\
 │       ├── manifest.json
 │       └── SHA256.txt
-├── Evidencias\
+├── Evidências\
 │   ├── Colaboradores\
 │   │   └── <Nome> - <samAccountName>\
 │   │       └── <data> - <treinamento> - <protocolo>.pdf
@@ -505,7 +516,7 @@ O banco também grava o SHA-256 do PDF gerado.
 
 Ao publicar um treinamento, é criado um snapshot em:
 
-`Treinamentos\<slug>\<versao>\manifest.json`
+`Treinamentos\<slug>\<versão>\manifest.json`
 
 E um arquivo `SHA256.txt` com o hash do `manifest.json`.
 
@@ -585,16 +596,16 @@ Ao aparecer qualquer erro no primeiro build, corrigir antes de avançar para IIS
 5. Executar pelo perfil HTTP em `http://localhost:5180`.
 6. Testar primeiro com uma conta AD de teste comum.
 7. Testar depois com um membro de `_informatica`.
-8. Validar criação local de `App_Data\Data`, `Treinamentos`, `Evidencias`, `Logs` e `Backup`.
+8. Validar criação local de `App_Data\Data`, `Treinamentos`, `Evidências`, `Logs` e `Backup`.
 9. Só depois discutir a publicação no servidor 10.1.2.21.
 
 ## 2026-10-06 - v0.0.7 - resumo do treinamento no PDF
-- Requisito: toda evidencia individual em PDF deve explicar, de forma resumida, o que foi abordado no treinamento concluido.
-- Decisao: o comprovante individual passa a ter duas paginas para nao comprimir os dados de auditoria da primeira pagina.
-- Pagina 1: resultado, dados AD, datas, duracao, aceite, protocolo e integridade.
-- Pagina 2: resumo do treinamento e principais temas abordados.
+- Requisito: toda evidência individual em PDF deve explicar, de forma resumida, o que foi abordado no treinamento concluído.
+- Decisão: o comprovante individual passa a ter duas páginas para não comprimir os dados de auditoria da primeira página.
+- Página 1: resultado, dados AD, datas, duracao, aceite, protocolo e integridade.
+- Página 2: resumo do treinamento e principais temas abordados.
 - `Trainings.SummaryText` foi adicionado com migracao automatica e sem apagar o banco existente.
 - Novo treinamento possui campo administrativo `Resumo para o PDF`.
-- Fallback: `SummaryText` -> bloco `RESUMO FINAL` do `ContentText` -> `Description` -> trecho do conteudo.
+- Fallback: `SummaryText` -> bloco `RESUMO FINAL` do `ContentText` -> `Description` -> trecho do conteúdo.
 - Para `security-awareness-v1`, o resumo registra: senhas/MFA, phishing e engenharia social, dados pessoais/LGPD e reporte de incidentes via TOPDESK.
-- Esta alteracao nao modifica a regra de conclusao, quiz, elegibilidade, Teams ou exclusoes por treinamento.
+- Esta alteração não modifica a regra de conclusão, quiz, elegibilidade, Teams ou exclusões por treinamento.

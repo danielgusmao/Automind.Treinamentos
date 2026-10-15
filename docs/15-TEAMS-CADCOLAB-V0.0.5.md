@@ -21,7 +21,7 @@ Tempo estimado: 8 minutos.
 Acessar treinamento: http://treinamentos.automind.com.br/Training/Start/1
 ```
 
-No payload real o titulo e o rotulo do link usam HTML `<strong>` e o URL usa `<a href>` para manter clicabilidade no Workflow ja existente.
+No payload real o título e o rotulo do link usam HTML `<strong>` e o URL usa `<a href>` para manter clicabilidade no Workflow já existente.
 
 ## Link
 
@@ -41,6 +41,6 @@ O sistema ganhou essa rota e os botoes de inicio tambem usam `Start`.
 
 ## Habilitacao no IIS
 
-O App Pool `Automind.Treinamentos` deve receber o mesmo valor da variavel `Automind__Teams__WebhookUrl` ja existente no App Pool `CadastroColaboradores`.
+O App Pool `Automind.Treinamentos` deve receber o mesmo valor da variavel `Automind__Teams__WebhookUrl` já existente no App Pool `CadastroColaboradores`.
 
-O script de preparo copia esse valor em memoria entre as configuracoes do IIS e nao imprime nem grava o segredo em arquivo.
+O script de preparo copia esse valor em memoria entre as configurações do IIS e não imprime nem grava o segredo em arquivo.

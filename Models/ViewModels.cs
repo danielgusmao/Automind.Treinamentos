@@ -6,7 +6,7 @@ public sealed class LoginViewModel
 {
     [Required]
     [StringLength(120)]
-    [Display(Name = "Usuario")]
+    [Display(Name = "Usuário")]
     public string Username { get; set; } = "";
 
     [Required]
@@ -48,35 +48,35 @@ public sealed class TrainingSubmitViewModel
 
 public sealed class AdminTrainingCreateViewModel
 {
-    [Required, StringLength(40), RegularExpression(@"^[A-Za-z0-9][A-Za-z0-9._-]*$", ErrorMessage = "Codigo invalido.")] public string Code { get; set; } = "";
-    [Required, StringLength(80), RegularExpression(@"^[a-z0-9][a-z0-9-]*$", ErrorMessage = "Use apenas letras minusculas, numeros e hifen no slug.")] public string Slug { get; set; } = "";
+    [Required, StringLength(40), RegularExpression(@"^[A-Za-z0-9][A-Za-z0-9._-]*$", ErrorMessage = "Código inválido.")] public string Code { get; set; } = "";
+    [Required, StringLength(80), RegularExpression(@"^[a-z0-9][a-z0-9-]*$", ErrorMessage = "Use apenas letras minúsculas, números e hífen no slug.")] public string Slug { get; set; } = "";
     [Required, StringLength(180)] public string Title { get; set; } = "";
     [StringLength(800)] public string Description { get; set; } = "";
     [StringLength(4000)] public string SummaryText { get; set; } = "";
-    [Required, StringLength(40), RegularExpression(@"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$", ErrorMessage = "Use uma versao no formato 1.0.0.")] public string Version { get; set; } = "1.0.0";
+    [Required, StringLength(40), RegularExpression(@"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$", ErrorMessage = "Use uma versão no formato 1.0.0.")] public string Version { get; set; } = "1.0.0";
     [StringLength(50000)]
     public string ContentText { get; set; } = """
 MODULO 1 - TITULO DO MODULO
 Objetivo: explique em uma frase o que o colaborador deve aprender.
 
-Conteudo:
+Conteúdo:
 - Apresente o conceito principal em linguagem simples.
-- Liste as boas praticas que devem ser seguidas.
-- Explique o que nao deve ser feito.
+- Liste as boas práticas que devem ser seguidas.
+- Explique o que não deve ser feito.
 
 Exemplo pratico:
-Descreva uma situacao real do dia a dia da Automind e qual e a conduta esperada.
+Descreva uma situação real do dia a dia da Automind e qual é a conduta esperada.
 
 MODULO 2 - TITULO DO MODULO
 Objetivo: descreva o objetivo deste segundo bloco.
 
-Conteudo:
+Conteúdo:
 - Ponto importante 1.
 - Ponto importante 2.
 - Ponto importante 3.
 
-O que fazer em caso de duvida ou incidente:
-Informe o canal, setor ou procedimento que o colaborador deve utilizar.
+O que fazer em caso de dúvida ou incidente:
+Informe o canal, o setor ou o procedimento que o colaborador deve utilizar.
 
 RESUMO FINAL
 Reforce em poucas linhas os comportamentos que o colaborador deve levar para o trabalho.
@@ -95,7 +95,7 @@ public sealed class AdminTrainingEditViewModel
     [Required, StringLength(180)] public string Title { get; set; } = "";
     [StringLength(800)] public string Description { get; set; } = "";
     [StringLength(4000)] public string SummaryText { get; set; } = "";
-    [Required, StringLength(40), RegularExpression(@"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$", ErrorMessage = "Use uma versao no formato 1.0.0.")] public string Version { get; set; } = "1.0.0";
+    [Required, StringLength(40), RegularExpression(@"^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$", ErrorMessage = "Use uma versão no formato 1.0.0.")] public string Version { get; set; } = "1.0.0";
     [StringLength(50000)] public string ContentText { get; set; } = "";
     [Range(1, 100)] public int PassingScore { get; set; } = 1;
     [Range(1, 480)] public int EstimatedMinutes { get; set; } = 10;

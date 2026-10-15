@@ -1,6 +1,6 @@
 @model TrainingCompletion
 @{
-    ViewData["Title"] = "Treinamento concluido";
+    ViewData["Title"] = "Treinamento concluído";
     var training = (Training)ViewBag.Training;
 }
 @section Styles {
@@ -12,7 +12,7 @@
         <a class="training-back" asp-action="Index">&larr; Meus treinamentos</a>
         <div class="training-toolbar-meta">
             <span class="meta-chip">@training.Code</span>
-            <span class="meta-chip">Versao @training.Version</span>
+            <span class="meta-chip">Versão @training.Version</span>
             <span class="status done">CONCLUIDO</span>
         </div>
     </div>
@@ -20,9 +20,9 @@
     <section class="training-complete-hero">
         <div class="training-complete-mark">&#10003;</div>
         <div>
-            <span class="training-section-eyebrow">Evidencia registrada</span>
+            <span class="training-section-eyebrow">Evidência registrada</span>
             <h1>@training.Title</h1>
-            <p>Treinamento concluido com sucesso. O comprovante foi gravado na pasta individual do colaborador.</p>
+            <p>Treinamento concluído com sucesso. O comprovante foi gravado na pasta individual do colaborador.</p>
         </div>
     </section>
 
@@ -31,7 +31,7 @@
             <div class="training-complete-metric"><small>Resultado</small><strong>@Model.Score/@Model.Total - Aprovado</strong></div>
             <div class="training-complete-metric"><small>Tempo estimado</small><strong>@training.EstimatedMinutes min</strong></div>
             <div class="training-complete-metric"><small>Tempo realizado</small><strong>@Model.DurationLabel</strong></div>
-            <div class="training-complete-metric"><small>Conclusao</small><strong>@Model.AcceptedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong></div>
+            <div class="training-complete-metric"><small>Conclusão</small><strong>@Model.AcceptedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong></div>
         </div>
         <div class="training-protocol">Protocolo @Model.Protocol</div>
         <div class="training-actions-row">

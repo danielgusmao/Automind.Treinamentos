@@ -51,8 +51,8 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Falha ao consultar usuarios elegiveis no AD para dashboard.");
-            ViewBag.AdError = "Nao foi possivel consultar o Active Directory.";
+            _logger.LogWarning(ex, "Falha ao consultar usuários elegíveis no AD para dashboard.");
+            ViewBag.AdError = "Não foi possível consultar o Active Directory.";
         }
         return View(trainings);
     }
@@ -69,7 +69,7 @@ public sealed class AdminController : Controller
         if (!ModelState.IsValid) return View(model);
         if (await _repo.TrainingVersionExistsAsync(model.Code, model.Version))
         {
-            ModelState.AddModelError(nameof(model.Version), $"A versao {model.Version} ja existe para o codigo {model.Code}.");
+            ModelState.AddModelError(nameof(model.Version), $"A versão {model.Version} já existe para o código {model.Code}.");
             return View(model);
         }
         try
@@ -81,7 +81,7 @@ public sealed class AdminController : Controller
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Falha ao criar treinamento {Code} {Version}.", model.Code, model.Version);
-            ModelState.AddModelError("", "Nao foi possivel cadastrar. Verifique codigo, versao e slug informados.");
+            ModelState.AddModelError("", "Não foi possível cadastrar. Verifique código, versão e slug informados.");
             return View(model);
         }
     }
@@ -144,7 +144,7 @@ public sealed class AdminController : Controller
             {
                 if (string.Equals(training.Version, model.Version?.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
-                    ModelState.AddModelError(nameof(model.Version), "Este treinamento ja possui evidencias. Informe uma nova versao.");
+                    ModelState.AddModelError(nameof(model.Version), "Este treinamento já possui evidências. Informe uma nova versão.");
                     return View(model);
                 }
 
@@ -158,13 +158,13 @@ public sealed class AdminController : Controller
                     toVersion = model.Version,
                     completionCount
                 });
-                TempData["Message"] = $"Nova versao {model.Version} criada como rascunho. As {completionCount} conclusao(oes) da versao {training.Version} foram preservadas.";
+                TempData["Message"] = $"Nova versão {model.Version} criada como rascunho. Os {completionCount} registros de conclusão da versão {training.Version} foram preservados.";
                 return RedirectToAction(nameof(Questions), new { id = newId });
             }
 
             if (await _repo.TrainingVersionExistsAsync(training.Code, model.Version, training.Id))
             {
-                ModelState.AddModelError(nameof(model.Version), $"A versao {model.Version} ja existe para o codigo {training.Code}.");
+                ModelState.AddModelError(nameof(model.Version), $"A versão {model.Version} já existe para o código {training.Code}.");
                 return View(model);
             }
 
@@ -173,12 +173,12 @@ public sealed class AdminController : Controller
                 var questionCount = (await _repo.GetQuestionsAsync(training.Id)).Count;
                 if (questionCount == 0)
                 {
-                    ModelState.AddModelError("", "Um treinamento publicado precisa ter pelo menos uma questao.");
+                    ModelState.AddModelError("", "Um treinamento publicado precisa ter pelo menos uma questão.");
                     return View(model);
                 }
                 if (model.PassingScore > questionCount)
                 {
-                    ModelState.AddModelError(nameof(model.PassingScore), "A nota minima nao pode ser maior que a quantidade de questoes.");
+                    ModelState.AddModelError(nameof(model.PassingScore), "A nota mínima não pode ser maior que a quantidade de questões.");
                     return View(model);
                 }
             }
@@ -201,7 +201,7 @@ public sealed class AdminController : Controller
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Falha ao editar treinamento {TrainingId}.", model.Id);
-            ModelState.AddModelError("", "Nao foi possivel salvar o treinamento. Consulte a TI se o problema persistir.");
+            ModelState.AddModelError("", "Não foi possível salvar o treinamento. Consulte a TI se o problema persistir.");
             return View(model);
         }
     }
@@ -226,7 +226,7 @@ public sealed class AdminController : Controller
         if (trainingForWrite is null) return NotFound();
         if (trainingForWrite.IsArchived || await _repo.GetCompletionCountAsync(model.TrainingId) > 0)
         {
-            TempData["Message"] = "Esta versao possui evidencias e e imutavel. Use Editar treinamento para criar uma nova versao antes de alterar as questoes.";
+            TempData["Message"] = "Esta versão possui evidências e é imutável. Use Editar treinamento para criar uma nova versão antes de alterar as questões.";
             return RedirectToAction(nameof(Questions), new { id = model.TrainingId });
         }
 
@@ -255,7 +255,7 @@ public sealed class AdminController : Controller
         if (training is null || question is null) return NotFound();
         if (training.IsArchived || await _repo.GetCompletionCountAsync(trainingId) > 0)
         {
-            TempData["Message"] = "Esta versao possui evidencias e e imutavel. Crie uma nova versao para alterar as questoes.";
+            TempData["Message"] = "Esta versão possui evidências e é imutável. Crie uma nova versão para alterar as questões.";
             return RedirectToAction(nameof(Questions), new { id = trainingId });
         }
         ViewBag.Training = training;
@@ -280,7 +280,7 @@ public sealed class AdminController : Controller
         if (training is null) return NotFound();
         if (training.IsArchived || await _repo.GetCompletionCountAsync(model.TrainingId) > 0)
         {
-            TempData["Message"] = "Esta versao possui evidencias e e imutavel. Crie uma nova versao para alterar as questoes.";
+            TempData["Message"] = "Esta versão possui evidências e é imutável. Crie uma nova versão para alterar as questões.";
             return RedirectToAction(nameof(Questions), new { id = model.TrainingId });
         }
         if (!ModelState.IsValid)
@@ -292,7 +292,7 @@ public sealed class AdminController : Controller
         await _repo.UpdateQuestionAsync(model);
         await RefreshPublishedSnapshotBestEffortAsync(training);
         await _audit.WriteAsync("training-question-edit", "success", Sam(), new { model.TrainingId, model.QuestionId, model.Text });
-        TempData["Message"] = "Questao atualizada com sucesso.";
+        TempData["Message"] = "Questão atualizada com sucesso.";
         return RedirectToAction(nameof(Questions), new { id = model.TrainingId });
     }
 
@@ -304,7 +304,7 @@ public sealed class AdminController : Controller
         if (training is null) return NotFound();
         if (training.IsArchived || await _repo.GetCompletionCountAsync(trainingId) > 0)
         {
-            TempData["Message"] = "Esta versao possui evidencias e e imutavel. Crie uma nova versao para alterar as questoes.";
+            TempData["Message"] = "Esta versão possui evidências e é imutável. Crie uma nova versão para alterar as questões.";
             return RedirectToAction(nameof(Questions), new { id = trainingId });
         }
         await _repo.DeleteQuestionAsync(trainingId, questionId);
@@ -323,26 +323,26 @@ public sealed class AdminController : Controller
 
         if (training.IsArchived)
         {
-            TempData["TrainingError"] = "Versoes historicas nao podem ser republicadas. Crie uma nova versao.";
+            TempData["TrainingError"] = "Versoes históricas não podem ser republicadas. Crie uma nova versão.";
             return RedirectToAction(nameof(Trainings));
         }
 
         if (training.IsPublished)
         {
-            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versao {training.Version} ja esta publicado.";
+            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versão {training.Version} já esta publicado.";
             return RedirectToAction(nameof(Trainings));
         }
 
         var questions = await _repo.GetQuestionsAsync(id);
         if (questions.Count == 0)
         {
-            TempData["Message"] = "Para publicar este treinamento, adicione pelo menos uma questao.";
+            TempData["Message"] = "Para publicar este treinamento, adicione pelo menos uma questão.";
             return RedirectToAction(nameof(Questions), new { id });
         }
 
         if (training.PassingScore > questions.Count)
         {
-            TempData["Message"] = $"A nota minima ({training.PassingScore}) e maior que a quantidade de questoes ({questions.Count}). Ajuste o treinamento antes de publicar.";
+            TempData["Message"] = $"A nota mínima ({training.PassingScore}) é maior que a quantidade de questões ({questions.Count}). Ajuste o treinamento antes de publicar.";
             return RedirectToAction(nameof(Questions), new { id });
         }
 
@@ -351,13 +351,13 @@ public sealed class AdminController : Controller
             await _snapshot.WriteSnapshotAsync(training, questions);
             await _repo.SetPublishedAsync(id, true);
             await _audit.WriteAsync("training-publish", "success", Sam(), new { id, publish = true });
-            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versao {training.Version} publicado com sucesso.";
+            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versão {training.Version} publicado com sucesso.";
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Falha ao publicar treinamento {TrainingId}.", id);
             await _audit.WriteAsync("training-publish", "error", Sam(), new { id, publish = true, error = ex.GetType().Name, code = ex.HResult });
-            TempData["TrainingError"] = "Nao foi possivel publicar o treinamento. Consulte a TI se o problema persistir.";
+            TempData["TrainingError"] = "Não foi possível publicar o treinamento. Consulte a TI se o problema persistir.";
         }
 
         return RedirectToAction(nameof(Trainings));
@@ -372,13 +372,13 @@ public sealed class AdminController : Controller
 
         if (training.IsArchived)
         {
-            TempData["TrainingError"] = "Versoes historicas nao podem ser alteradas.";
+            TempData["TrainingError"] = "Versoes históricas não podem ser alteradas.";
             return RedirectToAction(nameof(Trainings));
         }
 
         if (!training.IsPublished)
         {
-            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versao {training.Version} ja esta despublicado.";
+            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versão {training.Version} já esta despublicado.";
             return RedirectToAction(nameof(Trainings));
         }
 
@@ -386,13 +386,13 @@ public sealed class AdminController : Controller
         {
             await _repo.SetPublishedAsync(id, false);
             await _audit.WriteAsync("training-unpublish", "success", Sam(), new { id, publish = false });
-            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versao {training.Version} despublicado com sucesso.";
+            TempData["TrainingMessage"] = $"Treinamento {training.Code} - versão {training.Version} despublicado com sucesso.";
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Falha ao despublicar treinamento {TrainingId}.", id);
             await _audit.WriteAsync("training-unpublish", "error", Sam(), new { id, publish = false, error = ex.GetType().Name, code = ex.HResult });
-            TempData["TrainingError"] = "Nao foi possivel despublicar o treinamento. Consulte a TI se o problema persistir.";
+            TempData["TrainingError"] = "Não foi possível despublicar o treinamento. Consulte a TI se o problema persistir.";
         }
 
         return RedirectToAction(nameof(Trainings));
@@ -414,7 +414,7 @@ public sealed class AdminController : Controller
         if (training is null) return NotFound();
         if (training.IsArchived)
         {
-            TempData["TrainingMessage"] = "Esta e uma versao historica. Consulte Concluidos para as evidencias preservadas.";
+            TempData["TrainingMessage"] = "Esta é uma versão histórica. Consulte Concluídos para as evidências preservadas.";
             return RedirectToAction(nameof(Trainings));
         }
         ViewBag.Training = training;
@@ -441,8 +441,8 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Falha ao consultar usuarios elegiveis no AD.");
-            ViewBag.AdError = "Nao foi possivel consultar o Active Directory.";
+            _logger.LogWarning(ex, "Falha ao consultar usuários elegíveis no AD.");
+            ViewBag.AdError = "Não foi possível consultar o Active Directory.";
             return View(new List<PendingUserViewModel>());
         }
     }
@@ -460,7 +460,7 @@ public sealed class AdminController : Controller
 
         if (string.IsNullOrWhiteSpace(sam) || string.IsNullOrWhiteSpace(reason))
         {
-            TempData["ExclusionError"] = "Informe o colaborador e o motivo da exclusao permanente.";
+            TempData["ExclusionError"] = "Informe o colaborador e o motivo da exclusão permanente.";
             return RedirectToAction(nameof(Pending), new { id = trainingId });
         }
         if (reason.Length > 300) reason = reason[..300];
@@ -469,7 +469,7 @@ public sealed class AdminController : Controller
         var user = users.FirstOrDefault(x => string.Equals(x.SamAccountName, sam, StringComparison.OrdinalIgnoreCase));
         if (user is null)
         {
-            TempData["ExclusionError"] = "Conta nao localizada entre os usuarios elegiveis do Active Directory.";
+            TempData["ExclusionError"] = "Conta não localizada entre os usuários elegíveis do Active Directory.";
             return RedirectToAction(nameof(Pending), new { id = trainingId });
         }
 
@@ -483,7 +483,7 @@ public sealed class AdminController : Controller
             reason,
             sourceTrainingId = trainingId
         });
-        TempData["ExclusionResult"] = $"{user.DisplayName} foi adicionado a lista permanente de exclusoes e nao sera considerado em nenhum treinamento.";
+        TempData["ExclusionResult"] = $"{user.DisplayName} foi adicionado à lista permanente de exclusões e não será considerado em nenhum treinamento.";
         return RedirectToAction(nameof(Pending), new { id = trainingId });
     }
 
@@ -536,8 +536,8 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Falha ao consultar AD para exclusao permanente.");
-            TempData["DirectoryExclusionError"] = "Nao foi possivel consultar o Active Directory.";
+            _logger.LogWarning(ex, "Falha ao consultar AD para exclusão permanente.");
+            TempData["DirectoryExclusionError"] = "Não foi possível consultar o Active Directory.";
         }
         return RedirectToAction(nameof(DirectoryExclusions));
     }
@@ -563,7 +563,7 @@ public sealed class AdminController : Controller
         if (training is null) return NotFound();
         if (training.IsArchived || !training.IsPublished)
         {
-            TempData["TeamsError"] = "Lembretes so podem ser enviados para a versao atualmente publicada.";
+            TempData["TeamsError"] = "Lembretes so podem ser enviados para a versão atualmente publicada.";
             return RedirectToAction(nameof(Trainings));
         }
 
@@ -582,7 +582,7 @@ public sealed class AdminController : Controller
 
         if (!_teams.IsConfigured)
         {
-            TempData["TeamsError"] = "O webhook do Teams ainda nao esta configurado para o Automind.Treinamentos.";
+            TempData["TeamsError"] = "O webhook do Teams ainda não esta configurado para o Automind.Treinamentos.";
             return RedirectToAction(nameof(Pending), new { id = trainingId });
         }
 
@@ -658,7 +658,7 @@ public sealed class AdminController : Controller
         }
         catch (Exception ex)
         {
-            // O banco e a fonte autoritativa. Na conclusao, EvidenceService valida/reconstroi o snapshot.
+            // O banco é a fonte autoritativa. Na conclusão, EvidenceService valida/reconstroi o snapshot.
             _logger.LogWarning(ex, "Treinamento {TrainingId} foi atualizado, mas o refresh imediato do snapshot falhou.", training.Id);
         }
     }
@@ -669,8 +669,8 @@ public sealed class AdminController : Controller
         return value switch
         {
             "E-mail geral / Caixa compartilhada" => value,
-            "Conta de servico" => value,
-            "Terceiro / Nao colaborador" => value,
+            "Conta de serviço" => value,
+            "Terceiro / Não colaborador" => value,
             "Outro" => value,
             _ => "E-mail geral / Caixa compartilhada"
         };

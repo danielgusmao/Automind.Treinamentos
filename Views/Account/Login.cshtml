@@ -22,7 +22,7 @@
             <div>
                 <span class="eyebrow eyebrow-light">DESENVOLVIMENTO DE PESSOAS</span>
                 <h1>Treinar.<br />Comprovar.<br />Evoluir.</h1>
-                <p>Um ambiente interno para capacitacao, conhecimento e evidencias de conclusao vinculadas ao colaborador.</p>
+                <p>Um ambiente interno para capacitação, conhecimento e evidências de conclusão vinculadas ao colaborador.</p>
             </div>
             <span class="login-tagline">SIMPLE &middot; SMART &middot; RELIABLE</span>
         </div>
@@ -32,13 +32,13 @@
             <img class="login-mobile-logo" src="~/images/automind-logo-positive.png" alt="Automind" />
             <span class="eyebrow">ACESSO CORPORATIVO</span>
             <h2>Entre com sua conta Automind</h2>
-            <p class="login-subtitle">Use o mesmo usuario e senha do Active Directory. O sistema identifica automaticamente seus treinamentos e seu perfil de acesso.</p>
+            <p class="login-subtitle">Use o mesmo usuário e senha do Active Directory. O sistema identifica automaticamente seus treinamentos e seu perfil de acesso.</p>
             @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) { <div class="alert error">@Model.ErrorMessage</div> }
             <form asp-action="Login" method="post" class="form-stack">
                 @Html.AntiForgeryToken()
                 <input asp-for="ReturnUrl" type="hidden" />
                 <div asp-validation-summary="ModelOnly" class="alert error"></div>
-                <label asp-for="Username">Usuario</label>
+                <label asp-for="Username">Usuário</label>
                 <div class="input-with-icon"><span>U</span><input asp-for="Username" autocomplete="username" placeholder="nome.sobrenome" autofocus /></div>
                 <span asp-validation-for="Username"></span>
                 <label asp-for="Password">Senha</label>
@@ -46,7 +46,7 @@
                 <span asp-validation-for="Password"></span>
                 <button class="btn primary btn-login" type="submit">Entrar no portal</button>
             </form>
-            <div class="security-note"><span class="status-dot status-dot-safe"></span><p><strong>Credenciais nao sao armazenadas.</strong><br />A senha e utilizada apenas para validacao no Active Directory.</p></div>
+            <div class="security-note"><span class="status-dot status-dot-safe"></span><p><strong>Credenciais não são armazenadas.</strong><br />A senha é utilizada apenas para validação no Active Directory.</p></div>
         </div>
     </section>
 </main>

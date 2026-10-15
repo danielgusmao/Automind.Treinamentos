@@ -1,6 +1,6 @@
 # v0.0.5 - Estrutura de pastas persistentes
 
-## Decisao aprovada
+## Decisão aprovada
 
 A aplicacao publicada e os dados persistentes passam a ser fisicamente separados.
 
@@ -9,7 +9,7 @@ C:\Automind.Treinamentos\
 |-- Web\
 |-- Data\
 |-- Treinamentos\
-|-- Evidencias\
+|-- Evidências\
 |   |-- Colaboradores\
 |   `-- Relatorios\
 |-- Logs\
@@ -26,15 +26,15 @@ Banco `Automind.Treinamentos.db` e arquivos auxiliares SQLite. Nunca limpar dura
 
 ### Treinamentos
 
-Snapshots imutaveis/logicos por `slug/versao`, incluindo `manifest.json` e `SHA256.txt`.
+Snapshots imutaveis/logicos por `slug/versão`, incluindo `manifest.json` e `SHA256.txt`.
 
-### Evidencias/Colaboradores
+### Evidências/Colaboradores
 
 Na v0.0.5 a pasta era criada no formato `Nome - samAccountName`. Essa convencao foi substituida na v0.0.14 por somente `samAccountName`/login para reduzir o comprimento dos caminhos. Os PDFs continuam agrupados por colaborador.
 
-### Evidencias/Relatorios
+### Evidências/Relatorios
 
-Relatorios consolidados gerados pela administracao.
+Relatorios consolidados gerados pela administração.
 
 ### Logs
 
@@ -42,12 +42,12 @@ Relatorios consolidados gerados pela administracao.
 
 ### Backup
 
-Area separada para backups operacionais. Nao e pasta de artefato do pipeline.
+Area separada para backups operacionais. Não é pasta de artefato do pipeline.
 
 ## Desenvolvimento
 
-Para nao exigir `C:\Automind.Treinamentos` na maquina do desenvolvedor, `appsettings.json` continua usando `App_Data`. Em Production, `appsettings.Production.json` troca automaticamente a raiz para `C:\Automind.Treinamentos`.
+Para não exigir `C:\Automind.Treinamentos` na maquina do desenvolvedor, `appsettings.json` continua usando `App_Data`. Em Production, `appsettings.Production.json` troca automaticamente a raiz para `C:\Automind.Treinamentos`.
 
 ## Rollback da migracao inicial
 
-O script de preparo copia os dados antigos e nao remove `Web\App_Data`. Se houver necessidade de rollback para v0.0.4, os dados antigos permanecem disponiveis ate a limpeza ser autorizada posteriormente.
+O script de preparo copia os dados antigos e não remove `Web\App_Data`. Se houver necessidade de rollback para v0.0.4, os dados antigos permanecem disponíveis ate a limpeza ser autorizada posteriormente.

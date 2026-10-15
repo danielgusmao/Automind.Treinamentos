@@ -29,7 +29,7 @@ public sealed class TrainingController : Controller
         var email = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
         if (await _repo.IsDirectoryExcludedAsync(sam, email))
         {
-            TempData["TrainingMessage"] = "Seu usuario esta fora da base de colaboradores elegiveis para treinamentos.";
+            TempData["TrainingMessage"] = "Seu usuário esta fora da base de colaboradores elegíveis para treinamentos.";
             return View(new List<TrainingListItemViewModel>());
         }
 
@@ -46,7 +46,7 @@ public sealed class TrainingController : Controller
         if (training is null || !training.IsPublished) return NotFound();
         if (await IsExcludedAsync())
         {
-            TempData["TrainingMessage"] = "Seu usuario esta fora da base de colaboradores elegiveis para treinamentos.";
+            TempData["TrainingMessage"] = "Seu usuário esta fora da base de colaboradores elegíveis para treinamentos.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -67,7 +67,7 @@ public sealed class TrainingController : Controller
         if (training is null || !training.IsPublished) return NotFound();
         if (await IsExcludedAsync())
         {
-            TempData["TrainingMessage"] = "Seu usuario esta fora da base de colaboradores elegiveis para treinamentos.";
+            TempData["TrainingMessage"] = "Seu usuário esta fora da base de colaboradores elegíveis para treinamentos.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -79,9 +79,9 @@ public sealed class TrainingController : Controller
         var quiz = QuizValidationService.Validate(questions, model.Answers);
         if (!quiz.IsStructurallyValid)
         {
-            _logger.LogWarning("Quiz invalido recebido para treinamento {TrainingId} e usuario {SamAccountName}: {Reason}", training.Id, Sam(), quiz.Error);
+            _logger.LogWarning("Quiz inválido recebido para treinamento {TrainingId} e usuário {SamAccountName}: {Reason}", training.Id, Sam(), quiz.Error);
             var vm = BuildTakeViewModel(training, questions, startedAt);
-            vm.ErrorMessage = "Responda todas as questoes usando apenas as opcoes apresentadas.";
+            vm.ErrorMessage = "Responda todas as questões usando apenas as opções apresentadas.";
             return View(training.LayoutKey == "security-awareness-v1" ? "SecurityAwareness" : "Take", vm);
         }
 
@@ -90,8 +90,8 @@ public sealed class TrainingController : Controller
         {
             var vm = BuildTakeViewModel(training, questions, startedAt);
             vm.ErrorMessage = !model.Accepted
-                ? "E necessario aceitar o Termo de Ciencia."
-                : $"Resultado {score}/{questions.Count}. E necessario atingir {training.PassingScore}/{questions.Count} para registrar o aceite.";
+                ? "É necessário aceitar o Termo de Ciência."
+                : $"Resultado {score}/{questions.Count}. É necessário atingir {training.PassingScore}/{questions.Count} para registrar o aceite.";
             return View(training.LayoutKey == "security-awareness-v1" ? "SecurityAwareness" : "Take", vm);
         }
 
@@ -137,22 +137,22 @@ public sealed class TrainingController : Controller
                 try { System.IO.File.Delete(generatedPath); } catch { }
             }
 
-            _logger.LogError(ex, "Falha ao persistir conclusao do treinamento {TrainingId} para {SamAccountName}.", training.Id, completion.SamAccountName);
+            _logger.LogError(ex, "Falha ao persistir conclusão do treinamento {TrainingId} para {SamAccountName}.", training.Id, completion.SamAccountName);
             try
             {
                 await _audit.WriteAsync("training-completion", "failed", completion.SamAccountName, new { training.Id, error = ex.GetType().Name, code = ex.HResult });
             }
             catch (Exception auditEx)
             {
-                _logger.LogWarning(auditEx, "Falha adicional ao registrar auditoria de conclusao malsucedida.");
+                _logger.LogWarning(auditEx, "Falha adicional ao registrar auditoria de conclusão malsucedida.");
             }
 
             var vm = BuildTakeViewModel(training, questions, startedAt);
-            vm.ErrorMessage = "Nao foi possivel registrar a evidencia. Nenhum aceite foi concluido. Procure a TI.";
+            vm.ErrorMessage = "Não foi possível registrar a evidência. Nenhum aceite foi concluído. Procure a TI.";
             return View(training.LayoutKey == "security-awareness-v1" ? "SecurityAwareness" : "Take", vm);
         }
 
-        // Uma falha de auditoria depois do INSERT nao invalida nem apaga uma conclusao ja persistida.
+        // Uma falha de auditoria depois do INSERT não invalida nem apaga uma conclusão já persistida.
         try
         {
             await _audit.WriteAsync("training-completion", "success", completion.SamAccountName, new
@@ -170,7 +170,7 @@ public sealed class TrainingController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Conclusao {Protocol} foi persistida, mas a auditoria falhou.", completion.Protocol);
+            _logger.LogError(ex, "Conclusão {Protocol} foi persistida, mas a auditoria falhou.", completion.Protocol);
         }
 
         var saved = await _repo.GetCompletionAsync(training.Id, completion.SamAccountName);
@@ -223,5 +223,5 @@ public sealed class TrainingController : Controller
 
     private string StartKey(long trainingId) => $"TrainingStart:{Sam()}:{trainingId}";
 
-    private string Sam() => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("Sessao sem identificador AD.");
+    private string Sam() => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("Sessão sem identificador AD.");
 }

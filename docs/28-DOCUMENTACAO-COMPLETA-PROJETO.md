@@ -1,12 +1,12 @@
 # Automind.Treinamentos - documentacao completa do projeto
 
-Estado consolidado em 06/10/2026 - atualizado ate a versao v0.0.14.
+Estado consolidado em 06/10/2026 - atualizado ate a versão v0.0.14.
 
 ## 1. Objetivo
 
-Portal interno de treinamentos obrigatorios para colaboradores Automind, com autenticacao Active Directory, controle administrativo, quiz, aceite, evidencia PDF, acompanhamento de pendencias e lembretes via Microsoft Teams.
+Portal interno de treinamentos obrigatórios para colaboradores Automind, com autenticacao Active Directory, controle administrativo, quiz, aceite, evidência PDF, acompanhamento de pendências e lembretes via Microsoft Teams.
 
-O banco da aplicacao e a fonte de verdade das conclusoes. O Active Directory fornece a populacao de colaboradores elegiveis e a identidade usada no login.
+O banco da aplicacao é a fonte de verdade das conclusões. O Active Directory fornece a populacao de colaboradores elegíveis e a identidade usada no login.
 
 ## 2. Ambiente
 
@@ -15,7 +15,7 @@ O banco da aplicacao e a fonte de verdade das conclusoes. O Active Directory for
 - App Pool: `Automind.Treinamentos`.
 - Identidade atual do App Pool: `ApplicationPoolIdentity`.
 - URL atual: `http://treinamentos.automind.com.br`.
-- Aplicacao interna; o servidor nao deve ser exposto diretamente a Internet.
+- Aplicacao interna; o servidor não deve ser exposto diretamente a Internet.
 - Runtime alvo: `.NET 10.0 / ASP.NET Core`.
 - Banco: SQLite.
 
@@ -27,7 +27,7 @@ C:\Automind.Treinamentos\
 |-- Data\
 |   `-- Automind.Treinamentos.db
 |-- Treinamentos\
-|-- Evidencias\
+|-- Evidências\
 |   |-- Colaboradores\
 |   `-- Relatorios\
 |-- Logs\
@@ -40,9 +40,9 @@ Regra: `Web` e substituivel pela Release. Dados persistentes nunca devem ser apa
 
 ## 4. Autenticacao
 
-Login com usuario e senha do Active Directory `automind.com.br`.
+Login com usuário e senha do Active Directory `automind.com.br`.
 
-A senha e usada apenas para `ValidateCredentials`; nao e persistida, colocada em claims, banco, auditoria ou arquivos.
+A senha e usada apenas para `ValidateCredentials`; não é persistida, colocada em claims, banco, auditoria ou arquivos.
 
 O cookie autenticado guarda somente identidade basica:
 
@@ -52,15 +52,15 @@ O cookie autenticado guarda somente identidade basica:
 - cargo;
 - departamento.
 
-## 5. Autorizacao administrativa
+## 5. Autorização administrativa
 
 Grupo oficial: `_treinamentos`.
 
-A partir da v0.0.10 nenhuma role administrativa e persistida no cookie ou sessao.
+A partir da v0.0.10 nenhuma role administrativa é persistida no cookie ou sessão.
 
 Em cada requisicao autenticada o backend consulta diretamente o LDAP e verifica membership atual em `_treinamentos`. A verificacao suporta membership direta e grupo aninhado.
 
-A role `TreinamentosAdmin` existe somente em memoria durante a requisicao atual. A policy do `AdminController` e o menu Razor usam a mesma decisao.
+A role `TreinamentosAdmin` existe somente em memoria durante a requisicao atual. A policy do `AdminController` e o menu Razor usam a mesma decisão.
 
 Falha de LDAP = sem privilegio administrativo (fail-closed).
 
@@ -83,7 +83,7 @@ ActiveDirectory__AdminGroup=_treinamentos
 ActiveDirectory__AuthorizationServer=<FQDN-do-DC>
 ```
 
-O segundo e util somente se a infraestrutura decidir fixar um DC para evitar atraso de replicacao percebido durante alteracoes operacionais do grupo.
+O segundo e util somente se a infraestrutura decidir fixar um DC para evitar atraso de replicacao percebido durante alterações operacionais do grupo.
 
 ## 6. Populacao de colaboradores
 
@@ -93,47 +93,47 @@ Base inicial:
 - conta habilitada;
 - atributo `mail` terminando em `@automind.com.br`.
 
-Isso inclui algumas contas que tecnicamente sao usuarios/e-mails do AD mas nao representam pessoas. Por isso existe uma lista global permanente de exclusoes.
+Isso inclui algumas contas que tecnicamente são usuários/e-mails do AD mas não representam pessoas. Por isso existe uma lista global permanente de exclusões.
 
-## 7. Exclusoes permanentes
+## 7. Exclusões permanentes
 
 Tabela/fonte: `DirectoryExclusions` no SQLite persistente.
 
-A exclusao:
+A exclusão:
 
 - vale para todos os treinamentos atuais e futuros;
-- nao exclui nem modifica o objeto no AD;
-- remove a conta de elegiveis, pendentes e adesao;
+- não exclui nem modifica o objeto no AD;
+- remove a conta de elegíveis, pendentes e adesão;
 - impede lembretes Teams;
 - remove treinamentos de `Meus treinamentos`;
 - bloqueia acesso direto ao treinamento pelo backend;
 - registra categoria, motivo, operador e data;
 - pode ser revertida por `Reincluir`;
-- preserva historico de reinclusao.
+- preserva histórico de reinclusão.
 
 Conta inicial conhecida: `produtos / produtos@automind.com.br`.
 
-Categorias previstas incluem e-mail geral/caixa compartilhada, conta de servico, terceiro/nao colaborador e outro.
+Categorias previstas incluem e-mail geral/caixa compartilhada, conta de serviço, terceiro/nao colaborador e outro.
 
 ## 8. Treinamentos
 
-Administradores podem criar e editar treinamentos, definindo titulo, descricao, versao, tempo estimado, nota minima, conteudo e resumo para PDF. `Code` e `Slug` sao identificadores tecnicos definidos na criacao e permanecem estaveis.
+Administradores podem criar e editar treinamentos, definindo título, descrição, versão, tempo estimado, nota mínima, conteúdo e resumo para PDF. `Code` e `Slug` são identificadores técnicos definidos na criação e permanecem estaveis.
 
-Questoes podem ser criadas, editadas e excluidas enquanto a versao nao possui evidencias.
+Questões podem ser criadas, editadas e excluidas enquanto a versão não possui evidências.
 
-A partir da v0.0.11 uma versao que ja possui conclusoes e imutavel. Qualquer alteracao cria uma nova revisao em rascunho e copia as questoes, preservando integralmente conclusoes, PDFs, hashes e snapshot da versao anterior. Quando a nova revisao e publicada, a versao publicada anterior do mesmo codigo passa a historica.
+A partir da v0.0.11 uma versão que já possui conclusões é imutável. Qualquer alteração cria uma nova revisão em rascunho e copia as questões, preservando integralmente conclusões, PDFs, hashes e snapshot da versão anterior. Quando a nova revisão e publicada, a versão publicada anterior do mesmo código passa a histórica.
 
-Primeiro treinamento: `Treinamento de Conscientizacao em Seguranca da Informacao`, codigo `SI-001`, versao `1.0.0`, estimativa de 8 minutos e nota minima 5/5.
+Primeiro treinamento: `Treinamento de Conscientizacao em Segurança da Informação`, código `SI-001`, versão `1.0.0`, estimativa de 8 minutos e nota mínima 5/5.
 
-## 9. Conclusao e evidencia
+## 9. Conclusão e evidência
 
-O backend recalcula a pontuacao; nao confia no resultado informado pelo navegador.
+O backend recalcula a pontuacao; não confia no resultado informado pelo navegador.
 
-A conclusao registra:
+A conclusão registra:
 
 - colaborador;
-- treinamento/versao;
-- inicio e conclusao;
+- treinamento/versão;
+- inicio e conclusão;
 - duracao real;
 - nota;
 - aceite;
@@ -141,9 +141,9 @@ A conclusao registra:
 - hash do snapshot;
 - caminho e SHA-256 do PDF.
 
-O PDF individual possui dados de evidencia e uma segunda pagina com resumo do treinamento. O campo `SummaryText` pode ser definido pelo administrador; quando ausente, ha fallback para resumo final/descricao/conteudo.
+O PDF individual possui dados de evidência e uma segunda página com resumo do treinamento. O campo `SummaryText` pode ser definido pelo administrador; quando ausente, ha fallback para resumo final/descrição/conteúdo.
 
-PDFs ja emitidos nao sao reescritos retroativamente.
+PDFs já emitidos não são reescritos retroativamente.
 
 ## 10. Teams
 
@@ -152,7 +152,7 @@ Reutiliza o mesmo Workflow do projeto CadColab.
 Contrato:
 
 ```json
-{ "recipient": "usuario@automind.com.br", "text": "mensagem" }
+{ "recipient": "usuário@automind.com.br", "text": "mensagem" }
 ```
 
 Segredo somente no ambiente:
@@ -163,7 +163,7 @@ Automind__Teams__WebhookUrl
 
 Nunca salvar a URL real do Workflow em Git, banco, docs ou logs.
 
-A tela de pendencias permite envio individual ou em lote somente para colaboradores pendentes e elegiveis.
+A tela de pendências permite envio individual ou em lote somente para colaboradores pendentes e elegíveis.
 
 ## 11. Git, pipeline e Release
 
@@ -181,77 +181,77 @@ https://danielgusmao@dev.azure.com/danielgusmao/Automind.Treinamentos/_git/Autom
 
 Branch de deploy: `release`.
 
-Pipeline e Release estao configurados para deploy automatico quando a branch `release` recebe alteracao.
+Pipeline e Release estao configurados para deploy automatico quando a branch `release` recebe alteração.
 
-As mensagens de commit precisam conter versao no formato `vX.Y.Z`, pois a pipeline valida esse padrao.
+As mensagens de commit precisam conter versão no formato `vX.Y.Z`, pois a pipeline valida esse padrao.
 
-Nao fazer deploy manual depois de push bem-sucedido na `release`, salvo falha da automacao.
+Não fazer deploy manual depois de push bem-sucedido na `release`, salvo falha da automacao.
 
 ## 12. Versionamento
 
-A versao exibida pela interface vem do assembly. O `.csproj` e a fonte oficial e o build/publish gera `VERSION.txt` com o mesmo valor.
+A versão exibida pela interface vem do assembly. O `.csproj` é a fonte oficial e o build/publish gera `VERSION.txt` com o mesmo valor.
 
 A v0.0.7 demonstrou o risco de alterar apenas `VERSION.txt`; a UI continuou exibindo o assembly anterior. Isso foi corrigido definitivamente a partir da v0.0.8.
 
-## 13. Seguranca
+## 13. Segurança
 
-- Senha AD nao persistida.
-- Role administrativa nao persistida desde v0.0.10.
-- Autorizacao administrativa fail-closed.
-- Validacao server-side do quiz e acesso.
+- Senha AD não persistida.
+- Role administrativa não persistida desde v0.0.10.
+- Autorização administrativa fail-closed.
+- Validação server-side do quiz e acesso.
 - Webhook Teams fora do repositorio.
 - Dados persistentes fora da pasta publicada.
 - App Pool deve ter escrita somente nas pastas persistentes necessarias.
-- Nao usar `iisreset` para operacoes normais; atuar apenas no App Pool/site do projeto.
+- Não usar `iisreset` para operações normais; atuar apenas no App Pool/site do projeto.
 
-## 14. HTTPS/TLS - estado e decisao pendente
+## 14. HTTPS/TLS - estado e decisão pendente
 
-O site continua em HTTP porque ainda nao ha certificado configurado.
+O site continua em HTTP porque ainda não ha certificado configurado.
 
-O servidor e interno e nao sera exposto diretamente a Internet. Portanto a proxima fase deve avaliar HTTPS interno sem abrir o servidor para validacao HTTP publica.
+O servidor e interno e não será exposto diretamente a Internet. Portanto a proxima fase deve avaliar HTTPS interno sem abrir o servidor para validação HTTP publica.
 
-Opcoes a avaliar antes de instalar software:
+Opções a avaliar antes de instalar software:
 
 1. certificado emitido por CA interna/AD CS, se existir PKI corporativa;
-2. ACME com validacao DNS-01, caso o DNS publico permita automacao segura;
+2. ACME com validação DNS-01, caso o DNS publico permita automacao segura;
 3. certificado corporativo/importado manualmente com processo de renovacao controlado.
 
-`win-acme` nao deve ser instalado antes de validar qual metodo de emissao e renovacao se encaixa na infraestrutura. HTTP-01 nao e a primeira escolha porque exigiria alcance externo na porta 80, contrario ao requisito de servidor interno.
+`win-acme` não deve ser instalado antes de validar qual metodo de emissão e renovacao se encaixa na infraestrutura. HTTP-01 não e a primeira escolha porque exigiria alcance externo na porta 80, contrario ao requisito de servidor interno.
 
 ## 15. Incidentes/achados importantes
 
-- Falha inicial SQLite readonly e `manifest.json` sem permissao: origem em ACLs da pasta publicada; resolvida ao separar dados persistentes e corrigir permissoes.
-- v0.0.7 nao apareceu na UI: assembly permaneceu 0.0.6; corrigido na v0.0.8.
-- v0.0.9 removeu role antiga do cookie, mas `GetAuthorizationGroups()` nao refletiu de forma confiavel uma inclusao recente no grupo durante sessao aberta; substituido por LDAP direto na v0.0.10.
-- Pipeline falhou em commit sem `vX.Y.Z`; manter versao em toda mensagem que deve disparar build/release.
+- Falha inicial SQLite readonly e `manifest.json` sem permissão: origem em ACLs da pasta publicada; resolvida ao separar dados persistentes e corrigir permissoes.
+- v0.0.7 não apareceu na UI: assembly permaneceu 0.0.6; corrigido na v0.0.8.
+- v0.0.9 removeu role antiga do cookie, mas `GetAuthorizationGroups()` não refletiu de forma confiavel uma inclusão recente no grupo durante sessão aberta; substituido por LDAP direto na v0.0.10.
+- Pipeline falhou em commit sem `vX.Y.Z`; manter versão em toda mensagem que deve disparar build/release.
 
 ## 16. Regra de documentacao
 
-`docs/00-CHECKPOINT.md` e a fonte cumulativa oficial de retomada.
+`docs/00-CHECKPOINT.md` é a fonte cumulativa oficial de retomada.
 
-Toda alteracao relevante deve:
+Toda alteração relevante deve:
 
 1. adicionar a entrada mais recente no topo do checkpoint;
 2. atualizar `CHANGELOG.md`;
 3. atualizar `CONTEXTO-ATUAL.md` quando mudar o estado vigente;
 4. adicionar documento tematico/teste quando a mudanca justificar;
-5. preservar decisoes e historico necessarios para rollback e continuidade.
+5. preservar decisoes e histórico necessarios para rollback e continuidade.
 
 ## 17. Proximos passos
 
-1. Validar v0.0.10 com inclusao/remocao de usuario em `_treinamentos` sem logout.
-2. Se houver atraso por replicacao entre DCs, identificar o DC operacional e configurar `ActiveDirectory__AuthorizationServer` sem alterar codigo.
+1. Validar v0.0.10 com inclusão/remocao de usuário em `_treinamentos` sem logout.
+2. Se houver atraso por replicacao entre DCs, identificar o DC operacional e configurar `ActiveDirectory__AuthorizationServer` sem alterar código.
 3. Retomar estudo de HTTPS/TLS interno e executar apenas testes de conectividade/PKI antes de instalar win-acme ou outro agente.
-4. Continuar populando a lista permanente de contas que nao representam pessoas.
+4. Continuar populando a lista permanente de contas que não representam pessoas.
 
 ## 14. Publicacao administrativa
 
-A partir da v0.0.13, publicacao e despublicacao usam endpoints separados: `PublishTraining` e `UnpublishTraining`. Nao existe mais toggle booleano no formulario.
+A partir da v0.0.13, publicacao e despublicacao usam endpoints separados: `PublishTraining` e `UnpublishTraining`. Não éxiste mais toggle booleano no formulario.
 
-Ao publicar, o sistema valida questoes e nota minima, grava o snapshot em `C:\Automind.Treinamentos\Treinamentos\<slug-ou-familySlug>\<versao>` e somente depois marca a versao como publicada. Se o snapshot falhar, a publicacao nao e concluida.
+Ao publicar, o sistema valida questões e nota mínima, grava o snapshot em `C:\Automind.Treinamentos\Treinamentos\<slug-ou-familySlug>\<versão>` e somente depois marca a versão como publicada. Se o snapshot falhar, a publicacao não e concluida.
 
-A exclusao de treinamento de teste continua sendo uma operacao manual e nao existe botao de exclusao no portal.
+A exclusão de treinamento de teste continua sendo uma operacao manual e não existe botao de exclusão no portal.
 
 ### Convencao de nome dos PDFs - v0.0.14
 
-A estrutura definitiva permanece por colaborador: `C:\Automind.Treinamentos\Evidencias\Colaboradores\<login>`. A proposta anterior de separar fisicamente por treinamento/versao foi cancelada. Novos PDFs usam `<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf`. A v0.0.14 tambem migra evidencias existentes para o caminho curto quando o arquivo e localizado e atualiza `TrainingCompletions.EvidencePdfPath` sem alterar o conteudo/hash do PDF.
+A estrutura definitiva permanece por colaborador: `C:\Automind.Treinamentos\Evidências\Colaboradores\<login>`. A proposta anterior de separar fisicamente por treinamento/versão foi cancelada. Novos PDFs usam `<Código>_v<Versão>_<AAAAMMDD>_<Protocolo>.pdf`. A v0.0.14 tambem migra evidências existentes para o caminho curto quando o arquivo e localizado e atualiza `TrainingCompletions.EvidencePdfPath` sem alterar o conteúdo/hash do PDF.

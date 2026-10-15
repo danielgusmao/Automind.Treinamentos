@@ -1,8 +1,8 @@
 @model AdminQuestionEditViewModel
-@{ var training=(Training)ViewBag.Training; ViewData["Title"]="Editar questao"; }
+@{ var training=(Training)ViewBag.Training; ViewData["Title"]="Editar questão"; }
 <div class="page-head">
-    <div><span class="eyebrow">ADMINISTRACAO</span><h1>Editar questao</h1><p>@training.Title</p></div>
-    <a class="btn secondary" asp-action="Questions" asp-route-id="@training.Id">Voltar para questoes</a>
+    <div><span class="eyebrow">ADMINISTRAÇÃO</span><h1>Editar questão</h1><p>@training.Title</p></div>
+    <a class="btn secondary" asp-action="Questions" asp-route-id="@training.Id">Voltar para questões</a>
 </div>
 <form asp-action="EditQuestion" method="post" class="card form-grid">
     @Html.AntiForgeryToken()
@@ -15,5 +15,5 @@
     <label>Alternativa C<input asp-for="OptionC" /></label>
     <label>Alternativa D (opcional)<input asp-for="OptionD" /></label>
     <label>Resposta correta<select asp-for="CorrectIndex"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
-    <div class="span2 form-actions"><button class="btn primary" type="submit">Salvar alteracoes</button><a class="btn secondary" asp-action="Questions" asp-route-id="@training.Id">Cancelar</a></div>
+    <div class="span2 form-actions"><button class="btn primary" type="submit">Salvar alterações</button><a class="btn secondary" asp-action="Questions" asp-route-id="@training.Id">Cancelar</a></div>
 </form>

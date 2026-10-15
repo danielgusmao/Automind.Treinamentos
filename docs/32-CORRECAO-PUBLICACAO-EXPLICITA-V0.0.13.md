@@ -8,9 +8,9 @@ Na v0.0.12, a tela usava um unico POST `TogglePublish` com um campo oculto boole
 
 - `POST /Admin/PublishTraining` publica.
 - `POST /Admin/UnpublishTraining` despublica.
-- Nao existe mais parametro booleano para decidir a operacao.
+- Não éxiste mais parametro booleano para decidir a operacao.
 - O snapshot e criado antes da atualizacao do estado publicado.
-- Se o snapshot falhar, o treinamento nao e marcado como publicado.
+- Se o snapshot falhar, o treinamento não e marcado como publicado.
 
 ## Resultado esperado
 
@@ -21,4 +21,4 @@ Ao publicar SI-002:
 3. deve existir `C:\Automind.Treinamentos\Treinamentos\<slug>\1.0.0\manifest.json`;
 4. deve existir `SHA256.txt` na mesma pasta.
 
-A exclusao manual de treinamentos de teste nao faz parte desta versao.
+A exclusão manual de treinamentos de teste não faz parte desta versão.

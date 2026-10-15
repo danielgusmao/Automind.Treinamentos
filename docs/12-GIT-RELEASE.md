@@ -8,7 +8,7 @@ Branch inicial aprovada para `Automind.Treinamentos`: `release`.
 C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos
 ```
 
-Nao executar estes comandos dentro de `Automind.CadastroColaboradores`.
+Não éxecutar estes comandos dentro de `Automind.CadastroColaboradores`.
 
 ## GitHub
 
@@ -41,18 +41,18 @@ git push -u origin release
 git push -u azure release
 ```
 
-## Atualizacoes seguintes
+## Atualizações seguintes
 
 ```powershell
 Set-Location "C:\Users\daniel.gusmao\source\repos\Automind.Treinamentos"
 git switch release
 git add .
-git commit -m "descricao da alteracao"
+git commit -m "descrição da alteração"
 git push origin release
 git push azure release
 ```
 
-## Validacao
+## Validação
 
 ```powershell
 git status

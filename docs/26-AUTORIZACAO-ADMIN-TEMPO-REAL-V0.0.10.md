@@ -1,16 +1,16 @@
-# v0.0.10 - autorizacao administrativa em tempo real
+# v0.0.10 - autorização administrativa em tempo real
 
 ## Problema observado na v0.0.9
 
-A v0.0.9 removeu a dependencia do cookie antigo, mas ainda usava `UserPrincipal.GetAuthorizationGroups()` para descobrir se o usuario pertencia ao grupo `_treinamentos`.
+A v0.0.9 removeu a dependencia do cookie antigo, mas ainda usava `UserPrincipal.GetAuthorizationGroups()` para descobrir se o usuário pertencia ao grupo `_treinamentos`.
 
-Esse mecanismo e apropriado para montar grupos de autorizacao, porem nao e a melhor fonte para uma checagem operacional que precisa refletir mudancas de membership durante uma sessao aberta. Ele tambem pode falhar durante a enumeracao quando ha grupos/SIDs que nao resolvem corretamente.
+Esse mecanismo e apropriado para montar grupos de autorização, porem não e a melhor fonte para uma checagem operacional que precisa refletir mudancas de membership durante uma sessão aberta. Ele tambem pode falhar durante a enumeracao quando ha grupos/SIDs que não resolvem corretamente.
 
-Sintoma real observado: o usuario podia ser incluido novamente em `_treinamentos` no Active Directory e continuar aparecendo como `Colaborador` na pagina seguinte.
+Sintoma real observado: o usuário podia ser incluido novamente em `_treinamentos` no Active Directory e continuar aparecendo como `Colaborador` na página seguinte.
 
-## Decisao da v0.0.10
+## Decisão da v0.0.10
 
-A autorizacao administrativa deixou de ser uma propriedade persistida da autenticacao.
+A autorização administrativa deixou de ser uma propriedade persistida da autenticacao.
 
 O cookie passa a guardar apenas a identidade do colaborador:
 
@@ -20,18 +20,18 @@ O cookie passa a guardar apenas a identidade do colaborador:
 - cargo;
 - departamento.
 
-Nenhuma role administrativa e salva no cookie ou na sessao.
+Nenhuma role administrativa e salva no cookie ou na sessão.
 
 Em cada requisicao autenticada:
 
 1. o sistema remove da identidade em memoria qualquer role antiga `TreinamentosAdmin` ou `Informatica`;
 2. consulta diretamente o LDAP;
 3. localiza o grupo configurado em `ActiveDirectory:AdminGroup`;
-4. verifica se o usuario habilitado pertence a esse grupo usando o matching rule in chain `1.2.840.113556.1.4.1941`;
+4. verifica se o usuário habilitado pertence a esse grupo usando o matching rule in chain `1.2.840.113556.1.4.1941`;
 5. adiciona `TreinamentosAdmin` somente na identidade em memoria da requisicao atual;
 6. a policy MVC `TreinamentosAdmin` e avaliada depois dessa consulta.
 
-Com isso, o menu e o backend usam a mesma decisao de autorizacao no mesmo request.
+Com isso, o menu e o backend usam a mesma decisão de autorização no mesmo request.
 
 ## Grupo oficial
 
@@ -54,15 +54,15 @@ Configuracao:
 ActiveDirectory__AuthorizationServer=<FQDN-do-DC>
 ```
 
-Nao hardcodar IP/DC no codigo enquanto o controlador preferencial nao for validado.
+Não hardcodar IP/DC no código enquanto o controlador preferencial não for validado.
 
-## Comportamento de seguranca
+## Comportamento de segurança
 
-- Usuario fora do grupo: sem menu e sem acesso a `/Admin`.
-- Usuario dentro do grupo: menu e backend administrativo liberados.
+- Usuário fora do grupo: sem menu e sem acesso a `/Admin`.
+- Usuário dentro do grupo: menu e backend administrativo liberados.
 - Cookie antigo com role administrativa: ignorado/removido na requisicao.
 - Falha LDAP: fail-closed, sem privilegio administrativo.
-- Conta AD desabilitada: nao recebe privilegio administrativo.
+- Conta AD desabilitada: não recebe privilegio administrativo.
 - Membership direta ou via grupo aninhado: suportada.
 
 ## Arquivos principais

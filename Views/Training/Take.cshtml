@@ -1,12 +1,12 @@
 @model TrainingTakeViewModel
 @{ ViewData["Title"] = Model.Training.Title; var startedAtIso = Model.StartedAtUtc.ToString("O"); }
-<div class="page-head"><div><span class="eyebrow">TREINAMENTO</span><h1>@Model.Training.Title</h1><p>@Model.Training.Description</p></div><div class="training-meta"><span class="meta-chip">~ @Model.Training.EstimatedMinutes min</span><span class="meta-chip">@Model.Questions.Count questoes</span><span class="meta-chip">Nota minima @Model.Training.PassingScore</span><span class="meta-chip">Sessao <strong id="elapsedGeneric">00:00</strong></span></div></div>
+<div class="page-head"><div><span class="eyebrow">TREINAMENTO</span><h1>@Model.Training.Title</h1><p>@Model.Training.Description</p></div><div class="training-meta"><span class="meta-chip">~ @Model.Training.EstimatedMinutes min</span><span class="meta-chip">@Model.Questions.Count questões</span><span class="meta-chip">Nota mínima @Model.Training.PassingScore</span><span class="meta-chip">Sessão <strong id="elapsedGeneric">00:00</strong></span></div></div>
 @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) { <div class="alert error">@Model.ErrorMessage</div> }
 <div class="card prose">@foreach (var paragraph in (Model.Training.ContentText ?? "").Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)){ <p>@paragraph</p> }</div>
 <form asp-action="Submit" method="post" class="card quiz-card">
     @Html.AntiForgeryToken()<input type="hidden" name="TrainingId" value="@Model.Training.Id" /><span class="eyebrow">VERIFICACAO</span><h2>Quiz de fixacao</h2>
     @foreach (var q in Model.Questions){<div class="question"><strong>@q.Position. @q.Text</strong>@for (var i=0; i<q.Options.Count; i++){<label class="choice"><input type="radio" name="Answers[@q.Id]" value="@i" required /> @q.Options[i]</label>}</div>}
-    <label class="accept"><input type="checkbox" name="Accepted" value="true" required /> Declaro que participei do treinamento, li e compreendi o conteudo e estou ciente das minhas responsabilidades.</label>
+    <label class="accept"><input type="checkbox" name="Accepted" value="true" required /> Declaro que participei do treinamento, li e compreendi o conteúdo e estou ciente das minhas responsabilidades.</label>
     <button class="btn primary" type="submit">Registrar meu aceite</button>
 </form>
 

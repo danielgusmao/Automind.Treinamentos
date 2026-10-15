@@ -54,9 +54,9 @@ Nenhuma View, Controller, Service, Model, arquivo de banco, configuração de AD
 
 - grupo administrativo: `_treinamentos`;
 - autenticação e autorização AD sem mudança;
-- evidências em `Evidencias\Colaboradores\<login>`;
+- evidências em `Evidências\Colaboradores\<login>`;
 - PDFs e snapshots sem mudança;
 - webhook Teams fora do Git;
-- estrutura `Web`, `Data`, `Treinamentos`, `Evidencias`, `Logs`, `Backup` preservada;
+- estrutura `Web`, `Data`, `Treinamentos`, `Evidências`, `Logs`, `Backup` preservada;
 - branch de deploy: `release`;
 - pipeline/Release automática após push em `release`.

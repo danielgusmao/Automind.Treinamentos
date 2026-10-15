@@ -13,7 +13,7 @@
 <form asp-action="CreateTraining" method="post" class="card form-grid">
     <div asp-validation-summary="ModelOnly" class="alert error span2"></div>
     <label>Código<input asp-for="Code" placeholder="Ex.: SI-002" /></label>
-    <label>Slug<input asp-for="Slug" placeholder="ex.: phishing-2026" /><span class="form-help">Use letras minúsculas, números e hífens. Ex.: seguranca-email-2026.</span></label>
+    <label>Slug<input asp-for="Slug" placeholder="ex.: phishing-2026" /><span class="form-help">Use letras minúsculas, números e hífens. Ex.: segurança-email-2026.</span></label>
     <label class="span2">Título<input asp-for="Title" placeholder="Ex.: Boas práticas no uso do e-mail corporativo" /></label>
     <label class="span2">Descrição<textarea asp-for="Description" rows="2" placeholder="Resumo curto que aparecerá no catálogo do colaborador."></textarea></label>
     <label class="span2">Resumo para o PDF<textarea asp-for="SummaryText" rows="4" placeholder="Ex.: Este treinamento aborda os principais riscos e boas práticas do tema, incluindo os comportamentos esperados no dia a dia e o procedimento em caso de dúvida ou incidente."></textarea><span class="form-help">Escreva de 3 a 6 linhas com os principais assuntos abordados. Se ficar vazio, o sistema tentará usar o bloco RESUMO FINAL do conteúdo e, em último caso, a descrição.</span></label>

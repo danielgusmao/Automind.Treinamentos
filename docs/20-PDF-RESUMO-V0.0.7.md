@@ -1,23 +1,23 @@
-# PDF de evidencia com resumo - v0.0.7
+# PDF de evidência com resumo - v0.0.7
 
 ## Objetivo
-A evidencia individual precisa demonstrar nao apenas que o colaborador concluiu o treinamento, mas tambem quais assuntos foram apresentados.
+A evidência individual precisa demonstrar não apenas que o colaborador concluiu o treinamento, mas tambem quais assuntos foram apresentados.
 
 ## Estrutura do PDF
-### Pagina 1 - evidencia de conclusao
-- treinamento, versao, nota e aprovacao;
+### Página 1 - evidência de conclusão
+- treinamento, versão, nota e aprovacao;
 - tempo estimado e tempo realizado;
 - nome, login AD, e-mail, cargo e departamento;
-- inicio e conclusao;
+- inicio e conclusão;
 - termo de ciencia;
 - protocolo;
 - SHA-256 do treinamento.
 
-### Pagina 2 - resumo do treinamento
-- titulo e codigo;
+### Página 2 - resumo do treinamento
+- título e código;
 - resumo textual do treinamento;
 - principais temas abordados;
-- versao, tempo estimado e resultado.
+- versão, tempo estimado e resultado.
 
 ## Fonte do resumo
 Ordem de prioridade:
@@ -27,11 +27,11 @@ Ordem de prioridade:
 4. trecho normalizado de `ContentText`.
 
 ## Primeiro treinamento
-O treinamento de Seguranca da Informacao registra no PDF os seguintes pontos:
+O treinamento de Segurança da Informação registra no PDF os seguintes pontos:
 - senhas fortes e unicas e autenticacao multifator (MFA);
 - phishing e engenharia social;
 - dados pessoais e LGPD;
 - resposta a incidentes e abertura imediata de chamado no TOPDESK.
 
 ## Banco
-A coluna `SummaryText` e criada por migracao idempotente no startup. Bancos v0.0.6 existentes nao precisam ser apagados.
+A coluna `SummaryText` e criada por migracao idempotente no startup. Bancos v0.0.6 existentes não precisam ser apagados.

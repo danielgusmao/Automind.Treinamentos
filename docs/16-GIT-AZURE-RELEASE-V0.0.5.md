@@ -36,14 +36,14 @@ Destino da aplicacao:
 C:\Automind.Treinamentos\Web
 ```
 
-Nao limpar/deletar:
+Não limpar/deletar:
 
 ```text
 C:\Automind.Treinamentos\Data
 C:\Automind.Treinamentos\Treinamentos
-C:\Automind.Treinamentos\Evidencias
+C:\Automind.Treinamentos\Evidências
 C:\Automind.Treinamentos\Logs
 C:\Automind.Treinamentos\Backup
 ```
 
-O segredo Teams e configuracao de ACL pertencem ao servidor, nao ao artefato.
+O segredo Teams e configuracao de ACL pertencem ao servidor, não ao artefato.

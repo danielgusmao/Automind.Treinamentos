@@ -1,14 +1,14 @@
 # CONTEXTO ATUAL - Automind.Treinamentos
 
-Versao de aplicacao preparada: **v0.0.17**.
+Versão de aplicacao preparada: **v0.0.18**.
 
-## v0.0.17 - estado atual
+## v0.0.18 - estado atual
 
-A v0.0.17 é uma revisão exclusivamente visual sobre a v0.0.16. A lógica funcional continua intacta. Os textos de destaque antes em rosa claro usam `#fa094e`; as linhas/faixas neon da tela de login foram removidas mantendo o fundo; os banners deixaram de usar barras degradê decorativas e passam a destacar apenas o símbolo Automind em escala maior. O mesmo padrão foi aplicado ao treinamento dedicado de Segurança da Informação.
+A v0.0.18 consolida a revisão visual anterior e adiciona revisão ortográfica completa dos textos do portal em português brasileiro. Foram corrigidos acentos, termos como capacitação, evidência, conclusão, gestão, catálogo, módulos, pendências e mensagens de apoio. O bloco “Treinar. Comprovar. Evoluir.” teve o gradiente ajustado para o padrão institucional já aprovado, e os banners continuam destacando apenas o símbolo Automind em escala maior. O mesmo padrão foi mantido no treinamento dedicado de Segurança da Informação.
 
 A base visual da v0.0.16 permanece: opção 2 aprovada e gradiente institucional `#fa094e -> #4d1056` em componentes de destaque.
 
-Mudança mais recente: refinamento visual de login e banners na v0.0.17. Não houve alteração de autenticação, autorização, AD, SQLite, Teams, PDFs, evidências, publicação ou regras de negócio.
+Mudança mais recente: revisão ortográfica geral e ajuste final de gradiente na v0.0.18. Não houve alteração de autenticação, autorização, AD, SQLite, Teams, PDFs, evidências, publicação ou regras de negócio.
 
 ## v0.0.16 - revisão visual global
 
@@ -16,10 +16,10 @@ A v0.0.16 adotou a opção 2 aprovada e padronizou `#fa094e -> #4d1056` em hero,
 
 ## v0.0.15 - estado preservado
 
-A v0.0.15 preserva o layout institucional e as regras funcionais da v0.0.14, adicionando hardening, validacao, consistencia de evidencias, performance, observabilidade e limpeza de codigo. O unico item da auditoria deliberadamente nao ativado e HTTPS/TLS, porque o servidor ainda nao possui certificado.
+A v0.0.15 preserva o layout institucional e as regras funcionais da v0.0.14, adicionando hardening, validação, consistencia de evidências, performance, observabilidade e limpeza de código. O unico item da auditoria deliberadamente não ativado e HTTPS/TLS, porque o servidor ainda não possui certificado.
 
 
-Mudanca mais recente: hardening, consistencia de evidencias, performance, observabilidade e limpeza de codigo na v0.0.15; HTTPS permanece pendente por ausencia de certificado.
+Mudanca mais recente: hardening, consistencia de evidências, performance, observabilidade e limpeza de código na v0.0.15; HTTPS permanece pendente por ausencia de certificado.
 
 ## Revisão visual institucional - 2026-10-07
 
@@ -27,71 +27,71 @@ A v0.0.14 recebeu uma revisão somente de interface, baseada no site institucion
 
 
 
-## Evidencias - v0.0.14
+## Evidências - v0.0.14
 
-Novos PDFs individuais seguem `<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf`. A pasta individual usa somente o login AD: `Evidencias/Colaboradores/<login>`. Evidencias existentes sao migradas para esse padrao quando localizadas, com atualizacao do caminho no banco e sem alterar o hash do PDF.
+Novos PDFs individuais seguem `<Código>_v<Versão>_<AAAAMMDD>_<Protocolo>.pdf`. A pasta individual usa somente o login AD: `Evidências/Colaboradores/<login>`. Evidências existentes são migradas para esse padrao quando localizadas, com atualizacao do caminho no banco e sem alterar o hash do PDF.
 
 ## Publicacao - v0.0.13
 
-A publicacao e despublicacao usam endpoints separados. O frontend nao envia mais um booleano `publish` para um endpoint de toggle. Ao publicar com sucesso, o sistema gera `Treinamentos/<slug-ou-familySlug>/<versao>/manifest.json` e `SHA256.txt` antes de marcar a versao como publicada.
+A publicacao e despublicacao usam endpoints separados. O frontend não envia mais um booleano `publish` para um endpoint de toggle. Ao publicar com sucesso, o sistema gera `Treinamentos/<slug-ou-familySlug>/<versão>/manifest.json` e `SHA256.txt` antes de marcar a versão como publicada.
 
 
-## Edicao de treinamentos - v0.0.11
+## Edição de treinamentos - v0.0.11
 
-O catalogo administrativo possui `Editar`. Versoes sem conclusoes podem ser alteradas diretamente. Quando ja existem evidencias, a versao fica imutavel e o salvamento cria uma nova versao em rascunho com copia das questoes. A versao publicada anterior torna-se historica quando a nova revisao e publicada.
+O catálogo administrativo possui `Editar`. Versoes sem conclusões podem ser alteradas diretamente. Quando já existem evidências, a versão fica imutável e o salvamento cria uma nova versão em rascunho com copia das questões. A versão publicada anterior torna-se histórica quando a nova revisão e publicada.
 
-A proposta de reorganizar `Evidencias` por treinamento/versao foi cancelada. A estrutura definitiva permanece centrada no colaborador: `Evidencias/Colaboradores/<login>`. O nome curto usa codigo do treinamento, versao, data e protocolo.
+A proposta de reorganizar `Evidências` por treinamento/versão foi cancelada. A estrutura definitiva permanece centrada no colaborador: `Evidências/Colaboradores/<login>`. O nome curto usa código do treinamento, versão, data e protocolo.
 
-# Atualizacao v0.0.11 - autorizacao administrativa em tempo real
+# Atualizacao v0.0.11 - autorização administrativa em tempo real
 
 - Grupo administrativo oficial: `_treinamentos`.
-- A v0.0.9 ainda dependia de `GetAuthorizationGroups()` e nao refletiu de forma confiavel uma inclusao feita durante a sessao.
-- A v0.0.10 remove a role administrativa persistida do cookie e da sessao.
+- A v0.0.9 ainda dependia de `GetAuthorizationGroups()` e não refletiu de forma confiavel uma inclusão feita durante a sessão.
+- A v0.0.10 remove a role administrativa persistida do cookie e da sessão.
 - Cada requisicao consulta diretamente o LDAP e cria `TreinamentosAdmin` apenas em memoria para aquele request.
-- Menu e policy `/Admin` usam exatamente a mesma decisao.
-- Membership direta e aninhada sao suportadas.
+- Menu e policy `/Admin` usam exatamente a mesma decisão.
+- Membership direta e aninhada são suportadas.
 - Falha LDAP permanece fail-closed.
 - `ActiveDirectory__AuthorizationServer` pode fixar um DC por configuracao de ambiente caso a replicacao entre DCs gere atraso operacional.
 - HTTPS/TLS interno continua pendente para a proxima fase.
 
 # Contexto Atual - Automind.Treinamentos
 
-## Versao
+## Versão
 
 `v0.0.10`
 
 ## Estado atual
 
-Aplicacao interna ASP.NET Core MVC com login AD, administracao dinamica pelo grupo `_treinamentos`, SQLite persistente, treinamentos, quiz, aceite, PDFs, comparacao AD, Teams e pipeline/Release automaticos pela branch `release`.
+Aplicacao interna ASP.NET Core MVC com login AD, administração dinamica pelo grupo `_treinamentos`, SQLite persistente, treinamentos, quiz, aceite, PDFs, comparacao AD, Teams e pipeline/Release automaticos pela branch `release`.
 
 ## v0.0.9 - principal mudanca
 
-A autorizacao administrativa usa exclusivamente o grupo AD `_treinamentos`; cookies antigos nao preservam privilegio.
+A autorização administrativa usa exclusivamente o grupo AD `_treinamentos`; cookies antigos não preservam privilegio.
 
-A populacao de treinamento e formada por usuarios AD habilitados com e-mail `@automind.com.br`, menos a lista global `DirectoryExclusions`.
+A populacao de treinamento e formada por usuários AD habilitados com e-mail `@automind.com.br`, menos a lista global `DirectoryExclusions`.
 
-A lista e destinada a contas que nao representam pessoas, como e-mails gerais e caixas compartilhadas. Ela vale para todos os treinamentos atuais e futuros.
+A lista e destinada a contas que não representam pessoas, como e-mails gerais e caixas compartilhadas. Ela vale para todos os treinamentos atuais e futuros.
 
-Administradores podem consultar a lista completa, pesquisar, ver motivo/operador/data e reincluir uma conta. O historico fica preservado.
+Administradores podem consultar a lista completa, pesquisar, ver motivo/operador/data e reincluir uma conta. O histórico fica preservado.
 
-As exclusoes anteriores da v0.0.6/v0.0.7 sao migradas para a lista global. `produtos@automind.com.br` e uma exclusao inicial conhecida.
+As exclusões anteriores da v0.0.6/v0.0.7 são migradas para a lista global. `produtos@automind.com.br` e uma exclusão inicial conhecida.
 
 ## Regra de indicadores
 
 Contas globalmente excluidas:
 
-- nao contam como elegiveis;
-- nao contam como pendentes;
-- nao alteram adesao;
-- nao recebem Teams;
-- nao veem treinamentos;
-- nao podem iniciar treinamento por URL direta.
+- não contam como elegíveis;
+- não contam como pendentes;
+- não alteram adesão;
+- não recebem Teams;
+- não veem treinamentos;
+- não podem iniciar treinamento por URL direta.
 
 ## Versionamento
 
-A v0.0.7 nao apareceu corretamente na UI porque o `VERSION.txt` foi alterado para `v0.0.7`, mas o `.csproj` continuou compilando o assembly como `0.0.6`.
+A v0.0.7 não apareceu corretamente na UI porque o `VERSION.txt` foi alterado para `v0.0.7`, mas o `.csproj` continuou compilando o assembly como `0.0.6`.
 
-A v0.0.8 corrige isso. O assembly e a fonte oficial exibida pela interface e o build/publish gera `VERSION.txt` com a mesma versao.
+A v0.0.8 corrige isso. O assembly é a fonte oficial exibida pela interface e o build/publish gera `VERSION.txt` com a mesma versão.
 
 ## Estrutura de producao
 
@@ -100,13 +100,13 @@ C:\Automind.Treinamentos\
 |-- Web\
 |-- Data\
 |-- Treinamentos\
-|-- Evidencias\Colaboradores\
-|-- Evidencias\Relatorios\
+|-- Evidências\Colaboradores\
+|-- Evidências\Relatorios\
 |-- Logs\
 `-- Backup\
 ```
 
-A lista de exclusoes fica no SQLite em `Data` e nao e perdida quando `Web` e substituido.
+A lista de exclusões fica no SQLite em `Data` e não e perdida quando `Web` e substituido.
 
 ## Teams
 
@@ -120,4 +120,4 @@ Continua usando o mesmo Workflow do CadColab via `Automind__Teams__WebhookUrl`, 
 
 ## Deploy
 
-Pipeline e Release ja estao configurados para deploy automatico a cada alteracao na branch `release`. Depois de push bem-sucedido, aguardar a automacao; nao fazer deploy manual salvo falha da pipeline/Release.
+Pipeline e Release já estao configurados para deploy automatico a cada alteração na branch `release`. Depois de push bem-sucedido, aguardar a automacao; não fazer deploy manual salvo falha da pipeline/Release.

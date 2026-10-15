@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.0.18 - 2026-10-15
+
+- Revisão ortográfica geral do portal para português brasileiro.
+- Correção de acentuação e termos como capacitação, evidência, conclusão, gestão, catálogo, módulos, pendências, código, técnico e mensagens auxiliares.
+- Ajuste do aviso de credenciais na tela de login e de mensagens administrativas/complementares.
+- Gradiente do bloco de login “Treinar. Comprovar. Evoluir.” alinhado ao padrão institucional.
+- Símbolo Automind ampliado e mantido como elemento principal dos banners, incluindo o treinamento dedicado.
+- Nenhuma alteração em regra de negócio, AD, banco, Teams, PDFs, Controllers, Services ou Models funcionais.
+
 ## v0.0.17 - 2026-10-14
 
 - Refinamento exclusivamente visual baseado na v0.0.16.
@@ -19,12 +28,12 @@
 
 ## v0.0.15 - 2026-10-08
 
-- Hardening de login, sessao AD, headers e webhook Teams.
-- Validacao server-side reforcada no quiz e nos campos administrativos.
-- Snapshot/evidencia mais consistentes e escrita atomica.
+- Hardening de login, sessão AD, headers e webhook Teams.
+- Validação server-side reforcada no quiz e nos campos administrativos.
+- Snapshot/evidência mais consistentes e escrita atomica.
 - Integridade SQLite reforcada com indice unico, triggers e registro de migration.
 - Auditoria diaria, correlation id e health check.
-- Otimizacoes de consultas SQLite/AD e remocao de codigo legado sem uso.
+- Otimizações de consultas SQLite/AD e remocao de código legado sem uso.
 - Backup pre-deploy e menor privilegio para a pasta Backup.
 - PDF consolidado via POST + antiforgery.
 - HTTPS permanece pendente por ausencia de certificado.
@@ -40,70 +49,79 @@
 
 ## v0.0.14 - 2026-10-06
 
-- Mantem evidencias individuais organizadas por colaborador e cancela a proposta de separar por treinamento/versao.
-- Pasta do colaborador passa a usar somente o login AD: `Evidencias\Colaboradores\<samAccountName>`.
-- Novos PDFs usam o formato curto `<Codigo>_v<Versao>_<AAAAMMDD>_<Protocolo>.pdf`.
+- Mantem evidências individuais organizadas por colaborador e cancela a proposta de separar por treinamento/versão.
+- Pasta do colaborador passa a usar somente o login AD: `Evidências\Colaboradores\<samAccountName>`.
+- Novos PDFs usam o formato curto `<Código>_v<Versão>_<AAAAMMDD>_<Protocolo>.pdf`.
 - Limites defensivos reduzem risco de caminhos longos em copia e backup.
-- Evidencias existentes sao migradas quando localizadas; `TrainingCompletions.EvidencePdfPath` e atualizado e o hash/conteudo do PDF permanece inalterado.
-- Em colisao de arquivo no destino, nenhum arquivo e sobrescrito.
+- Evidências existentes são migradas quando localizadas; `TrainingCompletions.EvidencePdfPath` e atualizado e o hash/conteúdo do PDF permanece inalterado.
+- Em colisão de arquivo no destino, nenhum arquivo e sobrescrito.
 
 ## v0.0.13 - 2026-10-06
 - Corrigido bug em que `Publicar` podia chegar ao backend como `publish=false` e executar despublicacao.
 - Removido `TogglePublish(long id, bool publish)`.
 - Criados POSTs separados `PublishTraining` e `UnpublishTraining`.
-- Snapshot continua sendo criado antes de marcar a versao como publicada.
-- Nenhuma exclusao de treinamento foi adicionada na UI.
+- Snapshot continua sendo criado antes de marcar a versão como publicada.
+- Nenhuma exclusão de treinamento foi adicionada na UI.
 
 ## v0.0.12 - 2026-10-06
-- Corrigido fluxo de Publicar/Despublicar com feedback de validacao e erro.
+- Corrigido fluxo de Publicar/Despublicar com feedback de validação e erro.
 - Antiforgery token explicito no formulario de publicacao.
-- Treinamento sem questoes direciona o administrador para cadastrar questoes.
+- Treinamento sem questões direciona o administrador para cadastrar questões.
 
 ## v0.0.11 - 2026-10-06
 
-- Edicao de treinamento pelo catalogo.
-- Protecao de versoes que ja possuem evidencias.
-- Criacao automatica de nova revisao em rascunho com copia de questoes.
-- Bloqueio de edicao de questoes de versoes com conclusoes.
-- Estados de versao `Publicado`, `Rascunho` e `Historico`.
+- Edição de treinamento pelo catálogo.
+- Protecao de versoes que já possuem evidências.
+- Criacao automatica de nova revisão em rascunho com copia de questões.
+- Bloqueio de edição de questões de versoes com conclusões.
+- Estados de versão `Publicado`, `Rascunho` e `Histórico`.
 - Migracao aditiva com `FamilySlug` e `IsArchived`.
 
 ## v0.0.10 - 2026-10-06
 
-- Remove qualquer role administrativa persistida em cookie/sessao.
+- Remove qualquer role administrativa persistida em cookie/sessão.
 - Substitui `GetAuthorizationGroups()` por consulta LDAP direta do grupo `_treinamentos` em cada requisicao autenticada.
 - Membership direta e aninhada suportadas pelo matching rule in chain.
-- Menu administrativo e policy backend passam a usar a mesma decisao atual do AD no request.
-- Adiciona `ActiveDirectory:AuthorizationServer` opcional para fixar um DC sem alterar codigo.
+- Menu administrativo e policy backend passam a usar a mesma decisão atual do AD no request.
+- Adiciona `ActiveDirectory:AuthorizationServer` opcional para fixar um DC sem alterar código.
 - Mantem comportamento fail-closed em erro de AD.
 
 ## v0.0.9 - 2026-10-06
 
-- Corrige autorizacao administrativa para usar o grupo AD `_treinamentos`.
+- Corrige autorização administrativa para usar o grupo AD `_treinamentos`.
 - Revalida membership administrativa a cada requisicao autenticada.
-- Remove privilegio administrativo imediatamente quando o usuario deixa o grupo.
+- Remove privilegio administrativo imediatamente quando o usuário deixa o grupo.
 - Ignora/remove a role legada `Informatica` de cookies antigos.
 - Politica administrativa renomeada para `TreinamentosAdmin`.
 
 # Changelog
 
+## v0.0.18 - 2026-10-15
+
+- Revisão ortográfica geral do portal para português brasileiro.
+- Correção de acentuação e termos como capacitação, evidência, conclusão, gestão, catálogo, módulos, pendências, código, técnico e mensagens auxiliares.
+- Ajuste do aviso de credenciais na tela de login e de mensagens administrativas/complementares.
+- Gradiente do bloco de login “Treinar. Comprovar. Evoluir.” alinhado ao padrão institucional.
+- Símbolo Automind ampliado e mantido como elemento principal dos banners, incluindo o treinamento dedicado.
+- Nenhuma alteração em regra de negócio, AD, banco, Teams, PDFs, Controllers, Services ou Models funcionais.
+
 ## v0.0.8 - 2026-10-06
 
 - Nova lista global e permanente de contas excluidas da populacao de treinamentos.
-- Tela administrativa `Exclusoes` com nome, login, e-mail, categoria, motivo, operador, data, pesquisa e reinclusao.
-- Historico de reinclusoes preservado.
-- Exclusoes globais aplicadas a todos os treinamentos, indicadores, Teams e acesso direto.
+- Tela administrativa `Exclusões` com nome, login, e-mail, categoria, motivo, operador, data, pesquisa e reinclusão.
+- Histórico de reinclusoes preservado.
+- Exclusões globais aplicadas a todos os treinamentos, indicadores, Teams e acesso direto.
 - Migracao automatica dos registros anteriores de `TrainingExclusions` para `DirectoryExclusions`.
-- Inclusao inicial de `produtos@automind.com.br` como e-mail geral que nao representa pessoa.
+- Inclusão inicial de `produtos@automind.com.br` como e-mail geral que não representa pessoa.
 - Correcao do versionamento do assembly: `0.0.8` passa a ser a fonte oficial da UI.
-- `VERSION.txt` do artifact passa a ser gerado pelo build/publish a partir da mesma versao do projeto.
+- `VERSION.txt` do artifact passa a ser gerado pelo build/publish a partir da mesma versão do projeto.
 - PDF com resumo da v0.0.7 mantido.
 
 ## v0.0.6 - 2026-10-06
 
-- Inclusao de exclusoes administrativas por treinamento.
-- Motivo obrigatorio, auditoria e reinclusao.
-- Excluidos deixam de compor elegiveis, pendentes, adesao e lembretes Teams.
+- Inclusão de exclusões administrativas por treinamento.
+- Motivo obrigatório, auditoria e reinclusão.
+- Excluidos deixam de compor elegíveis, pendentes, adesão e lembretes Teams.
 - Bloqueio server-side de acesso ao treinamento excluido.
 - Nova tabela SQLite `TrainingExclusions`.
 
@@ -114,11 +132,11 @@
 - `appsettings.Production.json` aponta para `C:\Automind.Treinamentos`.
 - `App_Data` mantido somente como fallback de desenvolvimento.
 - Teams alinhado ao padrao do CadColab com `IHttpClientFactory`, cliente `TeamsWebhook`, `{ recipient, text }` e `Automind__Teams__WebhookUrl`.
-- Mensagem de lembrete aprovada com primeiro nome, titulo, tempo e link clicavel.
+- Mensagem de lembrete aprovada com primeiro nome, título, tempo e link clicavel.
 - Nova rota `/Training/Start/{id}` e botoes do portal usando `Start`.
 - `Portal:PublicBaseUrl=http://treinamentos.automind.com.br`.
 - Repositorio Azure DevOps e branch `release` documentados.
-- Script de preparo do servidor para migracao nao destrutiva, ACLs e copia segura da configuracao Teams.
+- Script de preparo do servidor para migracao não destrutiva, ACLs e copia segura da configuracao Teams.
 
 ## v0.0.4 - 2026-10-06
 
@@ -135,26 +153,26 @@
 
 ## v0.0.3 - 2026-10-05
 
-- Treinamento de Seguranca da Informacao integrado ao `_Layout` principal.
+- Treinamento de Segurança da Informação integrado ao `_Layout` principal.
 - Removido documento HTML independente (`Layout = null`) do treinamento.
-- Topbar, navegacao, usuario, versao e logout permanecem durante o treinamento.
-- Tela de conclusao tambem integrada ao layout principal.
+- Topbar, navegacao, usuário, versão e logout permanecem durante o treinamento.
+- Tela de conclusão tambem integrada ao layout principal.
 - Adicionada secao opcional `Styles` no layout compartilhado.
-- CSS do treinamento escopado para nao alterar componentes globais.
-- Conteudo, quiz 5/5, aceite, cronometro e evidencia PDF mantidos.
+- CSS do treinamento escopado para não alterar componentes globais.
+- Conteúdo, quiz 5/5, aceite, cronometro e evidência PDF mantidos.
 - Documentacao e checkpoint atualizados.
 
 ## v0.0.2 - 2026-10-05
 
 - Redesign expressivo baseado na identidade visual do CadColab.
-- Inclusao de logos, simbolo e wallpaper oficiais da Automind.
+- Inclusão de logos, simbolo e wallpaper oficiais da Automind.
 - Novo login corporativo e topbar.
-- Novo dashboard de colaborador e administracao.
+- Novo dashboard de colaborador e administração.
 - Tempo estimado por treinamento.
 - Cronometro visual durante a execucao.
-- Inicio, conclusao e duracao real gravados pelo servidor.
+- Inicio, conclusão e duracao real gravados pelo servidor.
 - Atualizacao incremental do SQLite para os novos campos de tempo.
-- PDF individual redesenhado com logo e informacoes de evidencia.
+- PDF individual redesenhado com logo e informações de evidência.
 - PDF consolidado redesenhado em paisagem e com duracao.
 - Documentacao atualizada.
 
@@ -176,10 +194,10 @@
 - Perfil HTTP para desenvolvimento, sem HTTPS por enquanto.
 
 ## v0.0.7 - 2026-10-06
-- PDF individual de evidencia passa a ter 2 paginas.
-- Nova pagina "Resumo do treinamento" com descricao objetiva do conteudo realizado.
+- PDF individual de evidência passa a ter 2 páginas.
+- Nova página "Resumo do treinamento" com descrição objetiva do conteúdo realizado.
 - Primeiro treinamento documenta senhas/MFA, phishing/engenharia social, dados pessoais/LGPD e resposta a incidentes/TOPDESK.
 - Novo campo `SummaryText` em `Trainings`, com migracao automatica de banco existente.
 - Cadastro de novo treinamento ganhou o campo "Resumo para o PDF".
-- Para treinamentos genericos sem resumo preenchido, o sistema tenta usar `RESUMO FINAL`, depois `Description` e por fim o proprio conteudo.
+- Para treinamentos genericos sem resumo preenchido, o sistema tenta usar `RESUMO FINAL`, depois `Description` e por fim o proprio conteúdo.
 - Rodape do PDF atualizado para v0.0.7.
