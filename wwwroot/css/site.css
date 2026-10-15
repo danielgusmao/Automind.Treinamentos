@@ -199,7 +199,7 @@ input[readonly]{background:#f3f4f6;color:#59545f}
 /* login */
 .login-body{min-height:100vh;background:var(--am-night);overflow-x:hidden}
 .login-shell{min-height:100vh;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr)}
-.login-visual{position:relative;overflow:hidden;min-height:100vh;background:linear-gradient(90deg,var(--am-accent-a),var(--am-accent-b));color:#fff}
+.login-visual{position:relative;overflow:hidden;min-height:100vh;background:#121018;color:#fff}
 .login-visual:before,.login-visual:after{content:none}
 .login-visual-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.02),rgba(0,0,0,.14))}
 .login-visual-content{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;padding:52px 58px}
