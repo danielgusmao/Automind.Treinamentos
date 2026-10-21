@@ -228,3 +228,8 @@
 - Cadastro de novo treinamento ganhou o campo "Resumo para o PDF".
 - Para treinamentos genericos sem resumo preenchido, o sistema tenta usar `RESUMO FINAL`, depois `Description` e por fim o proprio conteúdo.
 - Rodape do PDF atualizado para v0.0.7.
+
+## v0.0.21
+- Restaurado o fundo preto sólido da tela inicial/login, conforme decisão visual já aprovada.
+- Gradiente institucional permanece apenas em elementos de destaque.
+- Removida a pasta auxiliar `tests` do pacote, conforme fluxo de publicação definido pelo usuário.

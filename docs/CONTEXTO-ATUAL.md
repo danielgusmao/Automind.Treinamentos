@@ -131,3 +131,10 @@ Continua usando o mesmo Workflow do CadColab via `Automind__Teams__WebhookUrl`, 
 ## Deploy
 
 Pipeline e Release já estao configurados para deploy automatico a cada alteração na branch `release`. Depois de push bem-sucedido, aguardar a automacao; não fazer deploy manual salvo falha da pipeline/Release.
+
+## Regra visual permanente - tela inicial/login (v0.0.21)
+
+- A tela inicial/login do Automind.Treinamentos usa fundo preto/escuro sólido (`#121019`).
+- O gradiente institucional rosa/magenta/roxo é apenas elemento de destaque (botões, bordas, marca e pequenos acentos), nunca o fundo principal da tela inicial.
+- Esta é uma exceção visual aprovada do projeto e prevalece sobre regras genéricas do design system Automind.
+- Não reintroduzir fundo rosa/gradiente na tela inicial sem pedido explícito do Daniel.
