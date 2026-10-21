@@ -1,6 +1,18 @@
 # CONTEXTO ATUAL - Automind.Treinamentos
 
-Versão de aplicacao preparada: **v0.0.18**.
+Versão de aplicacao preparada: **v0.0.19**.
+
+## v0.0.19 - histórico e agenda de lembretes Teams
+
+A tela de pendências agora diferencia tentativa, aceite do Workflow e confirmação da etapa de envio ao Teams. O sistema persiste cada tentativa em `TeamsReminderHistory` e mantém a agenda por treinamento em `TrainingReminderSchedules`.
+
+Os `Audit-*.jsonl` anteriores são lidos na inicialização e importados sem disparar mensagens. Registros históricos com `status=success` provam apenas que o Workflow respondeu com sucesso ao portal e, portanto, aparecem como `Aceito pelo Workflow`.
+
+A agenda fica desativada por padrão. Ao ser ativada pelo administrador, o primeiro ciclo é agendado para `agora + intervalo`. O worker verifica ciclos vencidos a cada 15 minutos e respeita conclusões, elegibilidade AD, exclusões permanentes e avisos manuais/automáticos recentes.
+
+Para o estado `Confirmado`, o Workflow precisa responder após a etapa de postagem no Teams com `delivered=true` ou um `messageId`. O portal não interpreta isso como leitura da mensagem.
+
+Pendente de ambiente: configurar o Workflow para devolver o resultado estruturado e validar que o App Pool permanece ativo para execução confiável da agenda. Essas mudanças reais não foram aplicadas neste pacote.
 
 ## v0.0.18 - estado atual
 

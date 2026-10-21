@@ -125,6 +125,9 @@ public sealed class PendingUserViewModel
 {
     public AdUser User { get; set; } = new();
     public bool Completed { get; set; }
+    public TeamsReminderHistory? LastTeamsReminder { get; set; }
+    public TeamsReminderHistory? LastSuccessfulTeamsReminder { get; set; }
+    public bool ReminderDue { get; set; }
 }
 
 public sealed class AdminQuestionEditViewModel

@@ -490,6 +490,191 @@ VALUES($trainingId,$sam,$display,$email,$title,$department,$score,$total,$starte
         await cmd.ExecuteNonQueryAsync();
     }
 
+    public async Task<TrainingReminderSchedule> GetTrainingReminderScheduleAsync(long trainingId)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = "SELECT * FROM TrainingReminderSchedules WHERE TrainingId=$trainingId LIMIT 1;";
+        cmd.Parameters.AddWithValue("$trainingId", trainingId);
+        using var r = await cmd.ExecuteReaderAsync();
+        if (await r.ReadAsync()) return MapTrainingReminderSchedule(r);
+
+        return new TrainingReminderSchedule
+        {
+            TrainingId = trainingId,
+            Enabled = false,
+            IntervalDays = 15,
+            UpdatedAtUtc = DateTime.MinValue
+        };
+    }
+
+    public async Task SaveTrainingReminderScheduleAsync(long trainingId, bool enabled, int intervalDays, DateTime? nextRunAtUtc, string updatedBy)
+    {
+        intervalDays = Math.Clamp(intervalDays, 1, 365);
+        var now = DateTime.UtcNow;
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+INSERT INTO TrainingReminderSchedules(TrainingId, Enabled, IntervalDays, NextRunAtUtc, LastRunAtUtc, UpdatedBy, UpdatedAtUtc)
+VALUES($trainingId, $enabled, $intervalDays, $nextRunAtUtc, NULL, $updatedBy, $updatedAtUtc)
+ON CONFLICT(TrainingId) DO UPDATE SET
+    Enabled=excluded.Enabled,
+    IntervalDays=excluded.IntervalDays,
+    NextRunAtUtc=excluded.NextRunAtUtc,
+    UpdatedBy=excluded.UpdatedBy,
+    UpdatedAtUtc=excluded.UpdatedAtUtc;";
+        cmd.Parameters.AddWithValue("$trainingId", trainingId);
+        cmd.Parameters.AddWithValue("$enabled", enabled ? 1 : 0);
+        cmd.Parameters.AddWithValue("$intervalDays", intervalDays);
+        cmd.Parameters.AddWithValue("$nextRunAtUtc", nextRunAtUtc is null ? DBNull.Value : nextRunAtUtc.Value.ToUniversalTime().ToString("O"));
+        cmd.Parameters.AddWithValue("$updatedBy", updatedBy ?? string.Empty);
+        cmd.Parameters.AddWithValue("$updatedAtUtc", now.ToString("O"));
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<List<TrainingReminderSchedule>> GetDueTrainingReminderSchedulesAsync(DateTime nowUtc)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT * FROM TrainingReminderSchedules
+WHERE Enabled=1 AND NextRunAtUtc IS NOT NULL AND NextRunAtUtc <= $now
+ORDER BY NextRunAtUtc, TrainingId;";
+        cmd.Parameters.AddWithValue("$now", nowUtc.ToUniversalTime().ToString("O"));
+        using var r = await cmd.ExecuteReaderAsync();
+        var result = new List<TrainingReminderSchedule>();
+        while (await r.ReadAsync()) result.Add(MapTrainingReminderSchedule(r));
+        return result;
+    }
+
+    public async Task<bool> AdvanceTrainingReminderScheduleAsync(TrainingReminderSchedule schedule, DateTime finishedAtUtc)
+    {
+        if (schedule.NextRunAtUtc is null) return false;
+
+        var intervalDays = Math.Clamp(schedule.IntervalDays, 1, 365);
+        var next = schedule.NextRunAtUtc.Value.ToUniversalTime();
+        var finished = finishedAtUtc.ToUniversalTime();
+        do { next = next.AddDays(intervalDays); } while (next <= finished);
+
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+UPDATE TrainingReminderSchedules
+SET LastRunAtUtc=$lastRun, NextRunAtUtc=$nextRun
+WHERE TrainingId=$trainingId AND Enabled=1 AND NextRunAtUtc=$expectedNextRun;";
+        cmd.Parameters.AddWithValue("$lastRun", finished.ToString("O"));
+        cmd.Parameters.AddWithValue("$nextRun", next.ToString("O"));
+        cmd.Parameters.AddWithValue("$trainingId", schedule.TrainingId);
+        cmd.Parameters.AddWithValue("$expectedNextRun", schedule.NextRunAtUtc.Value.ToUniversalTime().ToString("O"));
+        return await cmd.ExecuteNonQueryAsync() == 1;
+    }
+
+    public async Task<Dictionary<string, TeamsReminderHistory>> GetLatestTeamsReminderHistoryAsync(long trainingId)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT * FROM TeamsReminderHistory
+WHERE TrainingId=$trainingId
+ORDER BY AttemptedAtUtc DESC, Id DESC;";
+        cmd.Parameters.AddWithValue("$trainingId", trainingId);
+        using var r = await cmd.ExecuteReaderAsync();
+        var result = new Dictionary<string, TeamsReminderHistory>(StringComparer.OrdinalIgnoreCase);
+        while (await r.ReadAsync())
+        {
+            var item = MapTeamsReminderHistory(r);
+            if (!result.ContainsKey(item.SamAccountName)) result[item.SamAccountName] = item;
+        }
+        return result;
+    }
+
+    public async Task<Dictionary<string, TeamsReminderHistory>> GetLatestSuccessfulTeamsReminderHistoryAsync(long trainingId)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT * FROM TeamsReminderHistory
+WHERE TrainingId=$trainingId AND Status IN ($accepted, $confirmed)
+ORDER BY AttemptedAtUtc DESC, Id DESC;";
+        cmd.Parameters.AddWithValue("$trainingId", trainingId);
+        cmd.Parameters.AddWithValue("$accepted", TeamsReminderStatus.WorkflowAccepted);
+        cmd.Parameters.AddWithValue("$confirmed", TeamsReminderStatus.DeliveryConfirmed);
+        using var r = await cmd.ExecuteReaderAsync();
+        var result = new Dictionary<string, TeamsReminderHistory>(StringComparer.OrdinalIgnoreCase);
+        while (await r.ReadAsync())
+        {
+            var item = MapTeamsReminderHistory(r);
+            if (!result.ContainsKey(item.SamAccountName)) result[item.SamAccountName] = item;
+        }
+        return result;
+    }
+
+    public async Task<long?> BeginTeamsReminderAttemptAsync(
+        long trainingId,
+        AdUser user,
+        string source,
+        string actor,
+        string? cycleKey,
+        DateTime attemptedAtUtc)
+    {
+        using var c = _db.OpenConnection();
+        using var tx = c.BeginTransaction();
+        using var cmd = c.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+INSERT OR IGNORE INTO TeamsReminderHistory(
+    TrainingId, SamAccountName, DisplayName, Recipient, AttemptedAtUtc, FinishedAtUtc,
+    Source, Status, HttpStatusCode, WorkflowRunId, MessageId, Error, Actor, CycleKey, ImportKey)
+VALUES(
+    $trainingId, lower($sam), $displayName, $recipient, $attemptedAtUtc, NULL,
+    $source, $status, NULL, '', '', '', $actor, $cycleKey, NULL);";
+        cmd.Parameters.AddWithValue("$trainingId", trainingId);
+        cmd.Parameters.AddWithValue("$sam", user.SamAccountName.Trim());
+        cmd.Parameters.AddWithValue("$displayName", user.DisplayName ?? string.Empty);
+        cmd.Parameters.AddWithValue("$recipient", user.Email ?? string.Empty);
+        cmd.Parameters.AddWithValue("$attemptedAtUtc", attemptedAtUtc.ToUniversalTime().ToString("O"));
+        cmd.Parameters.AddWithValue("$source", source);
+        cmd.Parameters.AddWithValue("$status", TeamsReminderStatus.Processing);
+        cmd.Parameters.AddWithValue("$actor", actor ?? string.Empty);
+        cmd.Parameters.AddWithValue("$cycleKey", cycleKey is null ? DBNull.Value : cycleKey);
+        var changed = await cmd.ExecuteNonQueryAsync();
+        if (changed == 0)
+        {
+            tx.Rollback();
+            return null;
+        }
+
+        using var id = c.CreateCommand();
+        id.Transaction = tx;
+        id.CommandText = "SELECT last_insert_rowid();";
+        var insertedId = Convert.ToInt64(await id.ExecuteScalarAsync());
+        tx.Commit();
+        return insertedId;
+    }
+
+    public async Task CompleteTeamsReminderAttemptAsync(long historyId, TeamsSendResult result, DateTime finishedAtUtc)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+UPDATE TeamsReminderHistory
+SET FinishedAtUtc=$finishedAtUtc,
+    Status=$status,
+    HttpStatusCode=$httpStatusCode,
+    WorkflowRunId=$workflowRunId,
+    MessageId=$messageId,
+    Error=$error
+WHERE Id=$id;";
+        cmd.Parameters.AddWithValue("$finishedAtUtc", finishedAtUtc.ToUniversalTime().ToString("O"));
+        cmd.Parameters.AddWithValue("$status", result.Status);
+        cmd.Parameters.AddWithValue("$httpStatusCode", result.HttpStatusCode is null ? DBNull.Value : result.HttpStatusCode.Value);
+        cmd.Parameters.AddWithValue("$workflowRunId", result.WorkflowRunId ?? string.Empty);
+        cmd.Parameters.AddWithValue("$messageId", result.MessageId ?? string.Empty);
+        cmd.Parameters.AddWithValue("$error", result.Error ?? string.Empty);
+        cmd.Parameters.AddWithValue("$id", historyId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     private static DirectoryExclusion MapDirectoryExclusion(SqliteDataReader r)
     {
         DateTime? reincludedAt = null;
@@ -536,6 +721,59 @@ VALUES($trainingId,$sam,$display,$email,$title,$department,$score,$total,$starte
         CreatedAtUtc = DateTime.Parse(r.GetString(r.GetOrdinal("CreatedAtUtc")), null, System.Globalization.DateTimeStyles.RoundtripKind),
         CreatedBy = r.GetString(r.GetOrdinal("CreatedBy"))
     };
+
+    private static TeamsReminderHistory MapTeamsReminderHistory(SqliteDataReader r)
+    {
+        DateTime? finishedAtUtc = null;
+        var finishedOrdinal = r.GetOrdinal("FinishedAtUtc");
+        if (!r.IsDBNull(finishedOrdinal))
+            finishedAtUtc = DateTime.Parse(r.GetString(finishedOrdinal), null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
+
+        int? httpStatusCode = null;
+        var httpOrdinal = r.GetOrdinal("HttpStatusCode");
+        if (!r.IsDBNull(httpOrdinal)) httpStatusCode = r.GetInt32(httpOrdinal);
+
+        return new TeamsReminderHistory
+        {
+            Id = r.GetInt64(r.GetOrdinal("Id")),
+            TrainingId = r.GetInt64(r.GetOrdinal("TrainingId")),
+            SamAccountName = r.GetString(r.GetOrdinal("SamAccountName")),
+            DisplayName = r.GetString(r.GetOrdinal("DisplayName")),
+            Recipient = r.GetString(r.GetOrdinal("Recipient")),
+            AttemptedAtUtc = DateTime.Parse(r.GetString(r.GetOrdinal("AttemptedAtUtc")), null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime(),
+            FinishedAtUtc = finishedAtUtc,
+            Source = r.GetString(r.GetOrdinal("Source")),
+            Status = r.GetString(r.GetOrdinal("Status")),
+            HttpStatusCode = httpStatusCode,
+            WorkflowRunId = r.GetString(r.GetOrdinal("WorkflowRunId")),
+            MessageId = r.GetString(r.GetOrdinal("MessageId")),
+            Error = r.GetString(r.GetOrdinal("Error")),
+            Actor = r.GetString(r.GetOrdinal("Actor")),
+            CycleKey = r.IsDBNull(r.GetOrdinal("CycleKey")) ? null : r.GetString(r.GetOrdinal("CycleKey")),
+            ImportKey = r.IsDBNull(r.GetOrdinal("ImportKey")) ? null : r.GetString(r.GetOrdinal("ImportKey"))
+        };
+    }
+
+    private static TrainingReminderSchedule MapTrainingReminderSchedule(SqliteDataReader r)
+    {
+        static DateTime? ReadNullableDate(SqliteDataReader reader, string name)
+        {
+            var ordinal = reader.GetOrdinal(name);
+            if (reader.IsDBNull(ordinal)) return null;
+            return DateTime.Parse(reader.GetString(ordinal), null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
+        }
+
+        return new TrainingReminderSchedule
+        {
+            TrainingId = r.GetInt64(r.GetOrdinal("TrainingId")),
+            Enabled = r.GetInt32(r.GetOrdinal("Enabled")) == 1,
+            IntervalDays = r.GetInt32(r.GetOrdinal("IntervalDays")),
+            NextRunAtUtc = ReadNullableDate(r, "NextRunAtUtc"),
+            LastRunAtUtc = ReadNullableDate(r, "LastRunAtUtc"),
+            UpdatedBy = r.GetString(r.GetOrdinal("UpdatedBy")),
+            UpdatedAtUtc = DateTime.Parse(r.GetString(r.GetOrdinal("UpdatedAtUtc")), null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime()
+        };
+    }
 
     private static TrainingCompletion MapCompletion(SqliteDataReader r)
     {

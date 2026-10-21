@@ -1,4 +1,4 @@
-# Arquitetura - estado atual v0.0.10
+# Arquitetura - estado atual v0.0.19
 
 ```text
 Navegador
@@ -6,59 +6,83 @@ Navegador
    v
 ASP.NET Core MVC / IIS
    |
-   +--> AD: autenticacao usuário/senha
+   +--> AD: autenticacao, autorizacao administrativa e usuarios elegiveis
    |
-   +--> AD: consulta de usuários elegíveis
+   +--> SQLite
+   |      +--> treinamentos / questoes / conclusoes
+   |      +--> exclusoes permanentes
+   |      +--> TeamsReminderHistory
+   |      `--> TrainingReminderSchedules
    |
-   +--> Teams Workflow: lembretes { recipient, text }
+   +--> Teams Workflow: { recipient, text }
+   |      `--> resposta opcional de confirmacao { success, delivered, workflowRunId, messageId }
    |
-   +--> SQLite: treinamentos, questões, conclusões
+   +--> TeamsReminderWorker (15 min)
+   |      `--> somente agenda explicitamente ativada
    |
-   +--> Sistema de arquivos persistente
+   `--> Sistema de arquivos persistente
           +--> Data\Automind.Treinamentos.db
-          +--> Treinamentos\<slug>\<versão>\manifest.json + SHA256.txt
-          +--> Evidências\Colaboradores\<Nome - sam>\*.pdf
-          +--> Evidências\Relatorios\*.pdf
-          +--> Logs\Audit.jsonl
-          +--> Backup\
+          +--> Treinamentos\<slug>\<versao>\manifest.json + SHA256.txt
+          +--> Evidencias\Colaboradores\<login>\*.pdf
+          +--> Evidencias\Relatorios\*.pdf
+          +--> Logs\Audit-*.jsonl
+          `--> Backup\
 ```
 
 ## Componentes
 
 - `AccountController`: login/logout AD.
-- `TrainingController`: area do colaborador, execucao, rota `/Training/Start/{id}` e aceite.
-- `AdminController`: funcoes restritas ao grupo AD `_treinamentos` por meio da policy `TreinamentosAdmin`, pendências e Teams.
-- `AdAuthenticationService`: validação de credenciais + dados do usuário + revalidação da membership administrativa no AD.
-- `AdDirectoryService`: usuários habilitados com e-mail `@automind.com.br`.
-- `TrainingRepository`: acesso SQLite.
-- `TrainingSnapshotService`: snapshot + SHA-256 do treinamento.
-- `EvidenceService`: PDFs individuais e consolidados.
-- `AuditService`: JSONL de auditoria.
-- `TeamsWebhookService`: mesmo contrato do CadColab, segredo externo ao Git.
-- `StorageService`: resolve a raiz de armazenamento e cria somente as pastas necessarias.
-- `SimplePdfService`: gerador PDF corporativo com identidade Automind, logo, tempos, protocolo e relatorios consolidados.
+- `TrainingController`: area do colaborador, execucao, aceite e evidencias.
+- `AdminController`: administracao, pendencias, exclusoes, envio manual e configuracao da agenda Teams.
+- `AdAuthenticationService`: credenciais e revalidacao de conta.
+- `AdAdminAuthorizationService`: membership atual do grupo `_treinamentos`, fail-closed.
+- `AdDirectoryService`: usuarios AD habilitados/elegiveis.
+- `TrainingRepository`: persistencia SQLite, inclusive historico/agenda Teams.
+- `TeamsWebhookService`: POST ao Workflow e classificacao do retorno em aceite, confirmacao ou falha.
+- `TeamsReminderService`: reserva a tentativa no banco antes do envio, finaliza o resultado e audita.
+- `TeamsReminderWorker`: executa ciclos automaticos vencidos sem depender de acesso a pagina.
+- `AuditService`: auditoria JSONL diaria; registros antigos de Teams sao usados para reconstruir o historico sem reenvio.
+- `TrainingSnapshotService`, `EvidenceService`, `SimplePdfService` e `StorageService`: comportamento anterior preservado.
 
-## Ambientes
+## Fluxo de lembrete Teams
 
-### Development
+```text
+Administrador seleciona usuario OU agenda vence
+  -> confirmar elegibilidade / pendencia / exclusao
+  -> reservar tentativa em TeamsReminderHistory
+  -> POST no Workflow
+  -> receber resultado
+  -> gravar status final
+  -> registrar Audit-*.jsonl
+  -> exibir ultimo estado na tela Pendencias
+```
 
-`Storage:RootPath=App_Data`, relativo ao projeto.
+```mermaid
+flowchart LR
+    A[Manual ou agenda] --> B[Validar elegibilidade e pendencia]
+    B --> C[Reservar tentativa no SQLite]
+    C --> D[POST Workflow Teams]
+    D --> E{Resposta}
+    E -->|2xx sem confirmacao| F[Aceito pelo Workflow]
+    E -->|delivered=true ou messageId| G[Confirmado]
+    E -->|erro| H[Falhou]
+    F --> I[Auditoria e tela]
+    G --> I
+    H --> I
+```
 
-### Production
+## Regra de agenda
 
-`Storage:RootPath=C:\Automind.Treinamentos`.
+A agenda e desativada por padrao e configurada por treinamento publicado. O primeiro ciclo ocorre somente depois do intervalo escolhido. Em cada ciclo, o worker ignora concluidos, excluidos e usuarios que receberam aviso valido dentro do intervalo. Uma chave unica por ciclo/usuario impede repeticao do mesmo ciclo apos reinicio.
 
-O diretorio `Web` não faz parte da raiz logica de dados; ele e apenas o destino da publicacao.
+## Confirmacao x leitura
 
-## Fonte oficial
+`Confirmado` significa confirmacao retornada pelo Workflow para a etapa de postagem no Teams. Nao significa que o colaborador abriu ou leu a mensagem.
 
-O banco é a fonte oficial de conclusão. Os PDFs são evidências derivadas e possuem hash registrado.
+## Persistencia e ambiente
 
-## Layout de treinamentos
+Development usa `Storage:RootPath=App_Data`; Production usa `C:\Automind.Treinamentos`. O banco continua sendo a fonte de verdade das conclusoes. Para a agenda executar continuamente no IIS, o App Pool precisa permanecer ativo; essa configuracao de ambiente e validada separadamente e nao e alterada pelo codigo.
 
-As views de treinamento usam o `_Layout.cshtml` compartilhado. Conteúdos especializados podem carregar CSS proprio pela secao `Styles`, mas não devem criar outro `<html>/<body>` ou remover a navegacao global.
+## Autorizacao administrativa
 
-
-## Autorização administrativa v0.0.10
-
-`UseAuthentication` restaura apenas a identidade do cookie. Em seguida, middleware proprio remove qualquer role administrativa persistida/legada, consulta `AdAdminAuthorizationService` no LDAP e acrescenta `TreinamentosAdmin` somente ao principal em memoria da requisicao. `UseAuthorization` roda depois dessa etapa. Portanto menu Razor e `[Authorize(Policy = "TreinamentosAdmin")]` usam a mesma decisão atual.
+A role administrativa nao e confiada ao cookie. A membership `_treinamentos` e consultada no AD e adicionada somente em memoria no request antes de `UseAuthorization`.

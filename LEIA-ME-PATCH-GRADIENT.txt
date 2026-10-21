@@ -1,0 +1,9 @@
+Automind.Treinamentos v0.0.18 - patch do gradiente da tela de login
+
+Arquivo alterado:
+wwwroot/css/site.css
+
+Ajustes:
+- o painel visual do login usa o mesmo gradiente do botao "Entrar no portal": #fa094e -> #4d1056;
+- "DESENVOLVIMENTO DE PESSOAS" fica branco e mais nitido sobre o gradiente;
+- nenhuma versao foi alterada: permanece v0.0.18.

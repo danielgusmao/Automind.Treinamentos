@@ -1,5 +1,105 @@
 # CHECKPOINT - Automind.Treinamentos
 
+## Estado atual / versao
+
+- Versao preparada: **v0.0.19**.
+- Base: v0.0.18 + patch final do gradiente de login.
+- Mudanca atual: historico visual, confirmacao de resultado e agenda de lembretes Teams.
+- Branch de publicacao documentada: `release`; pipeline/Release automatica apos push.
+
+## Regra de negocio atual
+
+- Populacao: usuarios AD habilitados/elegiveis, menos `DirectoryExclusions`.
+- Conclusao no SQLite e a fonte de verdade; PDF e evidencia derivada.
+- Usuario concluido ou globalmente excluido nao recebe lembrete Teams.
+- Historico de Teams e persistente e nunca e usado para afirmar leitura da mensagem.
+- HTTP 2xx do Workflow sem confirmacao explicita = `Aceito pelo Workflow`; somente `delivered=true` ou `messageId` = `Confirmado`.
+- Agenda e opt-in por treinamento, desativada por padrao.
+- Ultimo aviso manual ou automatico valido participa do intervalo para evitar reenvio precoce.
+
+## Fluxo atual do sistema
+
+```text
+Login AD
+  -> treinamentos publicados
+  -> quiz + aceite
+  -> conclusao SQLite
+  -> evidencia PDF
+
+Pendencias Admin
+  -> consultar AD - exclusoes - concluidos
+  -> mostrar ultimo estado Teams
+  -> envio manual OU ciclo automatico vencido
+  -> reservar tentativa no SQLite
+  -> POST Workflow Teams
+  -> gravar resultado + auditoria
+```
+
+```mermaid
+flowchart LR
+    A[Pendencias Admin] --> B[AD + exclusoes + conclusoes]
+    B --> C[Historico Teams]
+    C --> D{Manual ou agenda}
+    D --> E[Reservar tentativa]
+    E --> F[Workflow Teams]
+    F --> G[Gravar resultado]
+    G --> H[Atualizar tela e auditoria]
+```
+
+## Invariantes / nao modificar implicitamente
+
+- Grupo administrativo oficial: `_treinamentos`; role administrativa nao fica persistida no cookie.
+- `Code`/`Slug` e versionamento de treinamentos permanecem protegidos pelas regras existentes.
+- Estrutura de evidencias continua por colaborador/login.
+- Segredo do Workflow Teams permanece fora de Git/documentacao.
+- Nao transformar `Confirmado` em recibo de leitura.
+- Nao habilitar agenda automaticamente em migration/seed.
+- Nao reenviar o lote historico apenas para validar a nova tela.
+
+## Integracoes e responsabilidades
+
+- AD: autenticacao, autorizacao e elegibilidade.
+- SQLite: treinamentos, conclusoes, exclusoes, `TeamsReminderHistory` e `TrainingReminderSchedules`.
+- Workflow Teams: recebe `{ recipient, text }`; confirmacao estruturada depende de ajuste no Workflow real.
+- `TeamsReminderWorker`: verifica agendas vencidas a cada 15 minutos enquanto a aplicacao estiver ativa.
+- `Audit-*.jsonl`: auditoria e fonte de recuperacao historica idempotente dos envios antigos.
+
+## Testes relevantes ja validados
+
+- `VALIDADO HISTORICAMENTE`: login/AD, conclusoes, evidencias, exclusoes, publicacao e hardening conforme versoes anteriores.
+- `VALIDADO LOCALMENTE`: estrutura SQL v0.0.19, controles estaticos e ausencia de envio externo durante a preparacao.
+- `PENDENTE DE VALIDACAO`: build .NET 10, migration no ambiente, Workflow real, envio controlado e permanencia do App Pool.
+
+## Riscos e pendencias atuais
+
+- O lote antigo so prova HTTP 2xx/erro registrado; nao existe confirmacao retroativa de entrega no Teams.
+- Para obter `Confirmado`, o Workflow real precisa responder depois da etapa de postagem.
+- A agenda depende de o processo ASP.NET permanecer ativo; validar configuracao do App Pool antes de confiar em horario recorrente.
+- Build nao executado no ambiente de empacotamento por ausencia do SDK .NET.
+
+## Proximo ponto de continuidade
+
+1. Build/Static tests no Windows com .NET 10.
+2. Backup + publicacao controlada.
+3. Conferir importacao historica na tela sem reenviar mensagens.
+4. Ajustar Workflow real e validar com um unico usuario autorizado.
+5. Somente depois ativar agenda real.
+
+## 2026-10-21 - v0.0.19 - Historico e agenda Teams
+
+- Nova migration aditiva cria `TeamsReminderHistory` e `TrainingReminderSchedules`.
+- `Audit-*.jsonl` de `training-teams-reminder` e importado de forma idempotente sem envio externo.
+- Tela Pendencias mostra estado Teams, horario local do ultimo registro e preserva o ultimo aviso valido quando a tentativa mais recente falhou.
+- Adicionada selecao `Marcar quem precisa de aviso`, baseada no intervalo configurado.
+- Envios novos reservam tentativa antes do POST e registram resultado depois.
+- Resposta estruturada do Workflow pode promover o status para `Confirmado`; 2xx simples permanece `Aceito pelo Workflow`.
+- Agenda por treinamento e desativada por padrao; primeiro ciclo = ativacao + intervalo.
+- Worker de 15 minutos respeita AD, exclusoes, conclusoes e ultimo aviso valido.
+- `CycleKey` unica impede repeticao do mesmo ciclo automatico apos reinicio.
+- Nenhum IIS/M365 real foi alterado e nenhuma mensagem Teams foi enviada nesta rodada.
+- Testes: `VALIDADO LOCALMENTE` para estrutura/SQL; `PENDENTE DE VALIDACAO` para build e ambiente.
+- Rollback de codigo: retornar ao pacote v0.0.18. Rollback de dados: manter as tabelas novas sem uso ou restaurar backup SQLite pre-deploy se a migration precisar ser desfeita no ambiente.
+
 ## 2026-10-15 - v0.0.18 - Revisão ortográfica geral e ajuste final de gradiente
 
 - Baseada na v0.0.17, sem alteração de autenticação, autorização AD, regras de negócio, banco SQLite, Services, Teams, PDFs, publicação ou evidências.

@@ -39,7 +39,7 @@ button,.btn,input,textarea,select,.card,.status,.meta-chip,.hero-pill,.version-c
 
 .app-container{width:min(var(--am-max),calc(100% - 56px));margin:0 auto}
 
-/* topo  */
+/* topo */
 .topbar-shell{position:sticky;top:0;z-index:1000;background:linear-gradient(90deg,#100e16 0%,#1c1222 48%,var(--am-accent-b) 100%);border-bottom:1px solid rgba(255,255,255,.12)}
 .topbar-shell:after{content:"";display:block;height:3px;background:linear-gradient(90deg,var(--am-accent-a),var(--am-accent-b),transparent 78%)}
 .topbar{min-height:88px;display:grid;grid-template-columns:260px 1fr auto;align-items:stretch;gap:24px}
@@ -199,7 +199,7 @@ input[readonly]{background:#f3f4f6;color:#59545f}
 /* login */
 .login-body{min-height:100vh;background:var(--am-night);overflow-x:hidden}
 .login-shell{min-height:100vh;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(420px,.85fr)}
-.login-visual{position:relative;overflow:hidden;min-height:100vh;background:#121018;color:#fff}
+.login-visual{position:relative;overflow:hidden;min-height:100vh;background:linear-gradient(90deg,var(--am-accent-a),var(--am-accent-b));color:#fff}
 .login-visual:before,.login-visual:after{content:none}
 .login-visual-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.02),rgba(0,0,0,.14))}
 .login-visual-content{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;padding:52px 58px}
@@ -235,3 +235,34 @@ input[readonly]{background:#f3f4f6;color:#59545f}
 /* ajustes específicos do layout inspirado no site institucional */
 .catalog-action-row{display:flex;justify-content:flex-end;align-items:center;margin:-10px 0 20px}.catalog-action-row .btn{min-width:220px}.btn-plus{font-size:1.45rem;line-height:1;margin-right:9px;font-weight:400}.catalog-card{padding:18px}.training-list-head h2{margin:5px 0 4px;font-size:1.55rem}.training-list-head{margin-top:0}.admin-table-shell,.template-steps,.training-options{background:linear-gradient(90deg,rgba(250,9,78,.10),rgba(77,16,86,.10));padding:1px;border:0}
 .meta-chip-dark{border-color:rgba(255,255,255,.18)!important;background:rgba(255,255,255,.055)!important;color:#fff!important}
+
+/* v0.0.19 - historico e agenda de lembretes Teams */
+.reminder-schedule-card{padding:22px 26px}
+.reminder-schedule-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:18px}
+.reminder-schedule-head h2{margin:4px 0 7px}
+.reminder-schedule-head p{margin:0;max-width:780px}
+.reminder-schedule-summary{display:flex;flex-direction:column;align-items:flex-end;gap:9px;min-width:250px}
+.reminder-next-run{font-size:.78rem;color:var(--am-muted);white-space:nowrap}
+.reminder-next-run time,.reminder-next-run strong{color:var(--am-text);font-weight:800}
+.reminder-schedule-form{display:grid;grid-template-columns:minmax(260px,1fr) 180px auto;gap:14px;align-items:end;padding-top:17px;border-top:1px solid var(--am-line)}
+.reminder-toggle{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:800}
+.reminder-toggle input{width:18px;height:18px;margin:0}
+.reminder-interval{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:.82rem}
+.reminder-interval input{min-height:44px;width:100%}
+.reminder-contract-note{margin-top:14px;padding:12px 14px;border-left:3px solid var(--am-purple);background:#f6f2f7;color:#514a55;font-size:.78rem;line-height:1.5}
+.pending-reminder-table{min-width:1540px}
+.status.teams-confirmed{background:var(--am-green-bg);border-color:#c9e6d8;color:var(--am-green)}
+.status.teams-accepted{background:#eef4fb;border-color:#cad9eb;color:#345c86}
+.status.teams-failed{background:#fff0f1;border-color:#edc9ce;color:#a52738}
+.status.teams-unknown{background:var(--am-amber-bg);border-color:#ead9a1;color:var(--am-amber)}
+.status.teams-processing{background:#eef4fb;border-color:#cad9eb;color:#345c86}
+.status.teams-none{background:#efeff2;border-color:#dddde2;color:#66616b}
+.reminder-time{display:block;white-space:nowrap;font-weight:800;font-size:.78rem;color:var(--am-text)}
+.reminder-secondary{margin-top:4px;font-size:.69rem;color:var(--am-muted);line-height:1.25}
+
+@media(max-width:760px){
+  .reminder-schedule-head{flex-direction:column}
+  .reminder-schedule-summary{align-items:flex-start;min-width:0}
+  .reminder-schedule-form{grid-template-columns:1fr}
+  .reminder-next-run{white-space:normal}
+}

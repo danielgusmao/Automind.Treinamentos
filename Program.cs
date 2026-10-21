@@ -73,6 +73,8 @@ builder.Services.AddSingleton<SimplePdfService>();
 builder.Services.AddSingleton<TrainingSnapshotService>();
 builder.Services.AddHttpClient("TeamsWebhook", client => client.Timeout = TimeSpan.FromSeconds(15));
 builder.Services.AddSingleton<TeamsWebhookService>();
+builder.Services.AddScoped<TeamsReminderService>();
+builder.Services.AddHostedService<TeamsReminderWorker>();
 builder.Services.AddScoped<TrainingRepository>();
 builder.Services.AddScoped<AdAuthenticationService>();
 builder.Services.AddScoped<AdAdminAuthorizationService>();

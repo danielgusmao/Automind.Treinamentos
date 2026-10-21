@@ -16,10 +16,11 @@ public sealed class AdminController : Controller
     private readonly EvidenceService _evidence;
     private readonly AuditService _audit;
     private readonly TeamsWebhookService _teams;
+    private readonly TeamsReminderService _reminders;
     private readonly PortalOptions _portal;
     private readonly ILogger<AdminController> _logger;
 
-    public AdminController(TrainingRepository repo, AdDirectoryService ad, TrainingSnapshotService snapshot, EvidenceService evidence, AuditService audit, TeamsWebhookService teams, IOptions<PortalOptions> portal, ILogger<AdminController> logger)
+    public AdminController(TrainingRepository repo, AdDirectoryService ad, TrainingSnapshotService snapshot, EvidenceService evidence, AuditService audit, TeamsWebhookService teams, TeamsReminderService reminders, IOptions<PortalOptions> portal, ILogger<AdminController> logger)
     {
         _repo = repo;
         _ad = ad;
@@ -27,6 +28,7 @@ public sealed class AdminController : Controller
         _evidence = evidence;
         _audit = audit;
         _teams = teams;
+        _reminders = reminders;
         _portal = portal.Value;
         _logger = logger;
     }
@@ -419,9 +421,13 @@ public sealed class AdminController : Controller
         }
         ViewBag.Training = training;
         ViewBag.TeamsConfigured = _teams.IsConfigured;
+        var schedule = await _repo.GetTrainingReminderScheduleAsync(id);
+        ViewBag.TeamsSchedule = schedule;
 
         var completions = await _repo.GetCompletionsAsync(id);
         var completed = completions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var latestReminders = await _repo.GetLatestTeamsReminderHistoryAsync(id);
+        var latestSuccessfulReminders = await _repo.GetLatestSuccessfulTeamsReminderHistoryAsync(id);
         var exclusions = await _repo.GetDirectoryExclusionsAsync(activeOnly: true);
         var excludedSams = exclusions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var excludedEmails = exclusions.Where(x => !string.IsNullOrWhiteSpace(x.Email)).Select(x => x.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -433,10 +439,19 @@ public sealed class AdminController : Controller
             var eligible = users
                 .Where(u => !excludedSams.Contains(u.SamAccountName) && !excludedEmails.Contains(u.Email))
                 .ToList();
-            return View(eligible.Select(u => new PendingUserViewModel
+            return View(eligible.Select(u =>
             {
-                User = u,
-                Completed = completed.Contains(u.SamAccountName)
+                latestReminders.TryGetValue(u.SamAccountName, out var lastReminder);
+                latestSuccessfulReminders.TryGetValue(u.SamAccountName, out var lastSuccessfulReminder);
+                var isCompleted = completed.Contains(u.SamAccountName);
+                return new PendingUserViewModel
+                {
+                    User = u,
+                    Completed = isCompleted,
+                    LastTeamsReminder = lastReminder,
+                    LastSuccessfulTeamsReminder = lastSuccessfulReminder,
+                    ReminderDue = !isCompleted && TeamsReminderPolicy.IsDue(lastSuccessfulReminder, schedule.IntervalDays, DateTime.UtcNow)
+                };
             }).ToList());
         }
         catch (Exception ex)
@@ -557,13 +572,48 @@ public sealed class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveTeamsReminderSchedule(long trainingId, bool enabled, int intervalDays)
+    {
+        var training = await _repo.GetTrainingAsync(trainingId);
+        if (training is null) return NotFound();
+        if (training.IsArchived || !training.IsPublished)
+        {
+            TempData["TeamsScheduleError"] = "A agenda so pode ser ativada na versao atualmente publicada.";
+            return RedirectToAction(nameof(Pending), new { id = trainingId });
+        }
+
+        intervalDays = Math.Clamp(intervalDays, 1, 365);
+        if (enabled && !_teams.IsConfigured)
+        {
+            TempData["TeamsScheduleError"] = "Configure o Workflow do Teams antes de ativar a agenda.";
+            return RedirectToAction(nameof(Pending), new { id = trainingId });
+        }
+
+        var nextRunAtUtc = enabled ? DateTime.UtcNow.AddDays(intervalDays) : (DateTime?)null;
+        await _repo.SaveTrainingReminderScheduleAsync(trainingId, enabled, intervalDays, nextRunAtUtc, Sam());
+        await _audit.WriteAsync("training-teams-schedule", "success", Sam(), new
+        {
+            trainingId,
+            enabled,
+            intervalDays,
+            nextRunAtUtc
+        });
+
+        TempData["TeamsScheduleResult"] = enabled
+            ? $"Agenda ativada: novo ciclo a cada {intervalDays} dia(s)."
+            : "Agenda automatica desativada.";
+        return RedirectToAction(nameof(Pending), new { id = trainingId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> SendTeamsReminders(long trainingId, List<string>? selectedSams)
     {
         var training = await _repo.GetTrainingAsync(trainingId);
         if (training is null) return NotFound();
         if (training.IsArchived || !training.IsPublished)
         {
-            TempData["TeamsError"] = "Lembretes so podem ser enviados para a versão atualmente publicada.";
+            TempData["TeamsError"] = "Lembretes so podem ser enviados para a versao atualmente publicada.";
             return RedirectToAction(nameof(Trainings));
         }
 
@@ -582,7 +632,7 @@ public sealed class AdminController : Controller
 
         if (!_teams.IsConfigured)
         {
-            TempData["TeamsError"] = "O webhook do Teams ainda não esta configurado para o Automind.Treinamentos.";
+            TempData["TeamsError"] = "O webhook do Teams ainda nao esta configurado para o Automind.Treinamentos.";
             return RedirectToAction(nameof(Pending), new { id = trainingId });
         }
 
@@ -599,7 +649,8 @@ public sealed class AdminController : Controller
                 ?? $"{Request.Scheme}://{Request.Host}/Training/Start/{training.Id}")
             : $"{baseUrl}/Training/Start/{training.Id}";
 
-        var sent = 0;
+        var confirmed = 0;
+        var accepted = 0;
         var failed = 0;
         foreach (var sam in selected)
         {
@@ -607,25 +658,27 @@ public sealed class AdminController : Controller
             if (!usersBySam.TryGetValue(sam, out var user) || string.IsNullOrWhiteSpace(user.Email))
             {
                 failed++;
-                await _audit.WriteAsync("training-teams-reminder", "failed", Sam(), new { trainingId, sam, reason = "eligible-user-or-email-not-found" });
+                await _audit.WriteAsync("training-teams-reminder", "failed", Sam(), new { trainingId, sam, source = TeamsReminderSource.Manual, reason = "eligible-user-or-email-not-found" });
                 continue;
             }
             if (excludedSams.Contains(user.SamAccountName) || excludedEmails.Contains(user.Email)) continue;
 
-            var result = await _teams.SendTrainingReminderAsync(user.Email, user.DisplayName, training.Title, training.EstimatedMinutes, link, HttpContext.RequestAborted);
-            if (result.Success) sent++; else failed++;
-            await _audit.WriteAsync("training-teams-reminder", result.Success ? "success" : "failed", Sam(), new
-            {
-                trainingId,
-                training.Title,
-                recipient = user.Email,
-                sam = user.SamAccountName,
+            var dispatch = await _reminders.SendAsync(
+                training,
+                user,
                 link,
-                error = result.Error
-            });
+                TeamsReminderSource.Manual,
+                Sam(),
+                cycleKey: null,
+                HttpContext.RequestAborted);
+
+            var result = dispatch.SendResult;
+            if (result is null || !result.Success) failed++;
+            else if (string.Equals(result.Status, TeamsReminderStatus.DeliveryConfirmed, StringComparison.OrdinalIgnoreCase)) confirmed++;
+            else accepted++;
         }
 
-        TempData["TeamsResult"] = $"Lembrete(s) Teams enviado(s): {sent}." + (failed > 0 ? $" Falhas: {failed}." : "");
+        TempData["TeamsResult"] = $"Teams - confirmados: {confirmed}; aceitos pelo Workflow: {accepted}; falhas: {failed}.";
         return RedirectToAction(nameof(Pending), new { id = trainingId });
     }
 

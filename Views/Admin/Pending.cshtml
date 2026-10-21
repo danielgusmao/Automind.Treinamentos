@@ -1,24 +1,81 @@
 @model List<PendingUserViewModel>
 @{
-    var training=(Training)ViewBag.Training;
-    ViewData["Title"]="Pendentes";
-    var pending=Model.Count(x=>!x.Completed);
-    var completed=Model.Count-pending;
+    var training = (Training)ViewBag.Training;
+    var schedule = ViewBag.TeamsSchedule as TrainingReminderSchedule ?? new TrainingReminderSchedule { TrainingId = training.Id, IntervalDays = 15 };
+    ViewData["Title"] = "Pendentes";
+    var pending = Model.Count(x => !x.Completed);
+    var completed = Model.Count - pending;
     var excludedCount = ViewBag.ExcludedCount is int count ? count : 0;
     var teamsConfigured = ViewBag.TeamsConfigured is bool value && value;
+
+    string ReminderLabel(string? status) => status switch
+    {
+        TeamsReminderStatus.DeliveryConfirmed => "Confirmado",
+        TeamsReminderStatus.WorkflowAccepted => "Aceito pelo Workflow",
+        TeamsReminderStatus.Failed => "Falhou",
+        TeamsReminderStatus.Unknown => "Resultado incerto",
+        TeamsReminderStatus.Processing => "Em processamento",
+        _ => "Não avisado"
+    };
+
+    string ReminderCss(string? status) => status switch
+    {
+        TeamsReminderStatus.DeliveryConfirmed => "teams-confirmed",
+        TeamsReminderStatus.WorkflowAccepted => "teams-accepted",
+        TeamsReminderStatus.Failed => "teams-failed",
+        TeamsReminderStatus.Unknown => "teams-unknown",
+        TeamsReminderStatus.Processing => "teams-processing",
+        _ => "teams-none"
+    };
+
+    string ReminderSource(string? source) => source switch
+    {
+        TeamsReminderSource.Automatic => "Automático",
+        TeamsReminderSource.LegacyAudit => "Histórico",
+        _ => "Manual"
+    };
 }
 <div class="page-head"><div><span class="eyebrow">ACTIVE DIRECTORY</span><h1>Pendências do treinamento</h1><p>@training.Title</p></div><div class="page-head-actions"><a class="btn secondary" asp-action="DirectoryExclusions">Exclusões permanentes</a><a class="btn secondary" asp-action="Index">Voltar</a></div></div>
 <div class="stats stats-five"><div class="stat"><strong>@Model.Count</strong><span>Elegíveis</span></div><div class="stat"><strong>@completed</strong><span>Concluídos</span></div><div class="stat"><strong>@pending</strong><span>Pendentes</span></div><div class="stat"><strong>@excludedCount</strong><span>Excluídos permanentes</span></div><div class="stat"><strong>@(Model.Count == 0 ? 0 : Math.Round((double)completed / Model.Count * 100, 1))%</strong><span>Adesão</span></div></div>
 @if(ViewBag.AdError is not null){<div class="alert error">Falha ao consultar o AD: @ViewBag.AdError</div>}
 @if(TempData["TeamsResult"] is string result){<div class="alert success">@result</div>}
 @if(TempData["TeamsError"] is string teamsError){<div class="alert error">@teamsError</div>}
+@if(TempData["TeamsScheduleResult"] is string scheduleResult){<div class="alert success">@scheduleResult</div>}
+@if(TempData["TeamsScheduleError"] is string scheduleError){<div class="alert error">@scheduleError</div>}
 @if(TempData["ExclusionResult"] is string exclusionResult){<div class="alert success">@exclusionResult</div>}
 @if(TempData["ExclusionError"] is string exclusionError){<div class="alert error">@exclusionError</div>}
-@if(!teamsConfigured){<div class="alert info"><strong>Teams:</strong> os controles já estão disponíveis, mas o webhook precisa ser configurado no ambiente do App Pool para habilitar os envios.</div>}
+@if(!teamsConfigured){<div class="alert info"><strong>Teams:</strong> o Workflow precisa estar configurado no ambiente para habilitar envios e agenda.</div>}
+
+<div class="card reminder-schedule-card">
+    <div class="reminder-schedule-head">
+        <div>
+            <span class="eyebrow">AGENDA TEAMS</span>
+            <h2>Lembretes automáticos</h2>
+            <p class="muted">Quem ainda não concluiu pode receber novo aviso depois do intervalo definido. Um envio manual recente também conta para o intervalo.</p>
+        </div>
+        <div class="reminder-schedule-summary">
+            <span class="status @(schedule.Enabled ? "done" : "draft")">@(schedule.Enabled ? "Agenda ativa" : "Agenda desativada")</span>
+            <span class="reminder-next-run">
+                Próxima execução:
+                @if(schedule.Enabled && schedule.NextRunAtUtc is DateTime nextRun){<time class="local-datetime" data-utc="@nextRun.ToString("O")">@nextRun.ToString("dd/MM/yyyy HH:mm") UTC</time>}else{<strong>-</strong>}
+            </span>
+        </div>
+    </div>
+    <form asp-action="SaveTeamsReminderSchedule" method="post" class="reminder-schedule-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="trainingId" value="@training.Id" />
+        <label class="reminder-toggle"><input type="checkbox" name="enabled" value="true" checked="@(schedule.Enabled ? "checked" : null)" /> Ativar lembretes automáticos</label>
+        <label class="reminder-interval">Periodicidade <span class="muted">(dias)</span><input type="number" name="intervalDays" min="1" max="365" value="@schedule.IntervalDays" required /></label>
+        <button class="btn secondary" type="submit" disabled="@(!teamsConfigured)">Salvar agenda</button>
+    </form>
+    <div class="reminder-contract-note"><strong>Validação:</strong> "Confirmado" significa que o Workflow retornou confirmação da etapa de envio ao Teams. "Aceito pelo Workflow" significa apenas HTTP 2xx. O portal não marca mensagem como lida.</div>
+</div>
+
 <div class="card">
     <div class="pending-toolbar">
-        <div><span class="eyebrow">LEMBRETES</span><h2>Colaboradores elegíveis</h2><p class="muted">A lista vem do Active Directory. Contas na lista permanente de exclusões não entram em nenhum treinamento e não impactam os indicadores.</p></div>
+        <div><span class="eyebrow">LEMBRETES</span><h2>Colaboradores elegíveis</h2><p class="muted">O histórico antigo de auditoria é recuperado sem reenviar mensagens. Para seleção manual, considera-se o intervalo atual de @schedule.IntervalDays dia(s).</p></div>
         <div class="pending-toolbar-actions">
+            <button class="btn secondary" type="button" id="markDuePending" disabled="@(pending==0)">Marcar quem precisa de aviso</button>
             <button class="btn secondary" type="button" id="toggleAllPending" disabled="@(pending==0)">Marcar todos os pendentes</button>
             <form id="batchReminderForm" asp-action="SendTeamsReminders" method="post">
                 @Html.AntiForgeryToken()
@@ -27,16 +84,30 @@
             </form>
         </div>
     </div>
-    <div class="admin-table-shell"><table><thead><tr><th class="select-col">Marcar</th><th>Status</th><th>Nome</th><th>Login</th><th>E-mail</th><th>Cargo</th><th>Departamento</th><th>Ação</th></tr></thead><tbody>
-    @foreach(var x in Model.OrderBy(x=>x.Completed).ThenBy(x=>x.User.DisplayName)){
+    <div class="admin-table-shell"><table class="pending-reminder-table"><thead><tr><th class="select-col">Marcar</th><th>Status</th><th>Nome</th><th>Login</th><th>E-mail</th><th>Teams</th><th>Último registro</th><th>Cargo</th><th>Departamento</th><th>Ação</th></tr></thead><tbody>
+    @foreach(var x in Model.OrderBy(x=>x.Completed).ThenByDescending(x=>x.ReminderDue).ThenBy(x=>x.User.DisplayName)){
+        var last = x.LastTeamsReminder;
+        var lastSuccess = x.LastSuccessfulTeamsReminder;
         <tr class="@(x.Completed?"row-completed":"")">
-            <td class="select-col">@if(!x.Completed){<input class="pending-check" type="checkbox" name="selectedSams" value="@x.User.SamAccountName" form="batchReminderForm" aria-label="Selecionar @x.User.DisplayName" />}</td>
+            <td class="select-col">@if(!x.Completed){<input class="pending-check" type="checkbox" name="selectedSams" value="@x.User.SamAccountName" form="batchReminderForm" data-reminder-due="@(x.ReminderDue ? "true" : "false")" aria-label="Selecionar @x.User.DisplayName" />}</td>
             <td><span class="status @(x.Completed?"done":"pending")">@(x.Completed?"Concluído":"Pendente")</span></td>
-            <td><strong>@x.User.DisplayName</strong></td><td>@x.User.SamAccountName</td><td>@x.User.Email</td><td>@x.User.JobTitle</td><td>@x.User.Department</td>
+            <td><strong>@x.User.DisplayName</strong></td><td>@x.User.SamAccountName</td><td>@x.User.Email</td>
+            <td>
+                <span class="status @ReminderCss(last?.Status)" title="@(last?.Error ?? string.Empty)">@ReminderLabel(last?.Status)</span>
+                @if(lastSuccess is not null && last is not null && last.Id != lastSuccess.Id){<div class="reminder-secondary">Último envio válido preservado</div>}
+            </td>
+            <td>
+                @if(last is not null){
+                    <time class="local-datetime reminder-time" data-utc="@last.AttemptedAtUtc.ToString("O")">@last.AttemptedAtUtc.ToString("dd/MM/yyyy HH:mm") UTC</time>
+                    <div class="reminder-secondary">@ReminderSource(last.Source)</div>
+                    @if(lastSuccess is not null && lastSuccess.Id != last.Id){<div class="reminder-secondary">Último aviso válido: <time class="local-datetime" data-utc="@lastSuccess.AttemptedAtUtc.ToString("O")">@lastSuccess.AttemptedAtUtc.ToString("dd/MM/yyyy HH:mm") UTC</time></div>}
+                }else{<span class="muted">-</span>}
+            </td>
+            <td>@x.User.JobTitle</td><td>@x.User.Department</td>
             <td>
                 @if(!x.Completed){
                     <div class="row-actions">
-                        <form asp-action="SendTeamsReminders" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="selectedSams" value="@x.User.SamAccountName"/><button class="btn secondary btn-small" type="submit" disabled="@(!teamsConfigured)">Enviar Teams</button></form>
+                        <form asp-action="SendTeamsReminders" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="selectedSams" value="@x.User.SamAccountName"/><button class="btn secondary btn-small" type="submit" disabled="@(!teamsConfigured)">@(lastSuccess is null ? "Enviar Teams" : "Reenviar Teams")</button></form>
                         <button class="btn danger btn-small exclude-user-btn" type="button" data-sam="@x.User.SamAccountName" data-name="@x.User.DisplayName" data-email="@x.User.Email">Excluir permanentemente</button>
                     </div>
                 }else{<span class="muted">Concluído</span>}
@@ -82,6 +153,20 @@
             button.textContent = mark ? 'Desmarcar todos' : 'Marcar todos os pendentes';
         });
     }
+
+    document.getElementById('markDuePending')?.addEventListener('click', () => {
+        document.querySelectorAll('.pending-check').forEach(box => {
+            box.checked = box.dataset.reminderDue === 'true';
+        });
+    });
+
+    document.querySelectorAll('.local-datetime').forEach(el => {
+        const raw = el.dataset.utc;
+        if (!raw) return;
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) return;
+        el.textContent = date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    });
 
     const modal = document.getElementById('excludeModal');
     const sam = document.getElementById('excludeSam');

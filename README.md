@@ -1,17 +1,17 @@
 # Automind.Treinamentos
 
-Versão: **v0.0.18**
+Versão: **v0.0.19**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidências PDF, acompanhamento de pendências no Active Directory e comunicacao via Teams.
 
-## Destaques da v0.0.18
-- refinamento exclusivamente visual sobre a v0.0.16, sem alteração de regra de negócio;
-- textos de destaque que estavam em rosa claro passam a usar o magenta institucional `#fa094e`;
-- tela de login preserva o fundo aprovado, mas remove as linhas/faixas neon inclinadas;
-- banners/hero removem as barras degradê decorativas do fundo;
-- símbolo Automind passa a ser o único elemento gráfico do hero, ampliado para preencher melhor a área visual;
-- treinamento dedicado de Segurança da Informação recebe o mesmo refinamento visual;
-- versão de assembly, `VERSION.txt` e documentação atualizados para v0.0.18.
+## Destaques da v0.0.19
+- histórico visual de lembretes Teams na tela de pendências;
+- recuperação dos envios antigos a partir dos `Audit-*.jsonl`, sem reenviar mensagens;
+- diferencia `Aceito pelo Workflow` de `Confirmado`;
+- agenda por treinamento com intervalo configurável, desativada por padrão;
+- lembrete automático somente para quem segue elegível/pendente e já ultrapassou o intervalo desde o último aviso válido;
+- proteção contra duplicidade dentro do mesmo ciclo automático;
+- nenhuma alteração real em Teams/IIS foi executada durante a preparação do pacote.
 
 ## Base visual preservada da v0.0.16
 - composição aprovada da opção 2;
@@ -89,11 +89,24 @@ A lista e gerenciada em `Administração > Exclusões`.
 
 ## Teams
 
-A integracao usa o mesmo Workflow/contrato do CadColab:
+A integração continua enviando ao Workflow:
 
 ```json
-{ "recipient": "usuário@automind.com.br", "text": "mensagem" }
+{ "recipient": "usuario@automind.com.br", "text": "mensagem" }
 ```
+
+Na v0.0.19, o Workflow pode responder depois da etapa de postagem no Teams:
+
+```json
+{
+  "success": true,
+  "delivered": true,
+  "workflowRunId": "<id-da-execucao>",
+  "messageId": "<id-da-mensagem>"
+}
+```
+
+`delivered=true` ou `messageId` registra `Confirmado`. HTTP 2xx sem esses dados registra `Aceito pelo Workflow`. Isso comprova a etapa de envio, não leitura pelo destinatário.
 
 A URL real do Workflow não esta no projeto. O IIS fornece:
 
@@ -156,7 +169,9 @@ Comece por `docs/00-CHECKPOINT.md`.
 - revisão visual global v0.0.16: `docs/40-REVISAO-VISUAL-GRADIENTE-V0.0.16.md`;
 - refinamento visual v0.0.17: `docs/41-REFINO-VISUAL-V0.0.17.md`;
 - validação v0.0.17: `docs/42-TESTE-V0.0.17.md`;
-- revisão ortográfica e ajuste final de gradiente v0.0.18: `docs/43-REVISAO-ORTOGRAFIA-V0.0.18.md`.
+- revisão ortográfica e ajuste final de gradiente v0.0.18: `docs/43-REVISAO-ORTOGRAFIA-V0.0.18.md`;
+- histórico/agenda Teams v0.0.19: `docs/44-HISTORICO-E-AGENDA-TEAMS-V0.0.19.md`;
+- validação v0.0.19: `docs/45-TESTE-V0.0.19.md`.
 
 
 ## Autorização administrativa

@@ -30,7 +30,16 @@ try { StorageService.ValidatePathSegment("..", "slug"); }
 catch (InvalidOperationException) { blockedTraversal = true; }
 Assert(blockedTraversal, "Segmento '..' deve ser rejeitado.");
 
-var evidenceName = EvidenceNaming.IndividualFileName("SI-001", "1.0.0", new DateTime(2026, 10, 8, 0, 0, 0, DateTimeKind.Utc), "AM-20261008-ABCD");
+var evidenceName = EvidenceNaming.IndividualFileName("SI-001", "1.0.0", new DateTime(2026, 10, 8, 12, 0, 0, DateTimeKind.Local).ToUniversalTime(), "AM-20261008-ABCD");
 Assert(evidenceName == "SI-001_v1.0.0_20261008_AM-20261008-ABCD.pdf", "Nome de evidencia mudou inesperadamente.");
 
-Console.WriteLine("SelfTests v0.0.15: OK");
+Assert(TeamsReminderStatus.CountsAsNotified(TeamsReminderStatus.WorkflowAccepted), "HTTP 2xx aceito pelo Workflow deve contar como aviso para evitar duplicidade.");
+Assert(TeamsReminderStatus.CountsAsNotified(TeamsReminderStatus.DeliveryConfirmed), "Entrega confirmada deve contar como aviso.");
+Assert(!TeamsReminderStatus.CountsAsNotified(TeamsReminderStatus.Failed), "Falha nao deve contar como aviso entregue.");
+
+var reminderNow = new DateTime(2026, 10, 21, 15, 0, 0, DateTimeKind.Utc);
+Assert(TeamsReminderPolicy.IsDue(null, 15, reminderNow), "Usuario nunca avisado deve ficar elegivel no proximo ciclo.");
+Assert(!TeamsReminderPolicy.IsDue(new TeamsReminderHistory { AttemptedAtUtc = reminderNow.AddDays(-1) }, 15, reminderNow), "Aviso recente nao deve ser repetido antes do intervalo.");
+Assert(TeamsReminderPolicy.IsDue(new TeamsReminderHistory { AttemptedAtUtc = reminderNow.AddDays(-15) }, 15, reminderNow), "Aviso no limite do intervalo deve ficar elegivel.");
+
+Console.WriteLine("SelfTests v0.0.19: OK");

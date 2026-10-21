@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.0.19 - 2026-10-21
+
+- Criado histórico persistente de lembretes Teams por treinamento/colaborador.
+- A tela `Pendências do treinamento` passa a mostrar estado do Teams e data/hora do último registro, convertida no navegador para o horário local.
+- Estados separados: `Não avisado`, `Aceito pelo Workflow`, `Confirmado`, `Falhou`, `Em processamento` e `Resultado incerto`.
+- Eventos antigos `training-teams-reminder` dos `Audit-*.jsonl` são importados de forma idempotente para o SQLite sem reenviar mensagens. Sucesso antigo vira `Aceito pelo Workflow`, nunca `Confirmado`.
+- Envios novos passam a registrar tentativa antes do POST e resultado depois, reduzindo risco de duplicidade quando houver interrupção.
+- O contrato do Workflow aceita resposta estruturada com `delivered`, `workflowRunId` e `messageId`; HTTP 2xx sem confirmação explícita permanece apenas como `Aceito pelo Workflow`.
+- Adicionada agenda de lembretes por treinamento, desativada por padrão, com intervalo configurável de 1 a 365 dias.
+- Worker interno verifica a agenda a cada 15 minutos e envia somente para usuários elegíveis, pendentes, não excluídos e sem aviso válido dentro do intervalo.
+- Envios manuais recentes também contam para impedir lembrete automático precoce.
+- Ciclos automáticos usam chave única por treinamento, execução e colaborador para evitar reenvio do mesmo ciclo após reinício.
+- Nenhuma mensagem Teams foi enviada durante a preparação desta versão e nenhuma alteração real foi aplicada em IIS/Microsoft 365.
+
 ## v0.0.18 - 2026-10-15
 
 - Revisão ortográfica geral do portal para português brasileiro.
