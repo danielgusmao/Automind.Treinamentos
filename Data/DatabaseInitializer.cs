@@ -135,9 +135,11 @@ CREATE INDEX IF NOT EXISTS IX_DirectoryExclusions_Email ON DirectoryExclusions(E
         // v0.0.15: hardening de integridade e registro explicito da migration aplicada.
         await ApplyV015SchemaHardeningAsync(connection);
 
-        // v0.0.19: historico visual, agenda e recuperacao segura dos lembretes Teams.
+        // v0.0.19: historico visual e agenda de lembretes Teams.
         await ApplyV019TeamsReminderSchemaAsync(connection);
-        await ImportLegacyTeamsReminderAuditAsync(connection);
+
+        // v0.0.20: inicia o historico operacional do Teams do zero e nao importa auditorias antigas.
+        await ApplyV020TeamsReminderResetAsync(connection);
 
         // v0.0.8: converte as exclusoes antigas por treinamento em uma lista permanente
         // aplicavel a todos os treinamentos. A tabela legada e preservada apenas para historico/rollback.
@@ -452,10 +454,12 @@ ON TrainingReminderSchedules(Enabled, NextRunAtUtc);
         {
             recoverInterrupted.CommandText = @"
 UPDATE TeamsReminderHistory
-SET Status=$unknown,
-    Error=CASE WHEN trim(coalesce(Error,''))='' THEN 'Tentativa interrompida sem confirmacao final.' ELSE Error END
+SET Status=$failed,
+    FinishedAtUtc=coalesce(FinishedAtUtc, $finishedAtUtc),
+    Error=CASE WHEN trim(coalesce(Error,''))='' THEN 'Tentativa interrompida antes da confirmacao do envio.' ELSE Error END
 WHERE Status=$processing AND FinishedAtUtc IS NULL AND AttemptedAtUtc <= $cutoff;";
-            recoverInterrupted.Parameters.AddWithValue("$unknown", TeamsReminderStatus.Unknown);
+            recoverInterrupted.Parameters.AddWithValue("$failed", TeamsReminderStatus.Failed);
+            recoverInterrupted.Parameters.AddWithValue("$finishedAtUtc", DateTime.UtcNow.ToString("O"));
             recoverInterrupted.Parameters.AddWithValue("$processing", TeamsReminderStatus.Processing);
             recoverInterrupted.Parameters.AddWithValue("$cutoff", DateTime.UtcNow.AddMinutes(-5).ToString("O"));
             await recoverInterrupted.ExecuteNonQueryAsync();
@@ -467,89 +471,31 @@ WHERE Status=$processing AND FinishedAtUtc IS NULL AND AttemptedAtUtc <= $cutoff
         await mark.ExecuteNonQueryAsync();
     }
 
-    private async Task ImportLegacyTeamsReminderAuditAsync(SqliteConnection connection)
+    private static async Task ApplyV020TeamsReminderResetAsync(SqliteConnection connection)
     {
-        if (!Directory.Exists(_storage.LogsPath)) return;
-
-        foreach (var file in Directory.EnumerateFiles(_storage.LogsPath, "Audit-*.jsonl", SearchOption.TopDirectoryOnly).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+        using (var check = connection.CreateCommand())
         {
-            string[] lines;
-            try { lines = File.ReadAllLines(file); }
-            catch (IOException) { continue; }
-            catch (UnauthorizedAccessException) { continue; }
-
-            var lineNumber = 0;
-            foreach (var line in lines)
-            {
-                lineNumber++;
-                if (string.IsNullOrWhiteSpace(line)) continue;
-
-                try
-                {
-                    using var doc = JsonDocument.Parse(line);
-                    var root = doc.RootElement;
-                    if (!root.TryGetProperty("action", out var action) ||
-                        !string.Equals(action.GetString(), "training-teams-reminder", StringComparison.OrdinalIgnoreCase) ||
-                        !root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Object ||
-                        !data.TryGetProperty("trainingId", out var trainingIdNode) || !trainingIdNode.TryGetInt64(out var trainingId) ||
-                        !data.TryGetProperty("sam", out var samNode))
-                        continue;
-
-                    var sam = samNode.GetString()?.Trim() ?? string.Empty;
-                    if (string.IsNullOrWhiteSpace(sam)) continue;
-
-                    var timestamp = DateTime.UtcNow;
-                    if (root.TryGetProperty("timestampUtc", out var timestampNode) &&
-                        timestampNode.ValueKind == JsonValueKind.String &&
-                        DateTime.TryParse(timestampNode.GetString(), null, DateTimeStyles.RoundtripKind, out var parsedTimestamp))
-                        timestamp = parsedTimestamp.ToUniversalTime();
-
-                    var auditStatus = root.TryGetProperty("status", out var statusNode) ? statusNode.GetString() : null;
-                    var reminderStatus = string.Equals(auditStatus, "success", StringComparison.OrdinalIgnoreCase)
-                        ? TeamsReminderStatus.WorkflowAccepted
-                        : TeamsReminderStatus.Failed;
-                    var actor = root.TryGetProperty("actor", out var actorNode) ? actorNode.GetString() ?? "" : "";
-                    var recipient = data.TryGetProperty("recipient", out var recipientNode) ? recipientNode.GetString() ?? "" : "";
-                    var error = data.TryGetProperty("error", out var errorNode) ? errorNode.GetString() ?? "" : "";
-                    if (string.IsNullOrWhiteSpace(error) && data.TryGetProperty("reason", out var reasonNode))
-                        error = reasonNode.GetString() ?? "";
-
-                    var importKey = $"audit:{Path.GetFileName(file)}:{lineNumber}";
-                    using var insert = connection.CreateCommand();
-                    insert.CommandText = @"
-INSERT OR IGNORE INTO TeamsReminderHistory(
-    TrainingId, SamAccountName, DisplayName, Recipient, AttemptedAtUtc, FinishedAtUtc,
-    Source, Status, HttpStatusCode, WorkflowRunId, MessageId, Error, Actor, CycleKey, ImportKey)
-SELECT
-    $trainingId, lower($sam), '', $recipient, $attempted, $finished,
-    $source, $status, NULL, '', '', $error, $actor, NULL, $importKey
-WHERE EXISTS(SELECT 1 FROM Trainings WHERE Id=$trainingId);";
-                    insert.Parameters.AddWithValue("$trainingId", trainingId);
-                    insert.Parameters.AddWithValue("$sam", sam);
-                    insert.Parameters.AddWithValue("$recipient", recipient);
-                    insert.Parameters.AddWithValue("$attempted", timestamp.ToString("O"));
-                    insert.Parameters.AddWithValue("$finished", timestamp.ToString("O"));
-                    insert.Parameters.AddWithValue("$source", TeamsReminderSource.LegacyAudit);
-                    insert.Parameters.AddWithValue("$status", reminderStatus);
-                    insert.Parameters.AddWithValue("$error", error);
-                    insert.Parameters.AddWithValue("$actor", actor);
-                    insert.Parameters.AddWithValue("$importKey", importKey);
-                    await insert.ExecuteNonQueryAsync();
-                }
-                catch (JsonException)
-                {
-                    // Linha historica invalida nao pode impedir a inicializacao do portal.
-                }
-                catch (InvalidOperationException)
-                {
-                    // Estrutura inesperada em um registro antigo e ignorada.
-                }
-                catch (FormatException)
-                {
-                    // Valor antigo fora do formato esperado e ignorado.
-                }
-            }
+            check.CommandText = "SELECT COUNT(1) FROM SchemaMigrations WHERE Version='0.0.20';";
+            if (Convert.ToInt32(await check.ExecuteScalarAsync()) > 0) return;
         }
+
+        using var tx = connection.BeginTransaction();
+        using (var reset = connection.CreateCommand())
+        {
+            reset.Transaction = tx;
+            reset.CommandText = "DELETE FROM TeamsReminderHistory;";
+            await reset.ExecuteNonQueryAsync();
+        }
+
+        using (var mark = connection.CreateCommand())
+        {
+            mark.Transaction = tx;
+            mark.CommandText = "INSERT INTO SchemaMigrations(Version, AppliedAtUtc) VALUES('0.0.20', $now);";
+            mark.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
+            await mark.ExecuteNonQueryAsync();
+        }
+
+        tx.Commit();
     }
 
     private static async Task EnsureColumnAsync(SqliteConnection connection, string table, string column, string definition)

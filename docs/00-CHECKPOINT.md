@@ -2,9 +2,9 @@
 
 ## Estado atual / versao
 
-- Versao preparada: **v0.0.19**.
+- Versao preparada: **v0.0.20**.
 - Base: v0.0.18 + patch final do gradiente de login.
-- Mudanca atual: historico visual, confirmacao de resultado e agenda de lembretes Teams.
+- Mudanca atual: status Teams simples, historico iniciado do zero e responsividade da tela Pendencias.
 - Branch de publicacao documentada: `release`; pipeline/Release automatica apos push.
 
 ## Regra de negocio atual
@@ -12,8 +12,9 @@
 - Populacao: usuarios AD habilitados/elegiveis, menos `DirectoryExclusions`.
 - Conclusao no SQLite e a fonte de verdade; PDF e evidencia derivada.
 - Usuario concluido ou globalmente excluido nao recebe lembrete Teams.
-- Historico de Teams e persistente e nunca e usado para afirmar leitura da mensagem.
-- HTTP 2xx do Workflow sem confirmacao explicita = `Aceito pelo Workflow`; somente `delivered=true` ou `messageId` = `Confirmado`.
+- Historico de Teams e persistente no SQLite e nunca e usado para afirmar leitura da mensagem.
+- Estados de negocio exibidos: `Enviado`, `Falhou` e `Nao enviado`.
+- Somente `delivered=true` ou `messageId` = `Enviado`; HTTP 2xx sem confirmacao = `Falhou`.
 - Agenda e opt-in por treinamento, desativada por padrao.
 - Ultimo aviso manual ou automatico valido participa do intervalo para evitar reenvio precoce.
 
@@ -52,9 +53,9 @@ flowchart LR
 - `Code`/`Slug` e versionamento de treinamentos permanecem protegidos pelas regras existentes.
 - Estrutura de evidencias continua por colaborador/login.
 - Segredo do Workflow Teams permanece fora de Git/documentacao.
-- Nao transformar `Confirmado` em recibo de leitura.
+- Nao transformar `Enviado` em recibo de leitura.
 - Nao habilitar agenda automaticamente em migration/seed.
-- Nao reenviar o lote historico apenas para validar a nova tela.
+- Nao importar nem reconstruir o lote historico anterior; v0.0.20 inicia o controle do zero.
 
 ## Integracoes e responsabilidades
 
@@ -62,28 +63,43 @@ flowchart LR
 - SQLite: treinamentos, conclusoes, exclusoes, `TeamsReminderHistory` e `TrainingReminderSchedules`.
 - Workflow Teams: recebe `{ recipient, text }`; confirmacao estruturada depende de ajuste no Workflow real.
 - `TeamsReminderWorker`: verifica agendas vencidas a cada 15 minutos enquanto a aplicacao estiver ativa.
-- `Audit-*.jsonl`: auditoria e fonte de recuperacao historica idempotente dos envios antigos.
+- `Audit-*.jsonl`: auditoria tecnica; nao e fonte do status operacional exibido na tela.
 
 ## Testes relevantes ja validados
 
 - `VALIDADO HISTORICAMENTE`: login/AD, conclusoes, evidencias, exclusoes, publicacao e hardening conforme versoes anteriores.
-- `VALIDADO LOCALMENTE`: estrutura SQL v0.0.19, controles estaticos e ausencia de envio externo durante a preparacao.
-- `PENDENTE DE VALIDACAO`: build .NET 10, migration no ambiente, Workflow real, envio controlado e permanencia do App Pool.
+- `VALIDADO HISTORICAMENTE`: build v0.0.19 no Windows, SelfTests apos correcao de fuso, validacoes estaticas e ausencia de pacotes vulneraveis.
+- `VALIDADO LOCALMENTE`: delta v0.0.20 por verificacoes estaticas no pacote.
+- `PENDENTE DE VALIDACAO`: build v0.0.20 no Windows, migration no ambiente, Workflow real, envio controlado e permanencia do App Pool.
 
 ## Riscos e pendencias atuais
 
-- O lote antigo so prova HTTP 2xx/erro registrado; nao existe confirmacao retroativa de entrega no Teams.
-- Para obter `Confirmado`, o Workflow real precisa responder depois da etapa de postagem.
+- A migration v0.0.20 apaga o historico Teams criado pela v0.0.19 para iniciar o controle do zero; backup do SQLite e obrigatorio antes da publicacao no ambiente.
+- Para obter `Enviado`, o Workflow real precisa responder depois da etapa de postagem.
 - A agenda depende de o processo ASP.NET permanecer ativo; validar configuracao do App Pool antes de confiar em horario recorrente.
-- Build nao executado no ambiente de empacotamento por ausencia do SDK .NET.
+- Build v0.0.20 nao executado no ambiente de empacotamento por ausencia do SDK .NET.
 
 ## Proximo ponto de continuidade
 
-1. Build/Static tests no Windows com .NET 10.
-2. Backup + publicacao controlada.
-3. Conferir importacao historica na tela sem reenviar mensagens.
-4. Ajustar Workflow real e validar com um unico usuario autorizado.
+1. Build/Static tests v0.0.20 no Windows com .NET 10.
+2. Backup do SQLite antes da publicacao, pois a migration limpa somente `TeamsReminderHistory`.
+3. Publicar e validar responsividade/status com historico zerado.
+4. Ajustar Workflow real e validar `Enviado`/`Falhou` com um unico usuario autorizado.
 5. Somente depois ativar agenda real.
+
+## 2026-10-21 - v0.0.20 - Status Teams simples e responsividade
+
+- Decisao aprovada: ignorar envios anteriores e iniciar o historico operacional do Teams do zero.
+- Migration `0.0.20` limpa `TeamsReminderHistory` uma unica vez; `TrainingReminderSchedules` e preservada.
+- Importacao de `Audit-*.jsonl` antigos removida.
+- Tela Pendencias mostra somente `Enviado`, `Falhou` e `Nao enviado`; `Enviado` exibe a data/hora da confirmacao.
+- HTTP 2xx sem `delivered=true`/`messageId` nao conta como envio e registra falha de confirmacao.
+- Responsividade corrigida: sem `min-width:1540px`, coluna de acoes fixa a direita em desktop e layout em cartoes no mobile.
+- Agenda, filtros AD/exclusoes/conclusoes e `CycleKey` foram preservados.
+- SelfTest de nome de evidencia incorpora a correcao de fuso validada pelo usuario na v0.0.19.
+- `VALIDADO LOCALMENTE`: verificacoes estaticas do pacote e consistencia dos arquivos alterados.
+- `PENDENTE DE VALIDACAO`: build .NET 10, migration no banco real, Workflow real e teste controlado de envio.
+- Rollback de codigo: retornar a v0.0.19. Rollback de dados: restaurar backup SQLite pre-v0.0.20 se for necessario recuperar o historico apagado.
 
 ## 2026-10-21 - v0.0.19 - Historico e agenda Teams
 

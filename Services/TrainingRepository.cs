@@ -594,11 +594,10 @@ ORDER BY AttemptedAtUtc DESC, Id DESC;";
         using var cmd = c.CreateCommand();
         cmd.CommandText = @"
 SELECT * FROM TeamsReminderHistory
-WHERE TrainingId=$trainingId AND Status IN ($accepted, $confirmed)
+WHERE TrainingId=$trainingId AND Status=$sent
 ORDER BY AttemptedAtUtc DESC, Id DESC;";
         cmd.Parameters.AddWithValue("$trainingId", trainingId);
-        cmd.Parameters.AddWithValue("$accepted", TeamsReminderStatus.WorkflowAccepted);
-        cmd.Parameters.AddWithValue("$confirmed", TeamsReminderStatus.DeliveryConfirmed);
+        cmd.Parameters.AddWithValue("$sent", TeamsReminderStatus.Sent);
         using var r = await cmd.ExecuteReaderAsync();
         var result = new Dictionary<string, TeamsReminderHistory>(StringComparer.OrdinalIgnoreCase);
         while (await r.ReadAsync())

@@ -236,7 +236,7 @@ input[readonly]{background:#f3f4f6;color:#59545f}
 .catalog-action-row{display:flex;justify-content:flex-end;align-items:center;margin:-10px 0 20px}.catalog-action-row .btn{min-width:220px}.btn-plus{font-size:1.45rem;line-height:1;margin-right:9px;font-weight:400}.catalog-card{padding:18px}.training-list-head h2{margin:5px 0 4px;font-size:1.55rem}.training-list-head{margin-top:0}.admin-table-shell,.template-steps,.training-options{background:linear-gradient(90deg,rgba(250,9,78,.10),rgba(77,16,86,.10));padding:1px;border:0}
 .meta-chip-dark{border-color:rgba(255,255,255,.18)!important;background:rgba(255,255,255,.055)!important;color:#fff!important}
 
-/* v0.0.19 - historico e agenda de lembretes Teams */
+/* v0.0.20 - status Teams simples e tabela responsiva */
 .reminder-schedule-card{padding:22px 26px}
 .reminder-schedule-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:18px}
 .reminder-schedule-head h2{margin:4px 0 7px}
@@ -249,20 +249,49 @@ input[readonly]{background:#f3f4f6;color:#59545f}
 .reminder-toggle input{width:18px;height:18px;margin:0}
 .reminder-interval{display:flex;flex-direction:column;gap:6px;font-weight:800;font-size:.82rem}
 .reminder-interval input{min-height:44px;width:100%}
-.reminder-contract-note{margin-top:14px;padding:12px 14px;border-left:3px solid var(--am-purple);background:#f6f2f7;color:#514a55;font-size:.78rem;line-height:1.5}
-.pending-reminder-table{min-width:1540px}
-.status.teams-confirmed{background:var(--am-green-bg);border-color:#c9e6d8;color:var(--am-green)}
-.status.teams-accepted{background:#eef4fb;border-color:#cad9eb;color:#345c86}
+.pending-card{max-width:100%}
+.pending-table-shell{position:relative;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-gutter:stable}
+.pending-reminder-table{width:100%;min-width:1180px}
+.pending-reminder-table th,.pending-reminder-table td{padding:14px 10px}
+.pending-reminder-table .select-col{width:64px;text-align:center}
+.pending-reminder-table .action-col{position:sticky;right:0;z-index:2;min-width:180px;background:#fff;box-shadow:-14px 0 18px -18px rgba(18,16,25,.55)}
+.pending-reminder-table th.action-col{z-index:4;background:#f0f1f4}
+.pending-reminder-table tbody tr:hover .action-col{background:#faf9fb}
+.pending-reminder-table .row-actions{display:grid;gap:6px;min-width:160px}
+.pending-reminder-table .row-actions .inline-form{display:block}
+.pending-reminder-table .row-actions .btn{width:100%;white-space:normal;line-height:1.2}
+.status.teams-sent{background:var(--am-green-bg);border-color:#c9e6d8;color:var(--am-green)}
 .status.teams-failed{background:#fff0f1;border-color:#edc9ce;color:#a52738}
-.status.teams-unknown{background:var(--am-amber-bg);border-color:#ead9a1;color:var(--am-amber)}
-.status.teams-processing{background:#eef4fb;border-color:#cad9eb;color:#345c86}
 .status.teams-none{background:#efeff2;border-color:#dddde2;color:#66616b}
 .reminder-time{display:block;white-space:nowrap;font-weight:800;font-size:.78rem;color:var(--am-text)}
-.reminder-secondary{margin-top:4px;font-size:.69rem;color:var(--am-muted);line-height:1.25}
 
+@media(max-width:1700px){
+  .pending-reminder-table{min-width:980px}
+  .pending-reminder-table .col-job,.pending-reminder-table .col-department{display:none}
+}
+@media(max-width:1250px){
+  .pending-reminder-table{min-width:840px}
+  .pending-reminder-table .col-login{display:none}
+  .pending-toolbar-actions{width:100%}
+}
 @media(max-width:760px){
   .reminder-schedule-head{flex-direction:column}
   .reminder-schedule-summary{align-items:flex-start;min-width:0}
   .reminder-schedule-form{grid-template-columns:1fr}
   .reminder-next-run{white-space:normal}
+  .pending-table-shell{overflow:visible;background:transparent;padding:0}
+  .pending-reminder-table{display:block;min-width:0;background:transparent}
+  .pending-reminder-table thead{display:none}
+  .pending-reminder-table tbody{display:grid;gap:14px}
+  .pending-reminder-table tr{display:block;background:#fff;border:1px solid var(--am-line);box-shadow:var(--am-shadow)}
+  .pending-reminder-table td{display:grid;grid-template-columns:108px minmax(0,1fr);gap:12px;align-items:center;padding:11px 13px;border-bottom:1px solid var(--am-line);overflow-wrap:anywhere}
+  .pending-reminder-table td::before{content:attr(data-label);font-size:.64rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--am-muted)}
+  .pending-reminder-table td:last-child{border-bottom:0}
+  .pending-reminder-table .select-col{display:grid;width:auto;text-align:left}
+  .pending-reminder-table .col-job,.pending-reminder-table .col-department,.pending-reminder-table .col-login{display:grid}
+  .pending-reminder-table .action-col{position:static;min-width:0;background:#fff;box-shadow:none}
+  .pending-reminder-table tbody tr:hover .action-col{background:#fff}
+  .pending-reminder-table .row-actions{min-width:0;width:100%}
+  .pending-toolbar-actions{display:grid;width:100%;grid-template-columns:1fr}
+  .pending-toolbar-actions>*,.pending-toolbar-actions .btn{width:100%}
 }

@@ -649,8 +649,7 @@ public sealed class AdminController : Controller
                 ?? $"{Request.Scheme}://{Request.Host}/Training/Start/{training.Id}")
             : $"{baseUrl}/Training/Start/{training.Id}";
 
-        var confirmed = 0;
-        var accepted = 0;
+        var sent = 0;
         var failed = 0;
         foreach (var sam in selected)
         {
@@ -673,12 +672,14 @@ public sealed class AdminController : Controller
                 HttpContext.RequestAborted);
 
             var result = dispatch.SendResult;
-            if (result is null || !result.Success) failed++;
-            else if (string.Equals(result.Status, TeamsReminderStatus.DeliveryConfirmed, StringComparison.OrdinalIgnoreCase)) confirmed++;
-            else accepted++;
+            if (result is not null && result.Success &&
+                string.Equals(result.Status, TeamsReminderStatus.Sent, StringComparison.OrdinalIgnoreCase))
+                sent++;
+            else
+                failed++;
         }
 
-        TempData["TeamsResult"] = $"Teams - confirmados: {confirmed}; aceitos pelo Workflow: {accepted}; falhas: {failed}.";
+        TempData["TeamsResult"] = $"Teams - enviados: {sent}; falhas: {failed}.";
         return RedirectToAction(nameof(Pending), new { id = trainingId });
     }
 

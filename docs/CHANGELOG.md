@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.0.20 - 2026-10-21
+
+- Tela `Pendências do treinamento` corrigida para responsividade; removida largura fixa de 1540 px que cortava a coluna de ações.
+- Coluna `Ação` permanece acessível em desktop e a tabela vira cartões em telas pequenas.
+- Status visual do Teams simplificado para `Enviado`, `Falhou` e `Não enviado`.
+- `Enviado` só é persistido quando o Workflow confirma a etapa de envio com `delivered=true` ou `messageId`.
+- HTTP 2xx sem confirmação deixa de contar como envio e passa a ser tratado como falha de confirmação.
+- Data/hora da tela corresponde ao último envio confirmado.
+- Histórico operacional do Teams passa a iniciar do zero: migration `0.0.20` limpa `TeamsReminderHistory` uma única vez.
+- Importação dos `Audit-*.jsonl` antigos removida.
+- Agenda de 15 dias/configurável, filtros de elegibilidade e `CycleKey` permanecem preservados.
+- SelfTest de nome de evidência mantém a correção de fuso horário validada no Windows.
+
 ## v0.0.19 - 2026-10-21
 
 - Criado histórico persistente de lembretes Teams por treinamento/colaborador.

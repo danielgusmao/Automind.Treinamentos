@@ -38,10 +38,10 @@ ASP.NET Core MVC / IIS
 - `AdAdminAuthorizationService`: membership atual do grupo `_treinamentos`, fail-closed.
 - `AdDirectoryService`: usuarios AD habilitados/elegiveis.
 - `TrainingRepository`: persistencia SQLite, inclusive historico/agenda Teams.
-- `TeamsWebhookService`: POST ao Workflow e classificacao do retorno em aceite, confirmacao ou falha.
+- `TeamsWebhookService`: POST ao Workflow e classificacao do retorno em envio confirmado ou falha.
 - `TeamsReminderService`: reserva a tentativa no banco antes do envio, finaliza o resultado e audita.
 - `TeamsReminderWorker`: executa ciclos automaticos vencidos sem depender de acesso a pagina.
-- `AuditService`: auditoria JSONL diaria; registros antigos de Teams sao usados para reconstruir o historico sem reenvio.
+- `AuditService`: auditoria JSONL diaria; o historico operacional do Teams e lido exclusivamente do SQLite.
 - `TrainingSnapshotService`, `EvidenceService`, `SimplePdfService` e `StorageService`: comportamento anterior preservado.
 
 ## Fluxo de lembrete Teams
@@ -51,10 +51,11 @@ Administrador seleciona usuario OU agenda vence
   -> confirmar elegibilidade / pendencia / exclusao
   -> reservar tentativa em TeamsReminderHistory
   -> POST no Workflow
-  -> receber resultado
-  -> gravar status final
+  -> Workflow executa o envio ao Teams
+  -> receber confirmacao ou falha
+  -> gravar Enviado/Falhou no SQLite
   -> registrar Audit-*.jsonl
-  -> exibir ultimo estado na tela Pendencias
+  -> exibir status e horario do ultimo envio confirmado
 ```
 
 ```mermaid
@@ -62,22 +63,21 @@ flowchart LR
     A[Manual ou agenda] --> B[Validar elegibilidade e pendencia]
     B --> C[Reservar tentativa no SQLite]
     C --> D[POST Workflow Teams]
-    D --> E{Resposta}
-    E -->|2xx sem confirmacao| F[Aceito pelo Workflow]
-    E -->|delivered=true ou messageId| G[Confirmado]
-    E -->|erro| H[Falhou]
-    F --> I[Auditoria e tela]
-    G --> I
+    D --> E[Acao de envio no Teams]
+    E --> F{Resultado}
+    F -->|delivered=true ou messageId| G[Enviado]
+    F -->|erro ou sem confirmacao| H[Falhou]
+    G --> I[SQLite + auditoria + tela]
     H --> I
 ```
+
+## Confirmacao de envio
+
+`Enviado` significa que o Workflow retornou confirmacao depois da etapa de postagem no Teams. O portal nao controla se o colaborador abriu ou leu a mensagem.
 
 ## Regra de agenda
 
 A agenda e desativada por padrao e configurada por treinamento publicado. O primeiro ciclo ocorre somente depois do intervalo escolhido. Em cada ciclo, o worker ignora concluidos, excluidos e usuarios que receberam aviso valido dentro do intervalo. Uma chave unica por ciclo/usuario impede repeticao do mesmo ciclo apos reinicio.
-
-## Confirmacao x leitura
-
-`Confirmado` significa confirmacao retornada pelo Workflow para a etapa de postagem no Teams. Nao significa que o colaborador abriu ou leu a mensagem.
 
 ## Persistencia e ambiente
 

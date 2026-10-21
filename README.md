@@ -1,17 +1,17 @@
 # Automind.Treinamentos
 
-Versão: **v0.0.19**
+Versão: **v0.0.20**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidências PDF, acompanhamento de pendências no Active Directory e comunicacao via Teams.
 
-## Destaques da v0.0.19
-- histórico visual de lembretes Teams na tela de pendências;
-- recuperação dos envios antigos a partir dos `Audit-*.jsonl`, sem reenviar mensagens;
-- diferencia `Aceito pelo Workflow` de `Confirmado`;
-- agenda por treinamento com intervalo configurável, desativada por padrão;
-- lembrete automático somente para quem segue elegível/pendente e já ultrapassou o intervalo desde o último aviso válido;
-- proteção contra duplicidade dentro do mesmo ciclo automático;
-- nenhuma alteração real em Teams/IIS foi executada durante a preparação do pacote.
+## Destaques da v0.0.20
+- tela de pendências responsiva, com a coluna de ações acessível e layout em cartões no mobile;
+- status do Teams simplificado para `Enviado`, `Falhou` e `Não enviado`;
+- `Enviado` só é gravado quando o Workflow confirma a etapa de envio ao Teams;
+- data/hora exibida é a confirmação do último envio bem-sucedido;
+- histórico anterior do Teams é descartado uma única vez na migration `0.0.20`, iniciando o controle do zero;
+- `Audit-*.jsonl` antigos deixam de ser importados para o histórico operacional;
+- agenda por treinamento e proteção contra duplicidade permanecem preservadas.
 
 ## Base visual preservada da v0.0.16
 - composição aprovada da opção 2;
@@ -95,7 +95,7 @@ A integração continua enviando ao Workflow:
 { "recipient": "usuario@automind.com.br", "text": "mensagem" }
 ```
 
-Na v0.0.19, o Workflow pode responder depois da etapa de postagem no Teams:
+Na v0.0.20, o Workflow deve responder **depois** da ação de envio no Teams:
 
 ```json
 {
@@ -106,7 +106,7 @@ Na v0.0.19, o Workflow pode responder depois da etapa de postagem no Teams:
 }
 ```
 
-`delivered=true` ou `messageId` registra `Confirmado`. HTTP 2xx sem esses dados registra `Aceito pelo Workflow`. Isso comprova a etapa de envio, não leitura pelo destinatário.
+Somente `delivered=true` ou `messageId` registra `Enviado`. Falha HTTP, falha explícita do Workflow ou resposta 2xx sem confirmação registra `Falhou`. Ausência de histórico aparece como `Não enviado`. O sistema não controla leitura da mensagem.
 
 A URL real do Workflow não esta no projeto. O IIS fornece:
 
@@ -171,7 +171,9 @@ Comece por `docs/00-CHECKPOINT.md`.
 - validação v0.0.17: `docs/42-TESTE-V0.0.17.md`;
 - revisão ortográfica e ajuste final de gradiente v0.0.18: `docs/43-REVISAO-ORTOGRAFIA-V0.0.18.md`;
 - histórico/agenda Teams v0.0.19: `docs/44-HISTORICO-E-AGENDA-TEAMS-V0.0.19.md`;
-- validação v0.0.19: `docs/45-TESTE-V0.0.19.md`.
+- validação v0.0.19: `docs/45-TESTE-V0.0.19.md`;
+- status Teams simples e responsividade v0.0.20: `docs/46-STATUS-TEAMS-E-RESPONSIVIDADE-V0.0.20.md`;
+- validação v0.0.20: `docs/47-TESTE-V0.0.20.md`.
 
 
 ## Autorização administrativa

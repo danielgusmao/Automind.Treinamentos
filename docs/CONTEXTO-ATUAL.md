@@ -1,18 +1,16 @@
 # CONTEXTO ATUAL - Automind.Treinamentos
 
-Versão de aplicacao preparada: **v0.0.19**.
+Versão de aplicacao preparada: **v0.0.20**.
 
-## v0.0.19 - histórico e agenda de lembretes Teams
+## v0.0.20 - status Teams simples e responsividade
 
-A tela de pendências agora diferencia tentativa, aceite do Workflow e confirmação da etapa de envio ao Teams. O sistema persiste cada tentativa em `TeamsReminderHistory` e mantém a agenda por treinamento em `TrainingReminderSchedules`.
+A tela `Pendências do treinamento` mostra somente `Enviado`, `Falhou` ou `Não enviado`. `Enviado` exige confirmação explícita do Workflow após a ação do Teams e exibe a data/hora do último envio confirmado.
 
-Os `Audit-*.jsonl` anteriores são lidos na inicialização e importados sem disparar mensagens. Registros históricos com `status=success` provam apenas que o Workflow respondeu com sucesso ao portal e, portanto, aparecem como `Aceito pelo Workflow`.
+A migration `0.0.20` limpa uma única vez `TeamsReminderHistory`, conforme decisão de iniciar o controle do zero. Auditorias `Audit-*.jsonl` antigas não são mais importadas. O SQLite permanece como fonte oficial do status exibido.
 
-A agenda fica desativada por padrão. Ao ser ativada pelo administrador, o primeiro ciclo é agendado para `agora + intervalo`. O worker verifica ciclos vencidos a cada 15 minutos e respeita conclusões, elegibilidade AD, exclusões permanentes e avisos manuais/automáticos recentes.
+A tabela de pendências foi revisada para não cortar a coluna `Ação`: largura fixa de 1540 px removida, ações fixas à direita em desktop e linhas em formato de cartão em telas pequenas.
 
-Para o estado `Confirmado`, o Workflow precisa responder após a etapa de postagem no Teams com `delivered=true` ou um `messageId`. O portal não interpreta isso como leitura da mensagem.
-
-Pendente de ambiente: configurar o Workflow para devolver o resultado estruturado e validar que o App Pool permanece ativo para execução confiável da agenda. Essas mudanças reais não foram aplicadas neste pacote.
+Agenda e proteção contra duplicidade permanecem preservadas. A agenda continua desativada por padrão e depende do Workflow real devolver a confirmação de envio e do processo ASP.NET permanecer ativo no IIS.
 
 ## v0.0.18 - estado atual
 

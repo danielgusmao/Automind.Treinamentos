@@ -43,8 +43,8 @@ public sealed class TeamsReminderService(
         {
             result = new TeamsSendResult(
                 false,
-                TeamsReminderStatus.Unknown,
-                "A tentativa foi interrompida antes da confirmacao do resultado.");
+                TeamsReminderStatus.Failed,
+                "A tentativa foi interrompida antes da confirmacao do envio.");
             await repository.CompleteTeamsReminderAttemptAsync(historyId.Value, result, DateTime.UtcNow);
             await WriteAuditAsync(training, user, trainingUrl, source, actor, result);
             throw;

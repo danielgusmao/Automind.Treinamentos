@@ -3,21 +3,17 @@ namespace Automind.Treinamentos.Models;
 public static class TeamsReminderStatus
 {
     public const string Processing = "processing";
-    public const string WorkflowAccepted = "workflow-accepted";
-    public const string DeliveryConfirmed = "delivery-confirmed";
+    public const string Sent = "sent";
     public const string Failed = "failed";
-    public const string Unknown = "unknown";
 
     public static bool CountsAsNotified(string? status) =>
-        string.Equals(status, WorkflowAccepted, StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(status, DeliveryConfirmed, StringComparison.OrdinalIgnoreCase);
+        string.Equals(status, Sent, StringComparison.OrdinalIgnoreCase);
 }
 
 public static class TeamsReminderSource
 {
     public const string Manual = "manual";
     public const string Automatic = "automatic";
-    public const string LegacyAudit = "legacy-audit";
 }
 
 public sealed class TeamsReminderHistory

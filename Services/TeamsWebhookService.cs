@@ -68,8 +68,19 @@ public sealed class TeamsWebhookService(
             }
 
             var confirmed = workflow.Delivered || !string.IsNullOrWhiteSpace(workflow.MessageId);
-            var deliveryStatus = confirmed ? TeamsReminderStatus.DeliveryConfirmed : TeamsReminderStatus.WorkflowAccepted;
-            return new TeamsSendResult(true, deliveryStatus, null, statusCode, workflow.WorkflowRunId, workflow.MessageId);
+            if (!confirmed)
+            {
+                logger.LogWarning("Workflow Teams respondeu HTTP {StatusCode}, mas nao confirmou o envio ao destinatario.", statusCode);
+                return new TeamsSendResult(
+                    false,
+                    TeamsReminderStatus.Failed,
+                    "O Workflow respondeu, mas nao confirmou o envio ao Teams.",
+                    statusCode,
+                    workflow.WorkflowRunId,
+                    workflow.MessageId);
+            }
+
+            return new TeamsSendResult(true, TeamsReminderStatus.Sent, null, statusCode, workflow.WorkflowRunId, workflow.MessageId);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
