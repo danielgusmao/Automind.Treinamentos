@@ -643,43 +643,32 @@ public sealed class AdminController : Controller
         var excludedEmails = exclusions.Where(x => !string.IsNullOrWhiteSpace(x.Email)).Select(x => x.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var users = await _ad.GetEligibleUsersAsync();
         var usersBySam = users.ToDictionary(x => x.SamAccountName, StringComparer.OrdinalIgnoreCase);
-        var baseUrl = (_portal.PublicBaseUrl ?? string.Empty).Trim().TrimEnd('/');
-        var link = string.IsNullOrWhiteSpace(baseUrl)
-            ? (Url.Action("Start", "Training", new { id = training.Id }, Request.Scheme, Request.Host.Value)
-                ?? $"{Request.Scheme}://{Request.Host}/Training/Start/{training.Id}")
-            : $"{baseUrl}/Training/Start/{training.Id}";
 
-        var sent = 0;
-        var failed = 0;
+        var queued = 0;
+        var ignored = 0;
         foreach (var sam in selected)
         {
-            if (completed.Contains(sam)) continue;
+            if (completed.Contains(sam)) { ignored++; continue; }
             if (!usersBySam.TryGetValue(sam, out var user) || string.IsNullOrWhiteSpace(user.Email))
             {
-                failed++;
-                await _audit.WriteAsync("training-teams-reminder", "failed", Sam(), new { trainingId, sam, source = TeamsReminderSource.Manual, reason = "eligible-user-or-email-not-found" });
+                ignored++;
+                await _audit.WriteAsync("training-teams-reminder", "ignored", Sam(), new { trainingId, sam, source = TeamsReminderSource.Manual, reason = "eligible-user-or-email-not-found" });
                 continue;
             }
-            if (excludedSams.Contains(user.SamAccountName) || excludedEmails.Contains(user.Email)) continue;
+            if (excludedSams.Contains(user.SamAccountName) || excludedEmails.Contains(user.Email)) { ignored++; continue; }
 
-            var dispatch = await _reminders.SendAsync(
+            var result = await _reminders.QueueAsync(
                 training,
                 user,
-                link,
                 TeamsReminderSource.Manual,
                 Sam(),
                 cycleKey: null,
                 HttpContext.RequestAborted);
 
-            var result = dispatch.SendResult;
-            if (result is not null && result.Success &&
-                string.Equals(result.Status, TeamsReminderStatus.Sent, StringComparison.OrdinalIgnoreCase))
-                sent++;
-            else
-                failed++;
+            if (result.Queued) queued++; else ignored++;
         }
 
-        TempData["TeamsResult"] = $"Teams - enviados: {sent}; falhas: {failed}.";
+        TempData["TeamsResult"] = $"Teams - adicionados a fila: {queued}; ignorados: {ignored}.";
         return RedirectToAction(nameof(Pending), new { id = trainingId });
     }
 

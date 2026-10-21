@@ -18,6 +18,7 @@ public sealed class TeamsOptions
 {
     public bool Enabled { get; set; } = true;
     public string WebhookUrl { get; set; } = "";
+    public int DispatchIntervalSeconds { get; set; } = 13;
 }
 
 public sealed class PortalOptions

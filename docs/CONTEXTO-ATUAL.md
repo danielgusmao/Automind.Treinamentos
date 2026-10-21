@@ -138,3 +138,7 @@ Pipeline e Release já estao configurados para deploy automatico a cada alteraç
 - O gradiente institucional rosa/magenta/roxo é apenas elemento de destaque (botões, bordas, marca e pequenos acentos), nunca o fundo principal da tela inicial.
 - Esta é uma exceção visual aprovada do projeto e prevalece sobre regras genéricas do design system Automind.
 - Não reintroduzir fundo rosa/gradiente na tela inicial sem pedido explícito do Daniel.
+
+## Teams - v0.0.22
+
+O portal nao considera mais HTTP 202 do gatilho Power Automate como entrega. As solicitacoes sao persistidas e despachadas em fila com intervalo de 13 segundos. O Workflow deve devolver o resultado final para `/api/teams/reminder-result` usando `requestId` e `callbackToken` recebidos no payload. Ate o callback, a tela mostra `Enviando`.

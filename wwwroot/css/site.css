@@ -262,6 +262,7 @@ input[readonly]{background:#f3f4f6;color:#59545f}
 .pending-reminder-table .row-actions .btn{width:100%;white-space:normal;line-height:1.2}
 .status.teams-sent{background:var(--am-green-bg);border-color:#c9e6d8;color:var(--am-green)}
 .status.teams-failed{background:#fff0f1;border-color:#edc9ce;color:#a52738}
+.status.teams-processing{background:#eef5ff;border-color:#c9daf3;color:#315f9b}
 .status.teams-none{background:#efeff2;border-color:#dddde2;color:#66616b}
 .reminder-time{display:block;white-space:nowrap;font-weight:800;font-size:.78rem;color:var(--am-text)}
 

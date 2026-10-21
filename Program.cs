@@ -71,10 +71,11 @@ builder.Services.AddSingleton<TrainingDb>();
 builder.Services.AddSingleton<AuditService>();
 builder.Services.AddSingleton<SimplePdfService>();
 builder.Services.AddSingleton<TrainingSnapshotService>();
-builder.Services.AddHttpClient("TeamsWebhook", client => client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddHttpClient("TeamsWebhook", client => client.Timeout = TimeSpan.FromSeconds(30));
 builder.Services.AddSingleton<TeamsWebhookService>();
 builder.Services.AddScoped<TeamsReminderService>();
 builder.Services.AddHostedService<TeamsReminderWorker>();
+builder.Services.AddHostedService<TeamsReminderDispatchWorker>();
 builder.Services.AddScoped<TrainingRepository>();
 builder.Services.AddScoped<AdAuthenticationService>();
 builder.Services.AddScoped<AdAdminAuthorizationService>();
@@ -184,6 +185,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.MapHealthChecks("/health");
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",

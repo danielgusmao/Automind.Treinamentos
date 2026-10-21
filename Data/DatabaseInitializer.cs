@@ -141,6 +141,9 @@ CREATE INDEX IF NOT EXISTS IX_DirectoryExclusions_Email ON DirectoryExclusions(E
         // v0.0.20: inicia o historico operacional do Teams do zero e nao importa auditorias antigas.
         await ApplyV020TeamsReminderResetAsync(connection);
 
+        // v0.0.22: fila persistida e callback por tentativa para confirmacao real do Teams.
+        await ApplyV022TeamsQueueSchemaAsync(connection);
+
         // v0.0.8: converte as exclusoes antigas por treinamento em uma lista permanente
         // aplicavel a todos os treinamentos. A tabela legada e preservada apenas para historico/rollback.
         using (var migrateExclusions = connection.CreateCommand())
@@ -450,21 +453,6 @@ ON TrainingReminderSchedules(Enabled, NextRunAtUtc);
             await command.ExecuteNonQueryAsync();
         }
 
-        using (var recoverInterrupted = connection.CreateCommand())
-        {
-            recoverInterrupted.CommandText = @"
-UPDATE TeamsReminderHistory
-SET Status=$failed,
-    FinishedAtUtc=coalesce(FinishedAtUtc, $finishedAtUtc),
-    Error=CASE WHEN trim(coalesce(Error,''))='' THEN 'Tentativa interrompida antes da confirmacao do envio.' ELSE Error END
-WHERE Status=$processing AND FinishedAtUtc IS NULL AND AttemptedAtUtc <= $cutoff;";
-            recoverInterrupted.Parameters.AddWithValue("$failed", TeamsReminderStatus.Failed);
-            recoverInterrupted.Parameters.AddWithValue("$finishedAtUtc", DateTime.UtcNow.ToString("O"));
-            recoverInterrupted.Parameters.AddWithValue("$processing", TeamsReminderStatus.Processing);
-            recoverInterrupted.Parameters.AddWithValue("$cutoff", DateTime.UtcNow.AddMinutes(-5).ToString("O"));
-            await recoverInterrupted.ExecuteNonQueryAsync();
-        }
-
         using var mark = connection.CreateCommand();
         mark.CommandText = "INSERT OR IGNORE INTO SchemaMigrations(Version, AppliedAtUtc) VALUES('0.0.19', $now);";
         mark.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
@@ -496,6 +484,31 @@ WHERE Status=$processing AND FinishedAtUtc IS NULL AND AttemptedAtUtc <= $cutoff
         }
 
         tx.Commit();
+    }
+
+    private static async Task ApplyV022TeamsQueueSchemaAsync(SqliteConnection connection)
+    {
+        await EnsureColumnAsync(connection, "TeamsReminderHistory", "SubmittedAtUtc", "TEXT NULL");
+        await EnsureColumnAsync(connection, "TeamsReminderHistory", "RequestId", "TEXT NOT NULL DEFAULT ''");
+        await EnsureColumnAsync(connection, "TeamsReminderHistory", "CallbackToken", "TEXT NOT NULL DEFAULT ''");
+
+        using (var indexes = connection.CreateCommand())
+        {
+            indexes.CommandText = @"
+CREATE UNIQUE INDEX IF NOT EXISTS UX_TeamsReminderHistory_RequestId
+ON TeamsReminderHistory(RequestId) WHERE trim(RequestId) <> '';
+CREATE INDEX IF NOT EXISTS IX_TeamsReminderHistory_Queue
+ON TeamsReminderHistory(Status, AttemptedAtUtc, Id);
+CREATE UNIQUE INDEX IF NOT EXISTS UX_TeamsReminderHistory_Active
+ON TeamsReminderHistory(TrainingId, SamAccountName COLLATE NOCASE)
+WHERE Status IN ('queued','processing');";
+            await indexes.ExecuteNonQueryAsync();
+        }
+
+        using var mark = connection.CreateCommand();
+        mark.CommandText = "INSERT OR IGNORE INTO SchemaMigrations(Version, AppliedAtUtc) VALUES('0.0.22', $now);";
+        mark.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
+        await mark.ExecuteNonQueryAsync();
     }
 
     private static async Task EnsureColumnAsync(SqliteConnection connection, string table, string column, string definition)

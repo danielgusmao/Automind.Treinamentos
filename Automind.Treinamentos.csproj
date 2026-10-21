@@ -5,14 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Automind.Treinamentos</RootNamespace>
     <AssemblyName>Automind.Treinamentos</AssemblyName>
-    <Version>0.0.21</Version>
-    <FileVersion>0.0.21.0</FileVersion>
-    <InformationalVersion>0.0.20</InformationalVersion>
+    <Version>0.0.22</Version>
+    <FileVersion>0.0.22.0</FileVersion>
+    <InformationalVersion>0.0.22</InformationalVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="tests\**\*.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />

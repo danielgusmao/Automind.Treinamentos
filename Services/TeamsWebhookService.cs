@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using Automind.Treinamentos.Models;
 
 namespace Automind.Treinamentos.Services;
@@ -16,30 +15,30 @@ public sealed class TeamsWebhookService(
         Uri.TryCreate(WebhookUrl, UriKind.Absolute, out var uri) &&
         string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
 
-    public async Task<TeamsSendResult> SendTrainingReminderAsync(
-        string recipient,
-        string displayName,
+    public async Task<TeamsWorkflowSubmissionResult> SubmitTrainingReminderAsync(
+        TeamsReminderHistory attempt,
         string trainingTitle,
         int estimatedMinutes,
         string trainingUrl,
+        string callbackUrl,
         CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
-            return new TeamsSendResult(false, TeamsReminderStatus.Failed, "A integra\u00e7\u00e3o Teams est\u00e1 desabilitada ou sem webhook configurado.");
+            return new TeamsWorkflowSubmissionResult(false, false, null, "A integracao Teams esta desabilitada ou sem webhook configurado.");
 
-        if (string.IsNullOrWhiteSpace(recipient))
-            return new TeamsSendResult(false, TeamsReminderStatus.Failed, "Destinat\u00e1rio sem e-mail/UPN.");
+        if (string.IsNullOrWhiteSpace(attempt.Recipient))
+            return new TeamsWorkflowSubmissionResult(false, false, null, "Destinatario sem e-mail/UPN.");
 
-        var firstName = string.IsNullOrWhiteSpace(displayName)
+        var firstName = string.IsNullOrWhiteSpace(attempt.DisplayName)
             ? "colaborador"
-            : displayName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "colaborador";
+            : attempt.DisplayName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "colaborador";
 
         var safeFirstName = WebUtility.HtmlEncode(firstName);
         var safeTitle = WebUtility.HtmlEncode(trainingTitle);
         var safeUrl = WebUtility.HtmlEncode(trainingUrl);
 
         var text =
-            $"Ol\u00e1, {safeFirstName}. Voc\u00ea possui o treinamento <strong>{safeTitle}</strong> pendente.<br>" +
+            $"Ola, {safeFirstName}. Voce possui o treinamento <strong>{safeTitle}</strong> pendente.<br>" +
             $"Tempo estimado: {estimatedMinutes} minutos.<br>" +
             $"<strong>Acessar treinamento:</strong> <a href=\"{safeUrl}\">{safeUrl}</a>";
 
@@ -48,109 +47,54 @@ public sealed class TeamsWebhookService(
             var client = httpClientFactory.CreateClient("TeamsWebhook");
             using var response = await client.PostAsJsonAsync(
                 WebhookUrl,
-                new { recipient = recipient.Trim(), text },
+                new
+                {
+                    recipient = attempt.Recipient.Trim(),
+                    text,
+                    requestId = attempt.RequestId,
+                    callbackToken = attempt.CallbackToken,
+                    callbackUrl
+                },
                 cancellationToken);
 
             var statusCode = (int)response.StatusCode;
-            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            var workflow = ParseWorkflowResponse(responseBody);
-
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning("Webhook Teams recusou lembrete de treinamento. HTTP {StatusCode}.", statusCode);
-                return new TeamsSendResult(false, TeamsReminderStatus.Failed, $"O webhook Teams respondeu HTTP {statusCode}.", statusCode, workflow.WorkflowRunId, workflow.MessageId);
+                logger.LogWarning("Workflow Teams recusou a solicitacao. HTTP {StatusCode}; RequestId {RequestId}.", statusCode, attempt.RequestId);
+                return new TeamsWorkflowSubmissionResult(false, false, statusCode, $"O webhook Teams respondeu HTTP {statusCode}.");
             }
 
-            if (workflow.ExplicitFailure)
-            {
-                logger.LogWarning("Workflow Teams informou falha apos resposta HTTP {StatusCode}.", statusCode);
-                return new TeamsSendResult(false, TeamsReminderStatus.Failed, workflow.Error ?? "O Workflow informou falha no envio.", statusCode, workflow.WorkflowRunId, workflow.MessageId);
-            }
-
-            var confirmed = workflow.Delivered || !string.IsNullOrWhiteSpace(workflow.MessageId);
-            if (!confirmed)
-            {
-                logger.LogWarning("Workflow Teams respondeu HTTP {StatusCode}, mas nao confirmou o envio ao destinatario.", statusCode);
-                return new TeamsSendResult(
-                    false,
-                    TeamsReminderStatus.Failed,
-                    "O Workflow respondeu, mas nao confirmou o envio ao Teams.",
-                    statusCode,
-                    workflow.WorkflowRunId,
-                    workflow.MessageId);
-            }
-
-            return new TeamsSendResult(true, TeamsReminderStatus.Sent, null, statusCode, workflow.WorkflowRunId, workflow.MessageId);
+            // O gatilho do Power Automate normalmente devolve 202 antes de a acao do Teams terminar.
+            // Portanto, 2xx confirma apenas que a execucao foi aceita, nunca que a mensagem foi enviada.
+            return new TeamsWorkflowSubmissionResult(true, false, statusCode, null);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
         }
+        catch (TaskCanceledException exception)
+        {
+            logger.LogWarning(exception, "Timeout ao entregar solicitacao ao Workflow Teams. RequestId {RequestId}.", attempt.RequestId);
+            return new TeamsWorkflowSubmissionResult(false, true, null, "Nao foi possivel confirmar se o Workflow recebeu a solicitacao.");
+        }
+        catch (HttpRequestException exception)
+        {
+            logger.LogWarning(exception, "Falha de rede ao chamar Workflow Teams. RequestId {RequestId}.", attempt.RequestId);
+            return new TeamsWorkflowSubmissionResult(false, true, null, "Nao foi possivel confirmar se o Workflow recebeu a solicitacao.");
+        }
         catch (Exception exception)
         {
-            logger.LogWarning("Falha no envio Teams. Tipo: {ErrorType}; codigo: {Code}", exception.GetType().Name, exception.HResult);
-            return new TeamsSendResult(false, TeamsReminderStatus.Failed, $"Falha t\u00e9cnica no envio Teams ({exception.GetType().Name}).");
+            logger.LogWarning(exception, "Falha ao chamar Workflow Teams. RequestId {RequestId}.", attempt.RequestId);
+            return new TeamsWorkflowSubmissionResult(false, false, null, $"Falha tecnica ao chamar o Workflow ({exception.GetType().Name}).");
         }
     }
-
-    private static WorkflowResponse ParseWorkflowResponse(string? body)
-    {
-        if (string.IsNullOrWhiteSpace(body)) return new WorkflowResponse();
-
-        try
-        {
-            using var doc = JsonDocument.Parse(body);
-            if (doc.RootElement.ValueKind != JsonValueKind.Object) return new WorkflowResponse();
-
-            var root = doc.RootElement;
-            var hasSuccess = TryGetBoolean(root, "success", out var success);
-            var delivered = TryGetBoolean(root, "delivered", out var deliveredValue) && deliveredValue;
-            var status = TryGetString(root, "status");
-            var workflowRunId = TryGetString(root, "workflowRunId");
-            var messageId = TryGetString(root, "messageId");
-            var error = TryGetString(root, "error");
-            var explicitFailure = (hasSuccess && !success) ||
-                string.Equals(status, "failed", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(status, "error", StringComparison.OrdinalIgnoreCase);
-
-            return new WorkflowResponse(delivered, explicitFailure, workflowRunId, messageId, error);
-        }
-        catch (JsonException)
-        {
-            return new WorkflowResponse();
-        }
-    }
-
-    private static string? TryGetString(JsonElement root, string propertyName)
-    {
-        foreach (var property in root.EnumerateObject())
-        {
-            if (!string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase)) continue;
-            return property.Value.ValueKind == JsonValueKind.String ? property.Value.GetString() : property.Value.ToString();
-        }
-        return null;
-    }
-
-    private static bool TryGetBoolean(JsonElement root, string propertyName, out bool value)
-    {
-        foreach (var property in root.EnumerateObject())
-        {
-            if (!string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase)) continue;
-            if (property.Value.ValueKind == JsonValueKind.True) { value = true; return true; }
-            if (property.Value.ValueKind == JsonValueKind.False) { value = false; return true; }
-            if (property.Value.ValueKind == JsonValueKind.String && bool.TryParse(property.Value.GetString(), out value)) return true;
-        }
-        value = false;
-        return false;
-    }
-
-    private sealed record WorkflowResponse(
-        bool Delivered = false,
-        bool ExplicitFailure = false,
-        string? WorkflowRunId = null,
-        string? MessageId = null,
-        string? Error = null);
 }
+
+public sealed record TeamsWorkflowSubmissionResult(
+    bool Accepted,
+    bool Uncertain,
+    int? HttpStatusCode,
+    string? Error);
 
 public sealed record TeamsSendResult(
     bool Success,

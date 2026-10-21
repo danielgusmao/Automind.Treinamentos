@@ -1,3 +1,13 @@
+# v0.0.22 - Fila e confirmacao real do Teams
+
+- envio manual e automatico passa a entrar em fila persistida no SQLite;
+- dispatcher envia uma solicitacao por vez, com intervalo padrao de 13 segundos;
+- HTTP 202 do webhook significa apenas aceito para processamento e nao mais sucesso de entrega;
+- cada tentativa recebe RequestId e token unico de callback;
+- novo endpoint `POST /api/teams/reminder-result` recebe o resultado final do Workflow;
+- UI mostra `Enviando` enquanto o Workflow ainda nao confirmou o resultado;
+- `Enviado` e `Falhou` passam a depender do callback final do Workflow.
+
 # Changelog
 
 ## v0.0.20 - 2026-10-21

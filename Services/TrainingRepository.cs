@@ -614,6 +614,8 @@ ORDER BY AttemptedAtUtc DESC, Id DESC;";
         string source,
         string actor,
         string? cycleKey,
+        string requestId,
+        string callbackToken,
         DateTime attemptedAtUtc)
     {
         using var c = _db.OpenConnection();
@@ -622,19 +624,21 @@ ORDER BY AttemptedAtUtc DESC, Id DESC;";
         cmd.Transaction = tx;
         cmd.CommandText = @"
 INSERT OR IGNORE INTO TeamsReminderHistory(
-    TrainingId, SamAccountName, DisplayName, Recipient, AttemptedAtUtc, FinishedAtUtc,
-    Source, Status, HttpStatusCode, WorkflowRunId, MessageId, Error, Actor, CycleKey, ImportKey)
+    TrainingId, SamAccountName, DisplayName, Recipient, AttemptedAtUtc, SubmittedAtUtc, FinishedAtUtc,
+    Source, Status, HttpStatusCode, WorkflowRunId, MessageId, Error, Actor, CycleKey, ImportKey, RequestId, CallbackToken)
 VALUES(
-    $trainingId, lower($sam), $displayName, $recipient, $attemptedAtUtc, NULL,
-    $source, $status, NULL, '', '', '', $actor, $cycleKey, NULL);";
+    $trainingId, lower($sam), $displayName, $recipient, $attemptedAtUtc, NULL, NULL,
+    $source, $status, NULL, '', '', '', $actor, $cycleKey, NULL, $requestId, $callbackToken);";
         cmd.Parameters.AddWithValue("$trainingId", trainingId);
         cmd.Parameters.AddWithValue("$sam", user.SamAccountName.Trim());
         cmd.Parameters.AddWithValue("$displayName", user.DisplayName ?? string.Empty);
         cmd.Parameters.AddWithValue("$recipient", user.Email ?? string.Empty);
         cmd.Parameters.AddWithValue("$attemptedAtUtc", attemptedAtUtc.ToUniversalTime().ToString("O"));
         cmd.Parameters.AddWithValue("$source", source);
-        cmd.Parameters.AddWithValue("$status", TeamsReminderStatus.Processing);
+        cmd.Parameters.AddWithValue("$status", TeamsReminderStatus.Queued);
         cmd.Parameters.AddWithValue("$actor", actor ?? string.Empty);
+        cmd.Parameters.AddWithValue("$requestId", requestId);
+        cmd.Parameters.AddWithValue("$callbackToken", callbackToken);
         cmd.Parameters.AddWithValue("$cycleKey", cycleKey is null ? DBNull.Value : cycleKey);
         var changed = await cmd.ExecuteNonQueryAsync();
         if (changed == 0)
@@ -649,6 +653,160 @@ VALUES(
         var insertedId = Convert.ToInt64(await id.ExecuteScalarAsync());
         tx.Commit();
         return insertedId;
+    }
+
+    public async Task<TeamsReminderHistory?> ClaimNextQueuedTeamsReminderAsync(DateTime submittedAtUtc)
+    {
+        using var c = _db.OpenConnection();
+        using var tx = c.BeginTransaction();
+        long? id = null;
+
+        using (var select = c.CreateCommand())
+        {
+            select.Transaction = tx;
+            select.CommandText = @"
+SELECT Id FROM TeamsReminderHistory
+WHERE Status=$queued
+ORDER BY AttemptedAtUtc, Id
+LIMIT 1;";
+            select.Parameters.AddWithValue("$queued", TeamsReminderStatus.Queued);
+            var value = await select.ExecuteScalarAsync();
+            if (value is not null && value != DBNull.Value) id = Convert.ToInt64(value);
+        }
+
+        if (id is null)
+        {
+            tx.Rollback();
+            return null;
+        }
+
+        using (var claim = c.CreateCommand())
+        {
+            claim.Transaction = tx;
+            claim.CommandText = @"
+UPDATE TeamsReminderHistory
+SET Status=$processing, SubmittedAtUtc=$submittedAtUtc, Error=''
+WHERE Id=$id AND Status=$queued;";
+            claim.Parameters.AddWithValue("$processing", TeamsReminderStatus.Processing);
+            claim.Parameters.AddWithValue("$submittedAtUtc", submittedAtUtc.ToUniversalTime().ToString("O"));
+            claim.Parameters.AddWithValue("$id", id.Value);
+            claim.Parameters.AddWithValue("$queued", TeamsReminderStatus.Queued);
+            if (await claim.ExecuteNonQueryAsync() != 1)
+            {
+                tx.Rollback();
+                return null;
+            }
+        }
+
+        TeamsReminderHistory? item = null;
+        using (var read = c.CreateCommand())
+        {
+            read.Transaction = tx;
+            read.CommandText = "SELECT * FROM TeamsReminderHistory WHERE Id=$id;";
+            read.Parameters.AddWithValue("$id", id.Value);
+            using var reader = await read.ExecuteReaderAsync();
+            if (await reader.ReadAsync()) item = MapTeamsReminderHistory(reader);
+        }
+
+        tx.Commit();
+        return item;
+    }
+
+    public async Task MarkTeamsReminderSubmittedAsync(long historyId, int? httpStatusCode, DateTime submittedAtUtc)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+UPDATE TeamsReminderHistory
+SET Status=$processing, SubmittedAtUtc=$submittedAtUtc, HttpStatusCode=$httpStatusCode, Error=''
+WHERE Id=$id AND Status=$processing;";
+        cmd.Parameters.AddWithValue("$processing", TeamsReminderStatus.Processing);
+        cmd.Parameters.AddWithValue("$submittedAtUtc", submittedAtUtc.ToUniversalTime().ToString("O"));
+        cmd.Parameters.AddWithValue("$httpStatusCode", httpStatusCode is null ? DBNull.Value : httpStatusCode.Value);
+        cmd.Parameters.AddWithValue("$id", historyId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task MarkTeamsReminderSubmissionUncertainAsync(long historyId, string error, DateTime submittedAtUtc)
+    {
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+UPDATE TeamsReminderHistory
+SET Status=$processing, SubmittedAtUtc=$submittedAtUtc, Error=$error
+WHERE Id=$id AND Status=$processing;";
+        cmd.Parameters.AddWithValue("$processing", TeamsReminderStatus.Processing);
+        cmd.Parameters.AddWithValue("$submittedAtUtc", submittedAtUtc.ToUniversalTime().ToString("O"));
+        cmd.Parameters.AddWithValue("$error", error ?? string.Empty);
+        cmd.Parameters.AddWithValue("$id", historyId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    public async Task<bool> CompleteTeamsReminderAttemptByCallbackAsync(
+        string requestId,
+        string callbackToken,
+        TeamsSendResult result,
+        DateTime finishedAtUtc)
+    {
+        using var c = _db.OpenConnection();
+        using var tx = c.BeginTransaction();
+        long? id = null;
+        string? currentStatus = null;
+
+        using (var select = c.CreateCommand())
+        {
+            select.Transaction = tx;
+            select.CommandText = @"
+SELECT Id, Status FROM TeamsReminderHistory
+WHERE RequestId=$requestId AND CallbackToken=$callbackToken
+LIMIT 1;";
+            select.Parameters.AddWithValue("$requestId", requestId);
+            select.Parameters.AddWithValue("$callbackToken", callbackToken);
+            using var reader = await select.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                id = reader.GetInt64(0);
+                currentStatus = reader.GetString(1);
+            }
+        }
+
+        if (id is null)
+        {
+            tx.Rollback();
+            return false;
+        }
+
+        if (string.Equals(currentStatus, TeamsReminderStatus.Sent, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(currentStatus, TeamsReminderStatus.Failed, StringComparison.OrdinalIgnoreCase))
+        {
+            tx.Commit();
+            return true;
+        }
+
+        using (var update = c.CreateCommand())
+        {
+            update.Transaction = tx;
+            update.CommandText = @"
+UPDATE TeamsReminderHistory
+SET FinishedAtUtc=$finishedAtUtc,
+    Status=$status,
+    HttpStatusCode=coalesce($httpStatusCode, HttpStatusCode),
+    WorkflowRunId=$workflowRunId,
+    MessageId=$messageId,
+    Error=$error
+WHERE Id=$id;";
+            update.Parameters.AddWithValue("$finishedAtUtc", finishedAtUtc.ToUniversalTime().ToString("O"));
+            update.Parameters.AddWithValue("$status", result.Status);
+            update.Parameters.AddWithValue("$httpStatusCode", result.HttpStatusCode is null ? DBNull.Value : result.HttpStatusCode.Value);
+            update.Parameters.AddWithValue("$workflowRunId", result.WorkflowRunId ?? string.Empty);
+            update.Parameters.AddWithValue("$messageId", result.MessageId ?? string.Empty);
+            update.Parameters.AddWithValue("$error", result.Error ?? string.Empty);
+            update.Parameters.AddWithValue("$id", id.Value);
+            await update.ExecuteNonQueryAsync();
+        }
+
+        tx.Commit();
+        return true;
     }
 
     public async Task CompleteTeamsReminderAttemptAsync(long historyId, TeamsSendResult result, DateTime finishedAtUtc)
@@ -728,6 +886,11 @@ WHERE Id=$id;";
         if (!r.IsDBNull(finishedOrdinal))
             finishedAtUtc = DateTime.Parse(r.GetString(finishedOrdinal), null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
 
+        DateTime? submittedAtUtc = null;
+        var submittedOrdinal = r.GetOrdinal("SubmittedAtUtc");
+        if (!r.IsDBNull(submittedOrdinal))
+            submittedAtUtc = DateTime.Parse(r.GetString(submittedOrdinal), null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime();
+
         int? httpStatusCode = null;
         var httpOrdinal = r.GetOrdinal("HttpStatusCode");
         if (!r.IsDBNull(httpOrdinal)) httpStatusCode = r.GetInt32(httpOrdinal);
@@ -740,6 +903,7 @@ WHERE Id=$id;";
             DisplayName = r.GetString(r.GetOrdinal("DisplayName")),
             Recipient = r.GetString(r.GetOrdinal("Recipient")),
             AttemptedAtUtc = DateTime.Parse(r.GetString(r.GetOrdinal("AttemptedAtUtc")), null, System.Globalization.DateTimeStyles.RoundtripKind).ToUniversalTime(),
+            SubmittedAtUtc = submittedAtUtc,
             FinishedAtUtc = finishedAtUtc,
             Source = r.GetString(r.GetOrdinal("Source")),
             Status = r.GetString(r.GetOrdinal("Status")),
@@ -749,7 +913,9 @@ WHERE Id=$id;";
             Error = r.GetString(r.GetOrdinal("Error")),
             Actor = r.GetString(r.GetOrdinal("Actor")),
             CycleKey = r.IsDBNull(r.GetOrdinal("CycleKey")) ? null : r.GetString(r.GetOrdinal("CycleKey")),
-            ImportKey = r.IsDBNull(r.GetOrdinal("ImportKey")) ? null : r.GetString(r.GetOrdinal("ImportKey"))
+            ImportKey = r.IsDBNull(r.GetOrdinal("ImportKey")) ? null : r.GetString(r.GetOrdinal("ImportKey")),
+            RequestId = r.GetString(r.GetOrdinal("RequestId")),
+            CallbackToken = r.GetString(r.GetOrdinal("CallbackToken"))
         };
     }
 

@@ -63,8 +63,9 @@
             @foreach(var x in Model.OrderBy(x=>x.Completed).ThenByDescending(x=>x.ReminderDue).ThenBy(x=>x.User.DisplayName)){
                 var last = x.LastTeamsReminder;
                 var lastSent = x.LastSuccessfulTeamsReminder;
-                var teamsLabel = lastSent is not null ? "Enviado" : last?.Status == TeamsReminderStatus.Failed ? "Falhou" : "Não enviado";
-                var teamsCss = lastSent is not null ? "teams-sent" : last?.Status == TeamsReminderStatus.Failed ? "teams-failed" : "teams-none";
+                var isSending = last is not null && (last.Status == TeamsReminderStatus.Queued || last.Status == TeamsReminderStatus.Processing);
+                var teamsLabel = lastSent is not null ? "Enviado" : last?.Status == TeamsReminderStatus.Failed ? "Falhou" : isSending ? "Enviando" : "Não enviado";
+                var teamsCss = lastSent is not null ? "teams-sent" : last?.Status == TeamsReminderStatus.Failed ? "teams-failed" : isSending ? "teams-processing" : "teams-none";
                 var sentAt = lastSent?.FinishedAtUtc ?? lastSent?.AttemptedAtUtc;
                 <tr class="@(x.Completed?"row-completed":"")">
                     <td class="select-col" data-label="Marcar">@if(!x.Completed){<input class="pending-check" type="checkbox" name="selectedSams" value="@x.User.SamAccountName" form="batchReminderForm" data-reminder-due="@(x.ReminderDue ? "true" : "false")" aria-label="Selecionar @x.User.DisplayName" />}</td>
@@ -81,7 +82,7 @@
                     <td class="action-col" data-label="Ação">
                         @if(!x.Completed){
                             <div class="row-actions">
-                                <form asp-action="SendTeamsReminders" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="selectedSams" value="@x.User.SamAccountName"/><button class="btn secondary btn-small" type="submit" disabled="@(!teamsConfigured)">@(lastSent is null ? "Enviar Teams" : "Reenviar Teams")</button></form>
+                                <form asp-action="SendTeamsReminders" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="selectedSams" value="@x.User.SamAccountName"/><button class="btn secondary btn-small" type="submit" disabled="@(!teamsConfigured || isSending)">@(isSending ? "Aguardando Teams" : lastSent is null ? "Enviar Teams" : "Reenviar Teams")</button></form>
                                 <button class="btn danger btn-small exclude-user-btn" type="button" data-sam="@x.User.SamAccountName" data-name="@x.User.DisplayName" data-email="@x.User.Email">Excluir permanentemente</button>
                             </div>
                         }else{<span class="muted">Concluído</span>}

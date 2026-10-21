@@ -81,7 +81,6 @@ public sealed class TeamsReminderWorker(
             var excludedEmails = exclusions.Where(x => !string.IsNullOrWhiteSpace(x.Email)).Select(x => x.Email).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var latestSuccessful = await repository.GetLatestSuccessfulTeamsReminderHistoryAsync(training.Id);
             var users = await directory.GetEligibleUsersAsync();
-            var link = $"{baseUrl}/Training/Start/{training.Id}";
 
             foreach (var user in users)
             {
@@ -93,10 +92,9 @@ public sealed class TeamsReminderWorker(
                 if (!TeamsReminderPolicy.IsDue(lastSuccess, schedule.IntervalDays, nowUtc)) continue;
 
                 var cycleKey = $"automatic:{training.Id}:{schedule.NextRunAtUtc.Value.ToUniversalTime():O}:{user.SamAccountName.Trim().ToLowerInvariant()}";
-                await reminders.SendAsync(
+                await reminders.QueueAsync(
                     training,
                     user,
-                    link,
                     TeamsReminderSource.Automatic,
                     "scheduler",
                     cycleKey,

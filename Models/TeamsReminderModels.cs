@@ -2,6 +2,7 @@ namespace Automind.Treinamentos.Models;
 
 public static class TeamsReminderStatus
 {
+    public const string Queued = "queued";
     public const string Processing = "processing";
     public const string Sent = "sent";
     public const string Failed = "failed";
@@ -24,9 +25,10 @@ public sealed class TeamsReminderHistory
     public string DisplayName { get; set; } = "";
     public string Recipient { get; set; } = "";
     public DateTime AttemptedAtUtc { get; set; }
+    public DateTime? SubmittedAtUtc { get; set; }
     public DateTime? FinishedAtUtc { get; set; }
     public string Source { get; set; } = TeamsReminderSource.Manual;
-    public string Status { get; set; } = TeamsReminderStatus.Processing;
+    public string Status { get; set; } = TeamsReminderStatus.Queued;
     public int? HttpStatusCode { get; set; }
     public string WorkflowRunId { get; set; } = "";
     public string MessageId { get; set; } = "";
@@ -34,6 +36,20 @@ public sealed class TeamsReminderHistory
     public string Actor { get; set; } = "";
     public string? CycleKey { get; set; }
     public string? ImportKey { get; set; }
+    public string RequestId { get; set; } = "";
+    public string CallbackToken { get; set; } = "";
+}
+
+public sealed class TeamsReminderCallbackRequest
+{
+    public string RequestId { get; set; } = "";
+    public string CallbackToken { get; set; } = "";
+    public bool Success { get; set; }
+    public DateTime? SentAtUtc { get; set; }
+    public string WorkflowRunId { get; set; } = "";
+    public string MessageId { get; set; } = "";
+    public int? HttpStatusCode { get; set; }
+    public string Error { get; set; } = "";
 }
 
 public sealed class TrainingReminderSchedule
