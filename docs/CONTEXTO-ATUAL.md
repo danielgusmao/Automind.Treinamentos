@@ -1,6 +1,16 @@
 # CONTEXTO ATUAL - Automind.Treinamentos
 
-Versão de aplicacao preparada: **v0.0.20**.
+Versao de aplicacao preparada: **v0.0.23**.
+
+## v0.0.23 - Teams / SharePoint sem callback publico
+
+A confirmacao final do Teams passa a ser gravada pelo Power Automate na lista SharePoint `AutomindTreinamentosTeamsStatus`. O portal interno nao recebe callback da nuvem: ele consulta o SharePoint Online por Microsoft Graph usando identidade de aplicativo e reconciliacao por `RequestId`.
+
+O SQLite continua sendo a fonte usada pela interface e agenda. `queued`/`processing` continuam bloqueando duplicidade. Se o Graph estiver indisponivel, o portal mantem `Enviando` e nao inventa sucesso.
+
+O portal continua em `http://treinamentos.automind.com.br`, sem exposicao externa e sem ativacao parcial de HTTPS. A mensagem Teams informa que o ambiente e interno e que o usuario deve estar conectado a VPN.
+
+Documentacao de continuidade: `50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md`, `51-CONFIGURACAO-GRAPH-IIS-V0.0.23.md`, `52-TESTE-V0.0.23.md`.
 
 ## v0.0.20 - status Teams simples e responsividade
 

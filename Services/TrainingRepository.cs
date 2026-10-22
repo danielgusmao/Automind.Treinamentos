@@ -809,6 +809,52 @@ WHERE Id=$id;";
         return true;
     }
 
+    public async Task<List<TeamsReminderHistory>> GetOutstandingTeamsReminderAttemptsAsync(int limit)
+    {
+        limit = Math.Clamp(limit, 1, 250);
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+SELECT * FROM TeamsReminderHistory
+WHERE Status IN ($queued, $processing) AND trim(RequestId) <> ''
+ORDER BY COALESCE(SubmittedAtUtc, AttemptedAtUtc), Id
+LIMIT $limit;";
+        cmd.Parameters.AddWithValue("$queued", TeamsReminderStatus.Queued);
+        cmd.Parameters.AddWithValue("$processing", TeamsReminderStatus.Processing);
+        cmd.Parameters.AddWithValue("$limit", limit);
+        using var r = await cmd.ExecuteReaderAsync();
+        var result = new List<TeamsReminderHistory>();
+        while (await r.ReadAsync()) result.Add(MapTeamsReminderHistory(r));
+        return result;
+    }
+
+    public async Task<bool> CompleteTeamsReminderAttemptByCloudStatusAsync(
+        string requestId,
+        TeamsSendResult result,
+        DateTime finishedAtUtc)
+    {
+        requestId = (requestId ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(requestId)) return false;
+
+        using var c = _db.OpenConnection();
+        using var cmd = c.CreateCommand();
+        cmd.CommandText = @"
+UPDATE TeamsReminderHistory
+SET Status=$status, FinishedAtUtc=$finishedAtUtc, HttpStatusCode=COALESCE($httpStatusCode, HttpStatusCode),
+    WorkflowRunId=$workflowRunId, MessageId=$messageId, Error=$error
+WHERE RequestId=$requestId AND Status IN ($queued, $processing);";
+        cmd.Parameters.AddWithValue("$status", result.Status);
+        cmd.Parameters.AddWithValue("$finishedAtUtc", finishedAtUtc.ToUniversalTime().ToString("O"));
+        cmd.Parameters.AddWithValue("$httpStatusCode", result.HttpStatusCode is null ? DBNull.Value : result.HttpStatusCode.Value);
+        cmd.Parameters.AddWithValue("$workflowRunId", result.WorkflowRunId ?? string.Empty);
+        cmd.Parameters.AddWithValue("$messageId", result.MessageId ?? string.Empty);
+        cmd.Parameters.AddWithValue("$error", result.Error ?? string.Empty);
+        cmd.Parameters.AddWithValue("$requestId", requestId);
+        cmd.Parameters.AddWithValue("$queued", TeamsReminderStatus.Queued);
+        cmd.Parameters.AddWithValue("$processing", TeamsReminderStatus.Processing);
+        return await cmd.ExecuteNonQueryAsync() == 1;
+    }
+
     public async Task CompleteTeamsReminderAttemptAsync(long historyId, TeamsSendResult result, DateTime finishedAtUtc)
     {
         using var c = _db.OpenConnection();

@@ -255,3 +255,14 @@ A exclusão de treinamento de teste continua sendo uma operacao manual e não ex
 ### Convencao de nome dos PDFs - v0.0.14
 
 A estrutura definitiva permanece por colaborador: `C:\Automind.Treinamentos\Evidências\Colaboradores\<login>`. A proposta anterior de separar fisicamente por treinamento/versão foi cancelada. Novos PDFs usam `<Código>_v<Versão>_<AAAAMMDD>_<Protocolo>.pdf`. A v0.0.14 tambem migra evidências existentes para o caminho curto quando o arquivo e localizado e atualiza `TrainingCompletions.EvidencePdfPath` sem alterar o conteúdo/hash do PDF.
+
+
+## Atualizacao v0.0.23 - Teams / SharePoint / Graph
+
+O fluxo operacional atual de Teams foi substituido pelo desenho sem callback publico. Consulte:
+
+- `50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md` - arquitetura, URLs, lista, Power Automate, estados e caminhos de falha;
+- `51-CONFIGURACAO-GRAPH-IIS-V0.0.23.md` - App Registration, Sites.Selected, credenciais externas e IIS;
+- `52-TESTE-V0.0.23.md` - evidencias validadas e roteiro de validacao.
+
+O portal continua interno em HTTP e nao deve ser exposto para receber callback.

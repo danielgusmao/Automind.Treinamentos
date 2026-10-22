@@ -40,6 +40,7 @@ public sealed class TeamsWebhookService(
         var text =
             $"Ola, {safeFirstName}. Voce possui o treinamento <strong>{safeTitle}</strong> pendente.<br>" +
             $"Tempo estimado: {estimatedMinutes} minutos.<br>" +
+            $"Este \u00e9 um ambiente interno, ent\u00e3o esteja conectado \u00e0 VPN.<br>" +
             $"<strong>Acessar treinamento:</strong> <a href=\"{safeUrl}\">{safeUrl}</a>";
 
         try

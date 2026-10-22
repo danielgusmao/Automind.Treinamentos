@@ -1,3 +1,5 @@
+> HISTORICO v0.0.22: este documento descreve o desenho por callback. A arquitetura ativa da v0.0.23 esta em `50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md`. O endpoint de callback permanece apenas para compatibilidade/rollback; o Power Automate atual grava o resultado no SharePoint.
+
 # Teams - fila e callback - v0.0.22
 
 ## Objetivo

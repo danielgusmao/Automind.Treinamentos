@@ -1,3 +1,5 @@
+> HISTORICO v0.0.5: este documento descreve o reuso inicial do Workflow. O fluxo operacional atual de Teams/SharePoint/Graph esta documentado em `50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md`. A mensagem, o contrato de confirmacao e a arquitetura abaixo nao devem ser usados como referencia atual sem consultar a documentacao v0.0.23.
+
 # v0.0.5 - Reuso do Workflow Teams do CadColab
 
 ## Referencia adotada

@@ -17,10 +17,11 @@ public sealed class AdminController : Controller
     private readonly AuditService _audit;
     private readonly TeamsWebhookService _teams;
     private readonly TeamsReminderService _reminders;
+    private readonly TeamsReminderStatusSynchronizer _teamsStatusSync;
     private readonly PortalOptions _portal;
     private readonly ILogger<AdminController> _logger;
 
-    public AdminController(TrainingRepository repo, AdDirectoryService ad, TrainingSnapshotService snapshot, EvidenceService evidence, AuditService audit, TeamsWebhookService teams, TeamsReminderService reminders, IOptions<PortalOptions> portal, ILogger<AdminController> logger)
+    public AdminController(TrainingRepository repo, AdDirectoryService ad, TrainingSnapshotService snapshot, EvidenceService evidence, AuditService audit, TeamsWebhookService teams, TeamsReminderService reminders, TeamsReminderStatusSynchronizer teamsStatusSync, IOptions<PortalOptions> portal, ILogger<AdminController> logger)
     {
         _repo = repo;
         _ad = ad;
@@ -29,6 +30,7 @@ public sealed class AdminController : Controller
         _audit = audit;
         _teams = teams;
         _reminders = reminders;
+        _teamsStatusSync = teamsStatusSync;
         _portal = portal.Value;
         _logger = logger;
     }
@@ -421,8 +423,11 @@ public sealed class AdminController : Controller
         }
         ViewBag.Training = training;
         ViewBag.TeamsConfigured = _teams.IsConfigured;
+        ViewBag.TeamsStatusConfigured = _teamsStatusSync.IsConfigured;
         var schedule = await _repo.GetTrainingReminderScheduleAsync(id);
         ViewBag.TeamsSchedule = schedule;
+
+        await _teamsStatusSync.SyncOutstandingAsync(HttpContext.RequestAborted);
 
         var completions = await _repo.GetCompletionsAsync(id);
         var completed = completions.Select(x => x.SamAccountName).ToHashSet(StringComparer.OrdinalIgnoreCase);

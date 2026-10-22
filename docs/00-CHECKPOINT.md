@@ -2,90 +2,104 @@
 
 ## Estado atual / versao
 
-- Versao preparada: **v0.0.20**.
-- Base: v0.0.18 + patch final do gradiente de login.
-- Mudanca atual: status Teams simples, historico iniciado do zero e responsividade da tela Pendencias.
-- Branch de publicacao documentada: `release`; pipeline/Release automatica apos push.
+- Versao preparada: **v0.0.23**.
+- Baseline: pacote publicado v0.0.22.
+- Mudanca atual: resultado Teams em SharePoint Online + reconciliacao Graph no portal.
+- Branch de publicacao: `release`; pipeline/Release automatica apos push.
 
 ## Regra de negocio atual
 
 - Populacao: usuarios AD habilitados/elegiveis, menos `DirectoryExclusions`.
-- Conclusao no SQLite e a fonte de verdade; PDF e evidencia derivada.
+- Conclusao no SQLite e fonte de verdade; PDF e evidencia derivada.
 - Usuario concluido ou globalmente excluido nao recebe lembrete Teams.
-- Historico de Teams e persistente no SQLite e nunca e usado para afirmar leitura da mensagem.
-- Estados de negocio exibidos: `Enviado`, `Falhou` e `Nao enviado`.
-- Somente `delivered=true` ou `messageId` = `Enviado`; HTTP 2xx sem confirmacao = `Falhou`.
+- `Enviado` significa postagem concluida pelo Teams e resultado final gravado pelo Power Automate; nao significa leitura.
+- HTTP 2xx/202 do webhook confirma somente aceite do Workflow.
+- Resultado final externo e gravado na lista SharePoint `AutomindTreinamentosTeamsStatus`.
+- SQLite permanece fonte operacional da UI/agenda depois da reconciliacao por RequestId.
 - Agenda e opt-in por treinamento, desativada por padrao.
-- Ultimo aviso manual ou automatico valido participa do intervalo para evitar reenvio precoce.
+- Tentativa `queued`/`processing` impede duplicidade para o mesmo treinamento/colaborador.
 
 ## Fluxo atual do sistema
 
 ```text
-Login AD
-  -> treinamentos publicados
-  -> quiz + aceite
-  -> conclusao SQLite
-  -> evidencia PDF
-
 Pendencias Admin
-  -> consultar AD - exclusoes - concluidos
-  -> mostrar ultimo estado Teams
-  -> envio manual OU ciclo automatico vencido
-  -> reservar tentativa no SQLite
-  -> POST Workflow Teams
-  -> gravar resultado + auditoria
+  -> fila SQLite (RequestId)
+  -> dispatcher 13 s
+  -> Power Automate
+  -> Teams
+  -> SharePoint Success/Fail
+  -> Microsoft Graph (leitura)
+  -> sincronizar SQLite
+  -> UI Enviado/Falhou
 ```
 
 ```mermaid
 flowchart LR
-    A[Pendencias Admin] --> B[AD + exclusoes + conclusoes]
-    B --> C[Historico Teams]
-    C --> D{Manual ou agenda}
-    D --> E[Reservar tentativa]
-    E --> F[Workflow Teams]
-    F --> G[Gravar resultado]
-    G --> H[Atualizar tela e auditoria]
+    A[Pendencias Admin] --> B[Fila SQLite]
+    B --> C[Power Automate]
+    C --> D[Teams]
+    D --> E[SharePoint]
+    E --> F[Graph leitura]
+    F --> G[SQLite]
+    G --> H[UI]
 ```
 
 ## Invariantes / nao modificar implicitamente
 
-- Grupo administrativo oficial: `_treinamentos`; role administrativa nao fica persistida no cookie.
-- `Code`/`Slug` e versionamento de treinamentos permanecem protegidos pelas regras existentes.
+- Portal continua interno/HTTP ate existir certificado aprovado.
+- Nao expor `treinamentos.automind.com.br` para a Internet para callback.
+- Webhook Teams e ClientSecret Graph ficam fora de Git/docs/logs.
+- Grupo administrativo oficial: `_treinamentos`.
 - Estrutura de evidencias continua por colaborador/login.
-- Segredo do Workflow Teams permanece fora de Git/documentacao.
 - Nao transformar `Enviado` em recibo de leitura.
-- Nao habilitar agenda automaticamente em migration/seed.
-- Nao importar nem reconstruir o lote historico anterior; v0.0.20 inicia o controle do zero.
+- Nao liberar reenvio enquanto houver tentativa ativa sem resultado final reconciliado.
+- Campos `callbackToken`/`callbackUrl` continuam no payload somente por compatibilidade com o schema atual do Power Automate.
 
 ## Integracoes e responsabilidades
 
 - AD: autenticacao, autorizacao e elegibilidade.
-- SQLite: treinamentos, conclusoes, exclusoes, `TeamsReminderHistory` e `TrainingReminderSchedules`.
-- Workflow Teams: recebe `{ recipient, text }`; confirmacao estruturada depende de ajuste no Workflow real.
-- `TeamsReminderWorker`: verifica agendas vencidas a cada 15 minutos enquanto a aplicacao estiver ativa.
-- `Audit-*.jsonl`: auditoria tecnica; nao e fonte do status operacional exibido na tela.
+- SQLite: fila/historico Teams, agenda, treinamentos, conclusoes e exclusoes.
+- Power Automate `Treinamento Automind`: postar Teams e gravar resultado no SharePoint.
+- SharePoint GSTI-NOC: lista `AutomindTreinamentosTeamsStatus`.
+- Microsoft Graph: leitura server-to-server do status externo.
+- `TeamsReminderDispatchWorker`: despacha fila.
+- `TeamsReminderStatusSyncWorker`: reconcilia SharePoint -> SQLite.
+- `TeamsReminderStatusSynchronizer`: tambem roda ao abrir Pendencias.
 
 ## Testes relevantes ja validados
 
-- `VALIDADO HISTORICAMENTE`: login/AD, conclusoes, evidencias, exclusoes, publicacao e hardening conforme versoes anteriores.
-- `VALIDADO HISTORICAMENTE`: build v0.0.19 no Windows, SelfTests apos correcao de fuso, validacoes estaticas e ausencia de pacotes vulneraveis.
-- `VALIDADO LOCALMENTE`: delta v0.0.20 por verificacoes estaticas no pacote.
-- `PENDENTE DE VALIDACAO`: build v0.0.20 no Windows, migration no ambiente, Workflow real, envio controlado e permanencia do App Pool.
+- `VALIDADO NO AMBIENTE` 2026-10-22: trigger, Parse JSON, postagem Teams, branch SharePoint de sucesso, registro de RequestId/Recipient/Success/SentAtUtc/WorkflowRunId/MessageId e recebimento da mensagem.
+- `VALIDADO NO AMBIENTE`: branch de falha foi corretamente ignorada durante o caso de sucesso.
+- `VALIDADO HISTORICAMENTE`: login/AD, conclusoes, evidencias, exclusoes, publicacao, fila e hardening das versoes anteriores.
+- `PENDENTE DE VALIDACAO`: build .NET 10 v0.0.23, porque o SDK nao existe no ambiente de empacotamento.
+- `PENDENTE DE VALIDACAO`: Graph/IIS v0.0.23 depois da configuracao do App Registration.
+- `PENDENTE DE VALIDACAO`: falha/timeout real da acao Teams.
 
 ## Riscos e pendencias atuais
 
-- A migration v0.0.20 apaga o historico Teams criado pela v0.0.19 para iniciar o controle do zero; backup do SQLite e obrigatorio antes da publicacao no ambiente.
-- Para obter `Enviado`, o Workflow real precisa responder depois da etapa de postagem.
-- A agenda depende de o processo ASP.NET permanecer ativo; validar configuracao do App Pool antes de confiar em horario recorrente.
-- Build v0.0.20 nao executado no ambiente de empacotamento por ausencia do SDK .NET.
+- App Registration Graph e suas variaveis de ambiente ainda precisam ser configurados no IIS para a sincronizacao funcionar.
+- Sem Graph configurado, envio continua funcionando, mas a UI pode permanecer `Enviando`.
+- App Pool deve permanecer ativo para fila, agenda e sincronizacao em background.
+- HTTPS interno continua pendente por ausencia de certificado.
 
 ## Proximo ponto de continuidade
 
-1. Build/Static tests v0.0.20 no Windows com .NET 10.
-2. Backup do SQLite antes da publicacao, pois a migration limpa somente `TeamsReminderHistory`.
-3. Publicar e validar responsividade/status com historico zerado.
-4. Ajustar Workflow real e validar `Enviado`/`Falhou` com um unico usuario autorizado.
-5. Somente depois ativar agenda real.
+1. Configurar App Registration com `Sites.Selected` + `read` em GSTI-NOC.
+2. Configurar `Automind__TeamsStatus__TenantId`, `ClientId` e `ClientSecret` no App Pool.
+3. Publicar v0.0.23 via branch `release`.
+4. Abrir Pendencias sem reenviar Daniel: a tentativa v0.0.22 ja existente no SharePoint deve ser reconciliada para `Enviado`.
+5. Somente depois testar um novo envio controlado e, em rodada separada, uma falha/timeout.
+
+## 2026-10-22 - v0.0.23 - Teams + SharePoint + Graph
+
+- Power Automate alterado no ambiente: sucesso/falha gravados em `AutomindTreinamentosTeamsStatus`.
+- Caminho de sucesso validado com mensagem real Teams e item real SharePoint.
+- Portal v0.0.23 preparado para ler SharePoint por Graph e reconciliar o SQLite pelo RequestId.
+- Callback v0.0.22 deixa de ser dependencia operacional; endpoint fica apenas por compatibilidade/rollback.
+- Mensagem Teams passa a avisar VPN.
+- Documentacao completa em docs 50, 51 e 52.
+- Nenhuma exposicao externa do portal foi adicionada.
+- Build local pendente por ausencia do SDK .NET 10 neste ambiente.
 
 ## 2026-10-21 - v0.0.20 - Status Teams simples e responsividade
 

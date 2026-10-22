@@ -1,3 +1,17 @@
+# v0.0.23 - Status Teams via SharePoint Online
+
+- substitui a dependencia operacional do callback v0.0.22 por reconciliacao de status no SharePoint;
+- Power Automate grava sucesso/falha na lista `AutomindTreinamentosTeamsStatus`;
+- portal consulta a lista por Microsoft Graph com client credentials e atualiza `TeamsReminderHistory`;
+- sincronizacao roda em background e tambem ao abrir Pendencias;
+- tentativa aberta continua bloqueando duplicidade enquanto o resultado externo nao for reconciliado;
+- callback `/api/teams/reminder-result` permanece apenas para compatibilidade/rollback;
+- mensagem Teams inclui aviso: ambiente interno, conectar a VPN;
+- nova configuracao externa `Automind__TeamsStatus__*`;
+- permissao recomendada no Graph: `Sites.Selected` com `read` apenas no site GSTI-NOC;
+- caminho Power Automate -> Teams -> SharePoint validado no ambiente em 2026-10-22;
+- build .NET 10 desta entrega ficou pendente no ambiente de empacotamento porque o SDK nao esta instalado.
+
 # v0.0.22 - Fila e confirmacao real do Teams
 
 - envio manual e automatico passa a entrar em fila persistida no SQLite;

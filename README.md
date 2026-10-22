@@ -1,8 +1,22 @@
 # Automind.Treinamentos
 
-Versão: **v0.0.20**
+Versao: **v0.0.23**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidências PDF, acompanhamento de pendências no Active Directory e comunicacao via Teams.
+
+## Destaques da v0.0.23
+
+- resultado final do Teams passa a ser confirmado no SharePoint Online;
+- portal interno reconcilia o SharePoint por Microsoft Graph e atualiza o SQLite;
+- nenhum callback da nuvem para `treinamentos.automind.com.br` e necessario;
+- portal continua interno/HTTP e nao precisa ser exposto na Internet;
+- fila persistente e intervalo de 13 segundos permanecem;
+- tentativa `queued`/`processing` continua protegida contra duplicidade;
+- mensagem Teams passa a avisar que o ambiente e interno e exige VPN;
+- caminho de sucesso Power Automate -> Teams -> SharePoint foi `VALIDADO NO AMBIENTE` em 2026-10-22;
+- leitura Graph do portal exige App Registration com permissao recomendada `Sites.Selected` + `read` no site GSTI-NOC.
+
+Documentacao operacional completa: `docs/50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md`, `docs/51-CONFIGURACAO-GRAPH-IIS-V0.0.23.md` e `docs/52-TESTE-V0.0.23.md`.
 
 ## Destaques da v0.0.20
 - tela de pendências responsiva, com a coluna de ações acessível e layout em cartões no mobile;
@@ -89,30 +103,30 @@ A lista e gerenciada em `Administração > Exclusões`.
 
 ## Teams
 
-A integração continua enviando ao Workflow:
-
-```json
-{ "recipient": "usuario@automind.com.br", "text": "mensagem" }
-```
-
-Na v0.0.20, o Workflow deve responder **depois** da ação de envio no Teams:
-
-```json
-{
-  "success": true,
-  "delivered": true,
-  "workflowRunId": "<id-da-execucao>",
-  "messageId": "<id-da-mensagem>"
-}
-```
-
-Somente `delivered=true` ou `messageId` registra `Enviado`. Falha HTTP, falha explícita do Workflow ou resposta 2xx sem confirmação registra `Falhou`. Ausência de histórico aparece como `Não enviado`. O sistema não controla leitura da mensagem.
-
-A URL real do Workflow não esta no projeto. O IIS fornece:
+Fluxo atual v0.0.23:
 
 ```text
-Automind__Teams__WebhookUrl=<segredo>
+Portal -> fila SQLite -> Power Automate -> Teams -> SharePoint -> Graph -> SQLite/UI
 ```
+
+O portal envia `recipient`, `text`, `requestId` e campos de compatibilidade do schema v0.0.22. HTTP 2xx/202 do webhook significa apenas execucao aceita. `Enviado` depende do resultado final gravado na lista SharePoint.
+
+SharePoint:
+
+```text
+https://automindautomacao.sharepoint.com/sites/GSTI-NOC/Lists/AutomindTreinamentosTeamsStatus/AllItems.aspx
+```
+
+Segredos externos ao projeto:
+
+```text
+Automind__Teams__WebhookUrl=<SEGREDO_NO_AMBIENTE>
+Automind__TeamsStatus__TenantId=<TENANT_ID>
+Automind__TeamsStatus__ClientId=<CLIENT_ID>
+Automind__TeamsStatus__ClientSecret=<SEGREDO_NO_AMBIENTE>
+```
+
+O portal continua interno em `http://treinamentos.automind.com.br`. O Graph e acessado somente por HTTPS de saida.
 
 ## Repositorios
 
@@ -174,6 +188,10 @@ Comece por `docs/00-CHECKPOINT.md`.
 - validação v0.0.19: `docs/45-TESTE-V0.0.19.md`;
 - status Teams simples e responsividade v0.0.20: `docs/46-STATUS-TEAMS-E-RESPONSIVIDADE-V0.0.20.md`;
 - validação v0.0.20: `docs/47-TESTE-V0.0.20.md`.
+- fila/callback v0.0.22 (histórico): `docs/49-TEAMS-FILA-CALLBACK-V0.0.22.md`;
+- fluxo atual Teams + SharePoint + Graph v0.0.23: `docs/50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md`;
+- configuração Graph/IIS v0.0.23: `docs/51-CONFIGURACAO-GRAPH-IIS-V0.0.23.md`;
+- validação v0.0.23: `docs/52-TESTE-V0.0.23.md`.
 
 
 ## Autorização administrativa
