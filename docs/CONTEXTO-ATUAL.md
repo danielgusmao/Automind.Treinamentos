@@ -152,3 +152,11 @@ Pipeline e Release já estao configurados para deploy automatico a cada alteraç
 ## Teams - v0.0.22
 
 O portal nao considera mais HTTP 202 do gatilho Power Automate como entrega. As solicitacoes sao persistidas e despachadas em fila com intervalo de 13 segundos. O Workflow deve devolver o resultado final para `/api/teams/reminder-result` usando `requestId` e `callbackToken` recebidos no payload. Ate o callback, a tela mostra `Enviando`.
+
+
+### Correcao pre-publicacao v0.0.23 - exclusao de fontes residuais de testes
+
+- Restaurada no `Automind.Treinamentos.csproj` a exclusao `tests/**/*.cs` do item `Compile`.
+- Motivo: em workspaces/agentes reutilizados, uma pasta residual `tests` pode conter outro `Program.cs` e arquivos gerados `obj/*AssemblyInfo.cs`, causando `CS8802` e `CS0579`.
+- A v0.0.23 nao inclui pasta `tests`; a regra apenas impede compilacao acidental de residuos externos ao pacote.
+- Estado: VALIDADO LOCALMENTE por inspecao estatica do pacote; build .NET 10 permanece PENDENTE DE VALIDACAO no pipeline/ambiente com SDK adequado.

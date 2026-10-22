@@ -257,3 +257,11 @@
 - Restaurado o fundo preto sólido da tela inicial/login, conforme decisão visual já aprovada.
 - Gradiente institucional permanece apenas em elementos de destaque.
 - Removida a pasta auxiliar `tests` do pacote, conforme fluxo de publicação definido pelo usuário.
+
+
+### Correcao pre-publicacao v0.0.23 - exclusao de fontes residuais de testes
+
+- Restaurada no `Automind.Treinamentos.csproj` a exclusao `tests/**/*.cs` do item `Compile`.
+- Motivo: em workspaces/agentes reutilizados, uma pasta residual `tests` pode conter outro `Program.cs` e arquivos gerados `obj/*AssemblyInfo.cs`, causando `CS8802` e `CS0579`.
+- A v0.0.23 nao inclui pasta `tests`; a regra apenas impede compilacao acidental de residuos externos ao pacote.
+- Estado: VALIDADO LOCALMENTE por inspecao estatica do pacote; build .NET 10 permanece PENDENTE DE VALIDACAO no pipeline/ambiente com SDK adequado.
