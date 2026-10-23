@@ -1,16 +1,18 @@
 # CONTEXTO ATUAL - Automind.Treinamentos
 
-Versao de aplicacao preparada: **v0.0.23**.
+Versao de aplicacao preparada: **v0.0.24**.
 
-## v0.0.23 - Teams / SharePoint sem callback publico
+## v0.0.24 - Teams / SharePoint consultado por Power Automate
 
-A confirmacao final do Teams passa a ser gravada pelo Power Automate na lista SharePoint `AutomindTreinamentosTeamsStatus`. O portal interno nao recebe callback da nuvem: ele consulta o SharePoint Online por Microsoft Graph usando identidade de aplicativo e reconciliacao por `RequestId`.
+O resultado final do Teams continua sendo gravado pelo fluxo de envio na lista SharePoint `AutomindTreinamentosTeamsStatus`. O portal interno nao usa mais Microsoft Graph/App Registration. Em vez disso, chama por HTTPS de saida o fluxo `Automind.Treinamentos - Consultar Status Teams`, que consulta a lista por `RequestId` e devolve JSON.
 
-O SQLite continua sendo a fonte usada pela interface e agenda. `queued`/`processing` continuam bloqueando duplicidade. Se o Graph estiver indisponivel, o portal mantem `Enviando` e nao inventa sucesso.
+A URL desse fluxo e segredo e deve existir apenas no ambiente como `Automind__TeamsStatus__LookupUrl`. O portal permanece em `http://treinamentos.automind.com.br` e nao recebe callback da Internet.
 
-O portal continua em `http://treinamentos.automind.com.br`, sem exposicao externa e sem ativacao parcial de HTTPS. A mensagem Teams informa que o ambiente e interno e que o usuario deve estar conectado a VPN.
+O reenvio manual fica sempre disponivel. Cada clique gera nova tentativa/RequestId e entra na fila cadenciada de 13 segundos. A migration 0.0.24 remove o indice que bloqueava duas tentativas manuais ativas para o mesmo colaborador/treinamento. A agenda continua protegida por `CycleKey`.
 
-Documentacao de continuidade: `50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md`, `51-CONFIGURACAO-GRAPH-IIS-V0.0.23.md`, `52-TESTE-V0.0.23.md`.
+`Enviado em` usa o ultimo `SentAtUtc` confirmado pelo SharePoint/Power Automate.
+
+Documentacao vigente: `53-TEAMS-STATUS-POWER-AUTOMATE-V0.0.24.md` e `54-TESTE-V0.0.24.md`. O caminho Graph v0.0.23 foi marcado como superado.
 
 ## v0.0.20 - status Teams simples e responsividade
 

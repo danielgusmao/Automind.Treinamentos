@@ -2,9 +2,9 @@
 
 ## Estado atual / versao
 
-- Versao preparada: **v0.0.23**.
-- Baseline: pacote publicado v0.0.22.
-- Mudanca atual: resultado Teams em SharePoint Online + reconciliacao Graph no portal.
+- Versao preparada: **v0.0.24**.
+- Baseline: pacote publicado v0.0.23.
+- Mudanca atual: consulta de status Teams via Power Automate + SharePoint, sem Graph; reenvio manual sempre disponivel.
 - Branch de publicacao: `release`; pipeline/Release automatica apos push.
 
 ## Regra de negocio atual
@@ -15,9 +15,10 @@
 - `Enviado` significa postagem concluida pelo Teams e resultado final gravado pelo Power Automate; nao significa leitura.
 - HTTP 2xx/202 do webhook confirma somente aceite do Workflow.
 - Resultado final externo e gravado na lista SharePoint `AutomindTreinamentosTeamsStatus`.
-- SQLite permanece fonte operacional da UI/agenda depois da reconciliacao por RequestId.
-- Agenda e opt-in por treinamento, desativada por padrao.
-- Tentativa `queued`/`processing` impede duplicidade para o mesmo treinamento/colaborador.
+- Portal consulta o resultado por um segundo fluxo Power Automate usando `RequestId`; nao usa Graph/App Registration.
+- SQLite permanece fonte operacional da UI/agenda depois da reconciliacao.
+- Botao manual de Teams fica sempre disponivel; cada clique gera nova tentativa/RequestId.
+- Agenda e opt-in por treinamento, desativada por padrao, e continua protegida por `CycleKey`.
 
 ## Fluxo atual do sistema
 
@@ -25,21 +26,22 @@
 Pendencias Admin
   -> fila SQLite (RequestId)
   -> dispatcher 13 s
-  -> Power Automate
+  -> Power Automate de envio
   -> Teams
   -> SharePoint Success/Fail
-  -> Microsoft Graph (leitura)
+  -> Power Automate de consulta
   -> sincronizar SQLite
-  -> UI Enviado/Falhou
+  -> UI Enviado/Falhou + data/hora
 ```
 
 ```mermaid
 flowchart LR
     A[Pendencias Admin] --> B[Fila SQLite]
-    B --> C[Power Automate]
+    B --> C[Power Automate envio]
     C --> D[Teams]
     D --> E[SharePoint]
-    E --> F[Graph leitura]
+    A --> F[Power Automate consulta]
+    F --> E
     F --> G[SQLite]
     G --> H[UI]
 ```
@@ -48,12 +50,13 @@ flowchart LR
 
 - Portal continua interno/HTTP ate existir certificado aprovado.
 - Nao expor `treinamentos.automind.com.br` para a Internet para callback.
-- Webhook Teams e ClientSecret Graph ficam fora de Git/docs/logs.
+- URLs HTTP dos fluxos Power Automate ficam fora de Git/docs/logs.
 - Grupo administrativo oficial: `_treinamentos`.
 - Estrutura de evidencias continua por colaborador/login.
 - Nao transformar `Enviado` em recibo de leitura.
-- Nao liberar reenvio enquanto houver tentativa ativa sem resultado final reconciliado.
-- Campos `callbackToken`/`callbackUrl` continuam no payload somente por compatibilidade com o schema atual do Power Automate.
+- Reenvio manual nao deve ser bloqueado por tentativa `queued/processing`.
+- Fila continua cadenciada; liberar o botao nao remove o intervalo de despacho.
+- Campos `callbackToken`/`callbackUrl` continuam no payload somente por compatibilidade com o schema atual do fluxo de envio.
 
 ## Integracoes e responsabilidades
 
@@ -61,34 +64,48 @@ flowchart LR
 - SQLite: fila/historico Teams, agenda, treinamentos, conclusoes e exclusoes.
 - Power Automate `Treinamento Automind`: postar Teams e gravar resultado no SharePoint.
 - SharePoint GSTI-NOC: lista `AutomindTreinamentosTeamsStatus`.
-- Microsoft Graph: leitura server-to-server do status externo.
+- Power Automate `Automind.Treinamentos - Consultar Status Teams`: ler SharePoint por RequestId e devolver JSON ao portal.
 - `TeamsReminderDispatchWorker`: despacha fila.
-- `TeamsReminderStatusSyncWorker`: reconcilia SharePoint -> SQLite.
+- `TeamsReminderStatusSyncWorker`: reconcilia resultado via fluxo de consulta -> SQLite.
 - `TeamsReminderStatusSynchronizer`: tambem roda ao abrir Pendencias.
 
 ## Testes relevantes ja validados
 
-- `VALIDADO NO AMBIENTE` 2026-10-22: trigger, Parse JSON, postagem Teams, branch SharePoint de sucesso, registro de RequestId/Recipient/Success/SentAtUtc/WorkflowRunId/MessageId e recebimento da mensagem.
-- `VALIDADO NO AMBIENTE`: branch de falha foi corretamente ignorada durante o caso de sucesso.
-- `VALIDADO HISTORICAMENTE`: login/AD, conclusoes, evidencias, exclusoes, publicacao, fila e hardening das versoes anteriores.
-- `PENDENTE DE VALIDACAO`: build .NET 10 v0.0.23, porque o SDK nao existe no ambiente de empacotamento.
-- `PENDENTE DE VALIDACAO`: Graph/IIS v0.0.23 depois da configuracao do App Registration.
-- `PENDENTE DE VALIDACAO`: falha/timeout real da acao Teams.
+- `VALIDADO NO AMBIENTE` 2026-10-22: envio Teams + gravacao SharePoint de sucesso.
+- `VALIDADO NO AMBIENTE` 2026-10-23: servidor do portal chamou o fluxo de consulta e recebeu `found=true`, `success=true`, `SentAtUtc`, `WorkflowRunId` e `MessageId` do RequestId existente.
+- `VALIDADO HISTORICAMENTE`: login/AD, conclusoes, evidencias, exclusoes, publicacao, fila e hardening anteriores.
+- `PENDENTE DE VALIDACAO`: build .NET 10 v0.0.24 no pipeline.
+- `PENDENTE DE VALIDACAO`: reconciliacao da UI v0.0.24 depois de configurar `Automind__TeamsStatus__LookupUrl` no servidor.
+- `PENDENTE DE VALIDACAO`: reenvio manual repetido na v0.0.24 e falha/timeout real.
 
 ## Riscos e pendencias atuais
 
-- App Registration Graph e suas variaveis de ambiente ainda precisam ser configurados no IIS para a sincronizacao funcionar.
-- Sem Graph configurado, envio continua funcionando, mas a UI pode permanecer `Enviando`.
+- URL do fluxo de consulta precisa ser configurada no ambiente/IIS e tratada como segredo.
+- Sem essa configuracao, envio continua funcionando, mas a UI pode permanecer `Enviando`.
 - App Pool deve permanecer ativo para fila, agenda e sincronizacao em background.
 - HTTPS interno continua pendente por ausencia de certificado.
 
 ## Proximo ponto de continuidade
 
-1. Configurar App Registration com `Sites.Selected` + `read` em GSTI-NOC.
-2. Configurar `Automind__TeamsStatus__TenantId`, `ClientId` e `ClientSecret` no App Pool.
-3. Publicar v0.0.23 via branch `release`.
-4. Abrir Pendencias sem reenviar Daniel: a tentativa v0.0.22 ja existente no SharePoint deve ser reconciliada para `Enviado`.
-5. Somente depois testar um novo envio controlado e, em rodada separada, uma falha/timeout.
+1. Publicar v0.0.24 via branch `release`.
+2. Configurar `Automind__TeamsStatus__LookupUrl` no processo do portal, sem colocar a URL no Git.
+3. Abrir Pendencias sem reenviar Daniel: a tentativa existente deve virar `Enviado` e exibir data/hora.
+4. Confirmar botao `Reenviar Teams` habilitado.
+5. Testar dois reenvios manuais controlados; ambos devem entrar na fila com RequestIds diferentes.
+6. Em rodada separada, validar falha/timeout.
+
+## 2026-10-23 - v0.0.24 - consulta Power Automate + reenvio manual
+
+- Caminho Microsoft Graph/App Registration da v0.0.23 foi substituido pelo fluxo `Automind.Treinamentos - Consultar Status Teams`.
+- Consulta HTTP de saida do servidor foi validada contra um RequestId real ja gravado no SharePoint.
+- `TeamsStatusOptions` passa a usar somente `LookupUrl`, `SyncIntervalSeconds` e `BatchSize`.
+- Migration 0.0.24 remove `UX_TeamsReminderHistory_Active`; cada clique manual pode gerar nova tentativa mesmo com outra em andamento.
+- `RequestId` unico e `CycleKey` da agenda permanecem protegidos.
+- Botao da linha nao usa mais `Aguardando Teams` como bloqueio.
+- Data/hora continua baseada no ultimo envio confirmado.
+- Segredo do fluxo de consulta fica somente em `Automind__TeamsStatus__LookupUrl` no ambiente.
+- Documentacao atual: docs 53 e 54.
+- Build .NET 10 permanece pendente para o pipeline.
 
 ## 2026-10-22 - v0.0.23 - Teams + SharePoint + Graph
 

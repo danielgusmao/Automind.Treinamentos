@@ -1,4 +1,16 @@
-# v0.0.23 - Status Teams via SharePoint Online
+# CHANGELOG - Automind.Treinamentos
+
+## v0.0.24 - 2026-10-23
+
+- Substitui a leitura direta do SharePoint por Microsoft Graph pelo fluxo Power Automate `Automind.Treinamentos - Consultar Status Teams`.
+- Adiciona configuracao de ambiente `Automind__TeamsStatus__LookupUrl`; a URL real permanece fora do repositorio e da documentacao.
+- Mantem SharePoint como registro externo do resultado final do Teams e SQLite como fonte operacional da UI/agenda.
+- Migration `0.0.24` remove `UX_TeamsReminderHistory_Active`, permitindo reenvio manual mesmo com tentativa `queued/processing`.
+- Preserva unicidade de `RequestId` e protecao da agenda automatica por `CycleKey`.
+- Botao manual deixa de exibir/bloquear em `Aguardando Teams`; permanece `Enviar Teams`/`Reenviar Teams`.
+- Data/hora exibida continua sendo a do ultimo envio confirmado.
+- `VALIDADO NO AMBIENTE`: consulta HTTP do servidor ao novo fluxo retornou com sucesso os dados de um RequestId real do SharePoint.
+- `PENDENTE DE VALIDACAO`: build .NET 10 no pipeline e comportamento UI depois do deploy/configuracao do endpoint.
 
 - substitui a dependencia operacional do callback v0.0.22 por reconciliacao de status no SharePoint;
 - Power Automate grava sucesso/falha na lista `AutomindTreinamentosTeamsStatus`;

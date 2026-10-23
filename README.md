@@ -1,22 +1,21 @@
 # Automind.Treinamentos
 
-Versao: **v0.0.23**
+Versao: **v0.0.24**
 
 Aplicacao interna ASP.NET Core MVC para treinamentos, quiz, aceite, evidências PDF, acompanhamento de pendências no Active Directory e comunicacao via Teams.
 
-## Destaques da v0.0.23
+## Destaques da v0.0.24
 
-- resultado final do Teams passa a ser confirmado no SharePoint Online;
-- portal interno reconcilia o SharePoint por Microsoft Graph e atualiza o SQLite;
-- nenhum callback da nuvem para `treinamentos.automind.com.br` e necessario;
-- portal continua interno/HTTP e nao precisa ser exposto na Internet;
-- fila persistente e intervalo de 13 segundos permanecem;
-- tentativa `queued`/`processing` continua protegida contra duplicidade;
-- mensagem Teams passa a avisar que o ambiente e interno e exige VPN;
-- caminho de sucesso Power Automate -> Teams -> SharePoint foi `VALIDADO NO AMBIENTE` em 2026-10-22;
-- leitura Graph do portal exige App Registration com permissao recomendada `Sites.Selected` + `read` no site GSTI-NOC.
+- resultado final do Teams continua gravado no SharePoint Online pelo Power Automate;
+- portal consulta o resultado por um segundo fluxo Power Automate, sem Microsoft Graph/App Registration;
+- URL HTTP do fluxo de consulta fica somente no ambiente em `Automind__TeamsStatus__LookupUrl`;
+- botao manual de Teams permanece disponivel mesmo com tentativa `queued/processing`;
+- cada clique manual gera novo `RequestId` e nova tentativa na fila;
+- data/hora exibida continua sendo a do ultimo envio confirmado;
+- agenda automatica preserva a protecao de ciclo por `CycleKey`;
+- consulta Power Automate -> SharePoint -> resposta HTTP foi `VALIDADO NO AMBIENTE` em 2026-10-23.
 
-Documentacao operacional completa: `docs/50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md`, `docs/51-CONFIGURACAO-GRAPH-IIS-V0.0.23.md` e `docs/52-TESTE-V0.0.23.md`.
+Documentacao atual: `docs/53-TEAMS-STATUS-POWER-AUTOMATE-V0.0.24.md` e `docs/54-TESTE-V0.0.24.md`.
 
 ## Destaques da v0.0.20
 - tela de pendências responsiva, com a coluna de ações acessível e layout em cartões no mobile;
@@ -103,10 +102,10 @@ A lista e gerenciada em `Administração > Exclusões`.
 
 ## Teams
 
-Fluxo atual v0.0.23:
+Fluxo atual v0.0.24:
 
 ```text
-Portal -> fila SQLite -> Power Automate -> Teams -> SharePoint -> Graph -> SQLite/UI
+Portal -> fila SQLite -> Power Automate (envio) -> Teams -> SharePoint -> Power Automate (consulta) -> SQLite/UI
 ```
 
 O portal envia `recipient`, `text`, `requestId` e campos de compatibilidade do schema v0.0.22. HTTP 2xx/202 do webhook significa apenas execucao aceita. `Enviado` depende do resultado final gravado na lista SharePoint.
@@ -121,12 +120,10 @@ Segredos externos ao projeto:
 
 ```text
 Automind__Teams__WebhookUrl=<SEGREDO_NO_AMBIENTE>
-Automind__TeamsStatus__TenantId=<TENANT_ID>
-Automind__TeamsStatus__ClientId=<CLIENT_ID>
-Automind__TeamsStatus__ClientSecret=<SEGREDO_NO_AMBIENTE>
+Automind__TeamsStatus__LookupUrl=<SEGREDO_NO_AMBIENTE>
 ```
 
-O portal continua interno em `http://treinamentos.automind.com.br`. O Graph e acessado somente por HTTPS de saida.
+O portal continua interno em `http://treinamentos.automind.com.br`. A consulta de status usa somente HTTPS de saida para o Power Automate.
 
 ## Repositorios
 
@@ -189,9 +186,10 @@ Comece por `docs/00-CHECKPOINT.md`.
 - status Teams simples e responsividade v0.0.20: `docs/46-STATUS-TEAMS-E-RESPONSIVIDADE-V0.0.20.md`;
 - validação v0.0.20: `docs/47-TESTE-V0.0.20.md`.
 - fila/callback v0.0.22 (histórico): `docs/49-TEAMS-FILA-CALLBACK-V0.0.22.md`;
-- fluxo atual Teams + SharePoint + Graph v0.0.23: `docs/50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md`;
-- configuração Graph/IIS v0.0.23: `docs/51-CONFIGURACAO-GRAPH-IIS-V0.0.23.md`;
-- validação v0.0.23: `docs/52-TESTE-V0.0.23.md`.
+- historico v0.0.23: `docs/50-TEAMS-SHAREPOINT-STATUS-V0.0.23.md`;
+- caminho Graph v0.0.23 (superado): `docs/51-CONFIGURACAO-GRAPH-IIS-V0.0.23.md`;
+- fluxo atual v0.0.24: `docs/53-TEAMS-STATUS-POWER-AUTOMATE-V0.0.24.md`;
+- validacao v0.0.24: `docs/54-TESTE-V0.0.24.md`.
 
 
 ## Autorização administrativa

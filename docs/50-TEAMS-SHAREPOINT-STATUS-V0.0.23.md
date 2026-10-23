@@ -1,5 +1,8 @@
 # v0.0.23 - Teams + SharePoint - fluxo completo de status
 
+> **SUPERADO A PARTIR DA v0.0.24.** Preservado como historico. O fluxo vigente usa Power Automate para consultar o SharePoint, sem Microsoft Graph/App Registration. Ver `53-TEAMS-STATUS-POWER-AUTOMATE-V0.0.24.md`.
+
+
 ## Objetivo
 
 Registrar o resultado final do envio Teams na nuvem e permitir que o portal interno reconcilie esse resultado sem expor `treinamentos.automind.com.br` para a Internet.

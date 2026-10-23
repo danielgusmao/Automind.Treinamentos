@@ -144,6 +144,9 @@ CREATE INDEX IF NOT EXISTS IX_DirectoryExclusions_Email ON DirectoryExclusions(E
         // v0.0.22: fila persistida e callback por tentativa para confirmacao real do Teams.
         await ApplyV022TeamsQueueSchemaAsync(connection);
 
+        // v0.0.24: reenvio manual sempre permitido; cada clique gera uma tentativa independente.
+        await ApplyV024TeamsManualReenqueueAsync(connection);
+
         // v0.0.8: converte as exclusoes antigas por treinamento em uma lista permanente
         // aplicavel a todos os treinamentos. A tabela legada e preservada apenas para historico/rollback.
         using (var migrateExclusions = connection.CreateCommand())
@@ -498,10 +501,7 @@ ON TrainingReminderSchedules(Enabled, NextRunAtUtc);
 CREATE UNIQUE INDEX IF NOT EXISTS UX_TeamsReminderHistory_RequestId
 ON TeamsReminderHistory(RequestId) WHERE trim(RequestId) <> '';
 CREATE INDEX IF NOT EXISTS IX_TeamsReminderHistory_Queue
-ON TeamsReminderHistory(Status, AttemptedAtUtc, Id);
-CREATE UNIQUE INDEX IF NOT EXISTS UX_TeamsReminderHistory_Active
-ON TeamsReminderHistory(TrainingId, SamAccountName COLLATE NOCASE)
-WHERE Status IN ('queued','processing');";
+ON TeamsReminderHistory(Status, AttemptedAtUtc, Id);";
             await indexes.ExecuteNonQueryAsync();
         }
 
@@ -509,6 +509,27 @@ WHERE Status IN ('queued','processing');";
         mark.CommandText = "INSERT OR IGNORE INTO SchemaMigrations(Version, AppliedAtUtc) VALUES('0.0.22', $now);";
         mark.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
         await mark.ExecuteNonQueryAsync();
+    }
+
+    private static async Task ApplyV024TeamsManualReenqueueAsync(SqliteConnection connection)
+    {
+        using var tx = connection.BeginTransaction();
+        using (var drop = connection.CreateCommand())
+        {
+            drop.Transaction = tx;
+            drop.CommandText = "DROP INDEX IF EXISTS UX_TeamsReminderHistory_Active;";
+            await drop.ExecuteNonQueryAsync();
+        }
+
+        using (var mark = connection.CreateCommand())
+        {
+            mark.Transaction = tx;
+            mark.CommandText = "INSERT OR IGNORE INTO SchemaMigrations(Version, AppliedAtUtc) VALUES('0.0.24', $now);";
+            mark.Parameters.AddWithValue("$now", DateTime.UtcNow.ToString("O"));
+            await mark.ExecuteNonQueryAsync();
+        }
+
+        tx.Commit();
     }
 
     private static async Task EnsureColumnAsync(SqliteConnection connection, string table, string column, string definition)

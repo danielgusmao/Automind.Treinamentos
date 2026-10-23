@@ -19,7 +19,7 @@
 @if(TempData["ExclusionResult"] is string exclusionResult){<div class="alert success">@exclusionResult</div>}
 @if(TempData["ExclusionError"] is string exclusionError){<div class="alert error">@exclusionError</div>}
 @if(!teamsConfigured){<div class="alert info"><strong>Teams:</strong> o Workflow precisa estar configurado no ambiente para habilitar envios e agenda.</div>}
-@if(teamsConfigured && !teamsStatusConfigured){<div class="alert info"><strong>Status Teams:</strong> a sincronizacao de resultado com o SharePoint ainda nao esta configurada neste servidor. O envio pode chegar ao Teams enquanto a tela permanece em Enviando.</div>}
+@if(teamsConfigured && !teamsStatusConfigured){<div class="alert info"><strong>Status Teams:</strong> a consulta de resultado pelo Power Automate ainda nao esta configurada neste servidor. O envio pode chegar ao Teams enquanto a tela permanece em Enviando.</div>}
 
 <div class="card reminder-schedule-card">
     <div class="reminder-schedule-head">
@@ -84,7 +84,7 @@
                     <td class="action-col" data-label="Ação">
                         @if(!x.Completed){
                             <div class="row-actions">
-                                <form asp-action="SendTeamsReminders" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="selectedSams" value="@x.User.SamAccountName"/><button class="btn secondary btn-small" type="submit" disabled="@(!teamsConfigured || isSending)">@(isSending ? "Aguardando Teams" : lastSent is null ? "Enviar Teams" : "Reenviar Teams")</button></form>
+                                <form asp-action="SendTeamsReminders" method="post" class="inline-form">@Html.AntiForgeryToken()<input type="hidden" name="trainingId" value="@training.Id"/><input type="hidden" name="selectedSams" value="@x.User.SamAccountName"/><button class="btn secondary btn-small" type="submit" disabled="@(!teamsConfigured)">@(lastSent is null ? "Enviar Teams" : "Reenviar Teams")</button></form>
                                 <button class="btn danger btn-small exclude-user-btn" type="button" data-sam="@x.User.SamAccountName" data-name="@x.User.DisplayName" data-email="@x.User.Email">Excluir permanentemente</button>
                             </div>
                         }else{<span class="muted">Concluído</span>}

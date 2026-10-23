@@ -73,7 +73,7 @@ builder.Services.AddSingleton<AuditService>();
 builder.Services.AddSingleton<SimplePdfService>();
 builder.Services.AddSingleton<TrainingSnapshotService>();
 builder.Services.AddHttpClient("TeamsWebhook", client => client.Timeout = TimeSpan.FromSeconds(30));
-builder.Services.AddHttpClient("TeamsStatusGraph", client => client.Timeout = TimeSpan.FromSeconds(30));
+builder.Services.AddHttpClient("TeamsStatusLookup", client => client.Timeout = TimeSpan.FromSeconds(30));
 builder.Services.AddSingleton<TeamsWebhookService>();
 builder.Services.AddSingleton<TeamsStatusSharePointService>();
 builder.Services.AddScoped<TeamsReminderStatusSynchronizer>();

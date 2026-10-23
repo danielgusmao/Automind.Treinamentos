@@ -24,12 +24,7 @@ public sealed class TeamsOptions
 public sealed class TeamsStatusOptions
 {
     public bool Enabled { get; set; } = true;
-    public string TenantId { get; set; } = "";
-    public string ClientId { get; set; } = "";
-    public string ClientSecret { get; set; } = "";
-    public string SiteHostname { get; set; } = "automindautomacao.sharepoint.com";
-    public string SitePath { get; set; } = "/sites/GSTI-NOC";
-    public string ListName { get; set; } = "AutomindTreinamentosTeamsStatus";
+    public string LookupUrl { get; set; } = "";
     public int SyncIntervalSeconds { get; set; } = 15;
     public int BatchSize { get; set; } = 50;
 }

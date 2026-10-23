@@ -1,5 +1,8 @@
 # v0.0.23 - Configuracao Microsoft Graph / SharePoint / IIS
 
+> **SUPERADO A PARTIR DA v0.0.24.** Preservado como historico. O fluxo vigente usa Power Automate para consultar o SharePoint, sem Microsoft Graph/App Registration. Ver `53-TEAMS-STATUS-POWER-AUTOMATE-V0.0.24.md`.
+
+
 ## Objetivo
 
 Dar ao processo `Automind.Treinamentos` permissao somente de leitura para consultar os resultados Teams gravados no SharePoint Online.
