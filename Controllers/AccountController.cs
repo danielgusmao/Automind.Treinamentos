@@ -75,8 +75,13 @@ public sealed class AccountController : Controller
         var isAdminNow = _adminAuthorization.IsInAdminGroup(adUser.SamAccountName);
         await _audit.WriteAsync("login", "success", adUser.SamAccountName, new { adUser.DisplayName, adUser.Email, admin = isAdminNow });
 
-        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) &&
+            Url.IsLocalUrl(model.ReturnUrl) &&
+            !string.Equals(model.ReturnUrl, "/Account/Logout", StringComparison.OrdinalIgnoreCase))
+        {
             return LocalRedirect(model.ReturnUrl);
+        }
+
         return RedirectToAction("Index", "Training");
     }
 
